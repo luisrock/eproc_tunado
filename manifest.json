@@ -1,0 +1,34 @@
+{
+  "name": "Eproc Tunado - EPT",
+  "version": "0.0.1",
+  "manifest_version": 2,
+  "description": "Eproc com interface de minutas aperfeiçoada para juízes",
+  "homepage_url": "https://maurolopes.com.br",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+   "browser_action": {
+    "default_icon": "icons/icon16.png",
+    "default_title": "EPT - Configurações",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["tabs", "storage"],
+  "content_scripts": [{
+    "matches": ["*://eproc.jfrj.jus.br/*",
+                "*://eproc.jfes.jus.br/*",
+                "*://eproc.jfrs.jus.br/*",
+                "*://eproc.jfsc.jus.br/*",
+                "*://eproc.jfpr.jus.br/*",
+                "*://eproc1g.tjrs.jus.br/*",
+                "*://eproc1g.tjsc.jus.br/*",
+                "*://eproc1.tjto.jus.br/*"
+              ],
+    "all_frames": true,
+    "js": ["js/jquery.js","js/ept.js"]
+  }],
+  "background": {
+    "scripts": ["js/background.js"]
+  }
+}
