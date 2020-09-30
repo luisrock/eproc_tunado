@@ -96,7 +96,7 @@ chrome.storage.sync.get('enabled', data => {
 
 
                         let divBotoes = row.find('#divListaRecursosMinuta');
-                        //por ora, mantendo apenas os botões de assinar, devolver, conferir e editar
+                        //por ora, mantendo apenas os botões de assinar, devolver, conferir, editar e lembretes
                         divBotoes.children().each(function() {
                             if( !$(this).attr('href') 
                                 || 
@@ -108,6 +108,8 @@ chrome.storage.sync.get('enabled', data => {
                                     $(this).attr('href').includes('acao=minuta_conferir') === false  
                                     && 
                                     $(this).attr('href').includes('acao=minuta_verificar_agendamento') === false
+                                    && 
+                                    $(this).attr('href').includes('acao=minuta_lembrete_cadastrar') === false
                                 ) 
                             ) 
                             {
