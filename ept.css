@@ -1,0 +1,50 @@
+
+body{
+    width: 450px;
+    height:600px;
+}
+
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+    
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+button {
+    cursor: pointer;
+}
+
+.toggle-on {
+    background-color: #3189B3;
+    color: #dadada;
+}
+
+.toggle-off {
+    background-color: rgb(170, 170, 170);
+}
+
+#reload {
+    display: flex;
+    justify-content: center;
+}
+
+#btn-reload {
+    padding: 5px;
+    margin: 10px;
+    cursor: pointer;
+}
+
+footer {
+    margin: 20px;
+    text-align: center;
+}

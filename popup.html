@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPT</title>
+    <link rel="stylesheet" href="ept.css">
+    <script src="toggle.js"></script>
+</head>
+
+<body>
+    <div id="main">
+        <h1>Eproc Tunado</h1>
+        <button id="toggle">ligado</button>
+        <hr>
+        <h3>Funcionalidades:</h3>
+        <table>
+            <tr>
+                <th>
+                    Objetivo
+                </th>
+              
+                <th>
+                    Como?
+                </th>
+              
+                <th>
+
+                </th>
+            </tr>
+            
+            <tr>
+                <td>
+                    Permitir ao navegador armazenar senha (no formato <code>*******</code>), como nos formulários web em geral.
+                </td>
+                <td>
+                    Inserindo o atributo <code>[type="password"]</code> nos campos HTML de senha dos formulários de login e de assinatura.
+                </td>
+                <td>
+                    <button id="toggle-ept_password" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Oferecer ao usuário foco integral nas minutas a serem trabalhadas.
+                </td>
+                <td>
+                    Escondendo tudo o que não estiver inserido na tabela de minutas, como os inúmeros filtros oferecidos na página.
+                </td>
+                <td>
+                    <button id="toggle-ept_focus" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Oferecer ao usuário foco integral nas ações a serem realizadas com as minutas.
+                </td>
+                <td>
+                    Escondendo todos os botões situados na parte superior da tabela de minutas, salvo os de "assinar" e "visualizar".
+                </td>
+                <td>
+                    <button id="toggle-ept_actions" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    Mostrar o texto de cada minuta já na tabela inicial, evitando a necessidade de se ter de percorrer uma a uma para a visualização.
+                </td>
+                <td>
+                    Removendo diversas colunas e condensando os dados mais relevantes, juntamente com o texto da minuta e os botões mais usados, em uma única coluna da tabela.
+                </td>
+                <td>
+                    <button id="toggle-ept_tabletext" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Eliminar um clique no procedimento de edição de minuta.
+                </td>
+                <td>
+                    Automatizando o clique no botão da página de "manter agendamento", que aparece antes de ser aberto o texto da minuta a ser editado.
+                </td>
+                <td>
+                    <button id="toggle-ept_edit" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Aplicar design moderno e elegante à tabela de minutas.
+                </td>
+                <td>
+                    Melhorando a aparência visual com cores modernas, espaçamento adequado, bordas arredondadas e efeitos hover para melhor experiência do usuário.
+                </td>
+                <td>
+                    <button id="toggle-ept_tablestyle" class="ept-toggle toggle-on">on</button>
+                </td>
+            </tr>
+          </table>
+    </div>
+    <div id="reload">
+        <button id="btn-reload">Recarregar abas do eproc</button>
+    </div>
+    <hr>
+    <footer>
+        Criado por Mauro Lopes. Sugestões? trator70@gmail.com
+    </footer>
+</body>
+</html>
+

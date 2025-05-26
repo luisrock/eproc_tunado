@@ -1,0 +1,163 @@
+/* EPT - Arquivo de estilos para customização da tabela de minutas */
+/* 
+ * Este arquivo permite personalizar a aparência da tabela quando a funcionalidade
+ * "Mostrar texto na tabela" estiver ativa.
+ * 
+ * SELETORES DISPONÍVEIS:
+ * 
+ * #tabelaMinutas.ept-enhanced - Tabela principal com funcionalidade EPT ativa
+ * #tabelaMinutas.ept-enhanced .infraTrOrdenacao th - Cabeçalhos da tabela
+ * #tabelaMinutas.ept-enhanced tr:hover - Hover nas linhas da tabela
+ * 
+ * .ept-minuta-header - Cabeçalho de cada minuta expandida (processo, título, órgão)
+ * .ept-minuta-text - Conteúdo do texto da minuta
+ * .ept-minuta-footer - Rodapé com botões e informações do servidor
+ * 
+ * BOTÕES ESPECÍFICOS:
+ * .ept-minuta-footer a[href*="minuta_assinar"] - Botão Assinar
+ * .ept-minuta-footer a[href*="minuta_devolver"] - Botão Devolver  
+ * .ept-minuta-footer a[href*="minuta_conferir"] - Botão Conferir
+ * .ept-minuta-footer a[href*="minuta_verificar_agendamento"] - Botão Editar
+ * .ept-minuta-footer a[href*="minuta_lembrete_cadastrar"] - Botão Lembretes
+ * 
+ * button[onclick*="window.location.reload"] - Botão "Retornar tabela"
+ * 
+ * EXEMPLO DE USO:
+ * 
+ * #tabelaMinutas.ept-enhanced .infraTrOrdenacao th {
+ *     background: #4285f4 !important;
+ *     color: white !important;
+ * }
+ * 
+ * .ept-minuta-header {
+ *     background: #f0f0f0 !important;
+ *     border-radius: 4px !important;
+ * }
+ */
+
+/* =============================================== */
+/* BOTÕES COMPACTOS E MODERNOS                    */
+/* =============================================== */
+
+/* Reset básico para a div de botões */
+.ept-minuta-footer #divListaRecursosMinuta {
+    display: flex !important;
+    gap: 4px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    margin: 0 !important;
+}
+
+/* Estilo base para todos os links de botão */
+.ept-minuta-footer #divListaRecursosMinuta a {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    font-size: 10px !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    justify-content: center !important;
+    line-height: 1.2 !important;
+}
+
+/* Remove a imagem original e substitui por texto */
+.ept-minuta-footer #divListaRecursosMinuta a img {
+    display: none !important;
+}
+
+/* Adiciona texto aos botões usando ::after */
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"]::after {
+    content: "Editar" !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"]::after {
+    content: "Assinar" !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"]::after {
+    content: "Devolver" !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"]::after {
+    content: "Lembrete" !important;
+}
+
+/* Botão Editar - Azul simples */
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"] {
+    background: #2196F3 !important;
+    color: white !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"]:hover {
+    background: #1976D2 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3) !important;
+}
+
+/* Botão Assinar - Verde simples */
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"] {
+    background: #4CAF50 !important;
+    color: white !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"]:hover {
+    background: #388E3C !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3) !important;
+}
+
+/* Botão Devolver - Vermelho simples */
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"] {
+    background: #F44336 !important;
+    color: white !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"]:hover {
+    background: #D32F2F !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3) !important;
+}
+
+/* Botão Lembrete - Amarelo */
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"] {
+    background: #f8f880 !important;
+    color: #333 !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"]:hover {
+    background: #f5f548 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(248, 248, 128, 0.4) !important;
+}
+
+/* Esconde todos os outros botões que não são os 4 principais */
+.ept-minuta-footer #divListaRecursosMinuta a:not([href*="minuta_verificar_agendamento"]):not([href*="minuta_assinar"]):not([href*="minuta_devolver"]):not([href*="minuta_lembrete"]) {
+    display: none !important;
+}
+
+/* Esconde labels vazias ou desnecessárias */
+.ept-minuta-footer #divListaRecursosMinuta label {
+    display: contents !important;
+}
+
+/* Estilo para responsividade */
+@media (max-width: 768px) {
+    .ept-minuta-footer #divListaRecursosMinuta {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .ept-minuta-footer #divListaRecursosMinuta a {
+        justify-content: center !important;
+        margin-bottom: 2px !important;
+    }
+}
+
+/* Adicione seus estilos personalizados abaixo */ 
