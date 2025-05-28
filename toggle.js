@@ -2,12 +2,24 @@ const manifestHosts = [
   "*://eproc.jfrj.jus.br/*",
   "*://eproc.jfes.jus.br/*",
   "*://eproc.trf2.jus.br/*",
+  "*://eproc.trf4.jus.br/*",
+  "*://eproc1g.trf6.jus.br/*",
+  "*://eproc2g.trf6.jus.br/*",
   "*://eproc.jfrs.jus.br/*",
   "*://eproc.jfsc.jus.br/*",
   "*://eproc.jfpr.jus.br/*",
   "*://eproc1g.tjrs.jus.br/*",
+  "*://eproc2g.tjrs.jus.br/*",
   "*://eproc1g.tjsc.jus.br/*",
+  "*://eproc2g.tjsc.jus.br/*",
   "*://eproc1.tjto.jus.br/*",
+  "*://eproc2.tjto.jus.br/*",
+  "*://eproc1g.tjrj.jus.br/*",
+  "*://eproc2g.tjrj.jus.br/*",
+  "*://eproc1g.tjsp.jus.br/*",
+  "*://eproc2g.tjsp.jus.br/*",
+  "*://eproc1g.tjmg.jus.br/*",
+  "*://eproc2g.tjmg.jus.br/*"
 ];
 
 function toggleOnOff(flag, element, geral = false) {
