@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-0.0.4-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-0.0.6-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -14,6 +14,16 @@ O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora significativamente 
 - ⚡ **Funcionalidades aprimoradas** para produtividade
 - 🎛️ **Personalização completa** de estilos visuais
 - 🌐 **Suporte a múltiplos tribunais**
+- ✅ **Compatibilidade total** com eproc versão 9.15
+
+### 🔄 Atualização para eproc 9.15
+
+**Versão 0.0.6** - Adaptação para compatibilidade com eproc 9.15:
+
+- **Problema resolvido**: Links de visualização de minutas não funcionavam quando a funcionalidade "Mostrar texto na tabela" estava ativada
+- **Solução implementada**: Preservação dos links essenciais (`a.linkMinuta`) durante a modificação da estrutura da tabela
+- **Técnica utilizada**: Reincorporação dos links com posicionamento absoluto para garantir funcionalidade da função `visualizar()` do eproc
+- **Resultado**: Mantém todas as funcionalidades visuais aprimoradas sem interferir na navegação nativa do sistema
 
 ## 🏛️ Tribunais Suportados
 
@@ -366,7 +376,17 @@ Este projeto é desenvolvido para uso pessoal e profissional de magistrados e se
 
 ## 🔄 Changelog
 
-### v0.0.4 (Atual)
+### v0.0.6 (Atual)
+- ✅ **Correção crítica** para compatibilidade com eproc 9.15
+- ✅ **Preservação dos links** de visualização de minutas
+- ✅ **Manutenção da funcionalidade nativa** do sistema eproc
+- ✅ Suporte a 21 URLs de tribunais
+- ✅ Sistema completo de personalização CSS
+- ✅ Testes automatizados de URLs
+- ✅ Interface responsiva otimizada
+- ✅ Documentação unificada
+
+### v0.0.4
 - ✅ Suporte a 21 URLs de tribunais
 - ✅ Sistema completo de personalização CSS
 - ✅ Testes automatizados de URLs

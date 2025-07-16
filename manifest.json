@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Eproc Tunado - EPT",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Eproc com interface de minutas aperfeiçoada para juízes",
   "homepage_url": "https://maurolopes.com.br",
   "permissions": ["storage", "webNavigation", "tabs", "scripting"],

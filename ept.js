@@ -188,6 +188,17 @@ async function getStorageData(key) {
   
           let l = row.find(".linkMinuta");
           let urlPreview = l.attr("hrefpreview");
+          
+          // PRESERVAR OS LINKS ORIGINAIS ANTES DE REMOVER COLUNAS
+          let originalLinks = [];
+          row.find(".linkMinuta").each(function() {
+            originalLinks.push({
+              href: $(this).attr("href"),
+              dataLink: $(this).data("link"),
+              hrefPreview: $(this).attr("hrefpreview")
+            });
+          });
+          
           if (urlPreview) {
             //get the page url until 'eproc/', but including 'eproc/'
             let url = window.location.href;
@@ -344,9 +355,47 @@ async function getStorageData(key) {
                 )
                 .remove();
                 
+                             // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
+               originalLinks.forEach(function(linkData) {
+                 if (linkData.href) {
+                   let newLink = $('<a>', {
+                     href: linkData.href,
+                     class: 'linkMinuta',
+                     'data-link': linkData.dataLink,
+                     'hrefpreview': linkData.hrefPreview,
+                     style: 'display: none; position: absolute; left: -9999px;' // ESCONDER O LINK MAS MANTÊ-LO FUNCIONAL
+                   });
+                   
+                   // ADICIONAR O LINK DIRETAMENTE NA LINHA, NÃO NA CÉLULA
+                   row.append(newLink);
+                 }
+               });
+
               // Aplica estilos modernos ao conteúdo da minuta recém-carregada
               if (ept_tablestyleData.ept_tablestyle && window.EPT_TableStyler) {
                 window.EPT_TableStyler.enhanceContent(row[0]);
+              }
+            });
+          } else {
+            // SE NÃO HÁ URLPREVIEW, AINDA PRESERVAR OS LINKS ORIGINAIS
+            // Remove todas as colunas exceto a primeira (checkbox) e a segunda (que se torna o conteúdo expandido)
+            row
+              .children("td:eq(1),td:eq(3),td:eq(4),td:eq(5),td:eq(6),td:eq(7),td:eq(8),td:eq(9),td:eq(10),td:eq(11),td:eq(12),td:eq(13),td:eq(14),td:eq(15),td:eq(16),td:eq(17),td:eq(18),td:eq(19),td:eq(20)")
+              .remove();
+            
+            // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
+            originalLinks.forEach(function(linkData) {
+              if (linkData.href) {
+                let newLink = $('<a>', {
+                  href: linkData.href,
+                  class: 'linkMinuta',
+                  'data-link': linkData.dataLink,
+                  'hrefpreview': linkData.hrefPreview,
+                  style: 'display: none; position: absolute; left: -9999px;' // ESCONDER O LINK MAS MANTÊ-LO FUNCIONAL
+                });
+                
+                // ADICIONAR O LINK DIRETAMENTE NA LINHA, NÃO NA CÉLULA
+                row.append(newLink);
               }
             });
           } //end if(urlPreview)
