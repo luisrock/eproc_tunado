@@ -80,6 +80,31 @@ async function getStorageData(key) {
           .children(":not(#btnVisualizar):not(#btnAssinar)")
           .hide();
       }
+
+      // Adicionar botão "Retunar" na barra de comandos (fallback para reload manual)
+      if (window.location.href.includes('acao=minuta_area_trabalho')) {
+        const divBarra = document.getElementById('divBarraComandosTabela');
+        const btnAssinar = document.getElementById('btnAssinar');
+        
+        if (divBarra && btnAssinar && !document.getElementById('btnRetunarEPT')) {
+          // Criar espaçador
+          const espaco = document.createTextNode('\u00A0'); // &nbsp;
+          
+          // Criar botão
+          const btnRetunar = document.createElement('button');
+          btnRetunar.id = 'btnRetunarEPT';
+          btnRetunar.type = 'button';
+          btnRetunar.className = 'infraButton';
+          btnRetunar.textContent = 'Retunar';
+          btnRetunar.onclick = () => location.reload();
+          btnRetunar.style.cssText = 'background: #4a90e2; color: white;';
+          btnRetunar.title = 'Recarregar e reaplicar formatação EPT';
+          
+          // Inserir após o botão Assinar
+          btnAssinar.parentNode.insertBefore(espaco, btnAssinar.nextSibling);
+          btnAssinar.parentNode.insertBefore(btnRetunar, btnAssinar.nextSibling.nextSibling);
+        }
+      }
   
       // console.log(ept_actionsData);
   
@@ -402,9 +427,67 @@ async function getStorageData(key) {
         }); //end foreach
         //End texto de cada minuta da lista
   
-        $("#divBarraComandosTabela").append(
-          '<button onClick="window.location.reload();" style="margin-left:50px;background: #7dcfe2;color: #fcfdfe;padding: 2px; cursor:pointer;">Retunar tabela</button>'
-        );
+        // Observador para detectar mudanças na tabela feitas pelo eproc (via AJAX)
+        // e recarregar quando a edição for concluída (linha reconstruída sem cadeado)
+        const tabelaMinutas = document.getElementById('tabelaMinutas');
+        if (tabelaMinutas) {
+          // Flag para evitar disparar durante transformação inicial
+          let eptTransformacaoCompleta = false;
+          // Armazena linhas que estão em edição (com bgcolor laranja)
+          let linhasEmEdicao = new Set();
+          
+          // Aguardar um pequeno delay para garantir que a transformação EPT finalizou
+          setTimeout(() => {
+            eptTransformacaoCompleta = true;
+            debugLog('EPT: Observador de mudanças na tabela ativado');
+          }, 2000);
+          
+          const observadorTabela = new MutationObserver((mutations) => {
+            if (!eptTransformacaoCompleta) return;
+            
+            for (let mutation of mutations) {
+              // Detecta quando uma linha ganha bgcolor laranja (entrou em edição)
+              if (mutation.type === 'attributes' && 
+                  (mutation.attributeName === 'bgcolor' || mutation.attributeName === 'style')) {
+                const tr = mutation.target;
+                if (tr.tagName === 'TR' && !tr.classList.contains('infraTrOrdenacao')) {
+                  const bgcolor = tr.getAttribute('bgcolor') || '';
+                  const style = tr.getAttribute('style') || '';
+                  const temLaranja = bgcolor === '#ffaa00' || style.includes('rgb(255, 170, 0)');
+                  
+                  if (temLaranja && !linhasEmEdicao.has(tr.id)) {
+                    debugLog('EPT: Linha em edição detectada:', tr.id);
+                    linhasEmEdicao.add(tr.id);
+                  }
+                }
+              }
+              
+              // Detecta quando o Eproc reconstrói uma linha (adiciona múltiplos TDs)
+              if (mutation.type === 'childList' && mutation.addedNodes.length > 5) {
+                const tr = mutation.target;
+                if (tr.tagName === 'TR' && linhasEmEdicao.has(tr.id)) {
+                  // Verifica se a linha reconstruída NÃO contém mais o cadeado
+                  const temCadeado = tr.querySelector('img[src*="cadeado.gif"]');
+                  
+                  if (!temCadeado) {
+                    debugLog('EPT: Edição concluída, recarregando tabela...');
+                    setTimeout(() => {
+                      location.reload();
+                    }, 500);
+                    return;
+                  }
+                }
+              }
+            }
+          });
+          
+          observadorTabela.observe(tabelaMinutas, {
+            childList: true,
+            attributes: true,
+            attributeFilter: ['bgcolor', 'style'],
+            subtree: true
+          });
+        }
       }
   
       //Iframe para editar minuta
@@ -442,24 +525,54 @@ async function getStorageData(key) {
           const link = event.target.closest("a");
           
           // Verifica se é um link que contém a ação de verificar agendamento
-          if (
-            link &&
-            link.href &&
-            link.href.includes("controlador.php?acao=minuta_verificar_agendamento")
-          ) {
-            debugLog('EPT: Detectado clique em link de editar minuta, iniciando observação...');
-            startObserving();
-            return;
+          // Expandido para suportar tanto href quanto onclick (compatibilidade com diferentes versões do eproc)
+          if (link) {
+            const href = link.href || '';
+            const onclick = link.getAttribute('onclick') || '';
+            const title = link.title || link.getAttribute('data-tooltip_titulo') || '';
+            
+            // Detecta por múltiplos critérios (mantém compatibilidade com versões antigas e novas)
+            const isEditarMinutaLink = (
+              href.includes("minuta_verificar_agendamento") ||
+              onclick.includes("minuta_verificar_agendamento") ||
+              (onclick.includes("executarRecursoMinuta") && title.includes("Editar minuta"))
+            );
+            
+            if (isEditarMinutaLink) {
+              debugLog('EPT: Detectado clique em link de editar minuta, iniciando observação...');
+              startObserving();
+              return;
+            }
           }
           
           // Também detecta cliques em imagens dentro de labels (caso do ícone de editar)
           const img = event.target.closest("img");
           if (img && img.alt && img.alt.includes("Editar minuta")) {
             const parentLink = img.closest("a");
-            if (parentLink && parentLink.href && parentLink.href.includes("minuta_verificar_agendamento")) {
-              debugLog('EPT: Detectado clique em ícone de editar minuta, iniciando observação...');
-              startObserving();
-              return;
+            if (parentLink) {
+              // Verifica href OU onclick para maior compatibilidade
+              const href = parentLink.href || '';
+              const onclick = parentLink.getAttribute('onclick') || '';
+              if (href.includes("minuta_verificar_agendamento") || onclick.includes("minuta_verificar_agendamento")) {
+                debugLog('EPT: Detectado clique em ícone de editar minuta, iniciando observação...');
+                startObserving();
+                return;
+              }
+            }
+          }
+          
+          // Detecta cliques em ícones Material Design (versões mais novas do eproc)
+          const materialIcon = event.target.closest("i.material-icons");
+          if (materialIcon && materialIcon.textContent.includes("edit_document")) {
+            const parentLink = materialIcon.closest("a");
+            if (parentLink) {
+              const onclick = parentLink.getAttribute('onclick') || '';
+              const title = parentLink.title || parentLink.getAttribute('data-tooltip_titulo') || '';
+              if (onclick.includes("minuta_verificar_agendamento") || title.includes("Editar minuta")) {
+                debugLog('EPT: Detectado clique em ícone Material Design de editar minuta, iniciando observação...');
+                startObserving();
+                return;
+              }
             }
           }
         });
@@ -468,10 +581,16 @@ async function getStorageData(key) {
         document.addEventListener("click", function (event) {
           // Se já está observando, não fazer nada
           if (isObserving) return;
-  
+
           // Detecta cliques em qualquer elemento que tenha atributos relacionados à edição de minuta
+          // Expandido para incluir onclick e title (compatibilidade com diferentes versões do eproc)
           const target = event.target;
-          const closestLink = target.closest("a[href*='minuta_verificar_agendamento']");
+          const closestLink = target.closest(
+            "a[href*='minuta_verificar_agendamento'], " +
+            "a[onclick*='minuta_verificar_agendamento'], " +
+            "a[title*='Editar minuta'], " +
+            "a[data-tooltip_titulo*='Editar minuta']"
+          );
           
           if (closestLink) {
             debugLog('EPT: Detectado clique delegado em link de verificar agendamento...');
