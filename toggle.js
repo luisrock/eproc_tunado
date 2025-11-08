@@ -30,7 +30,8 @@ function toggleOnOff(flag, element, geral = false) {
   let classToRemove = flag ? "toggle-off" : "toggle-on";
   element.classList.add(classToAdd);
   element.classList.remove(classToRemove);
-  element.textContent = !flag ? "off" : "on";
+  
+  // Não precisa alterar texto nos toggles switch, apenas as classes
 }
 
 function toggleGeral(ept_enabled) {
@@ -40,10 +41,17 @@ function toggleGeral(ept_enabled) {
   }
   let classToAdd = !ept_enabled ? "toggle-off" : "toggle-on";
   let classToRemove = ept_enabled ? "toggle-off" : "toggle-on";
-  let elementText = !ept_enabled ? "Desligado" : "Ligado";
+  let elementText = !ept_enabled ? "Desativado" : "Ativado";
   btnGeral.classList.add(classToAdd);
   btnGeral.classList.remove(classToRemove);
-  btnGeral.textContent = elementText;
+  
+  // Atualizar o texto dentro do span
+  const labelSpan = btnGeral.querySelector('.toggle-label');
+  if (labelSpan) {
+    labelSpan.textContent = elementText;
+  } else {
+    btnGeral.textContent = elementText;
+  }
 }
 
 async function updateTab(tabId) {

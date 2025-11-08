@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,108 +7,107 @@
     <link rel="stylesheet" href="ept.css">
     <script src="toggle.js"></script>
 </head>
-
 <body>
-    <div id="main">
-        <h1>Eproc Tunado</h1>
-        <button id="toggle">ligado</button>
-        <hr>
-        <h3>Funcionalidades:</h3>
-        <table>
-            <tr>
-                <th>
-                    Objetivo
-                </th>
-              
-                <th>
-                    Como?
-                </th>
-              
-                <th>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">Eproc Tunado</h1>
+                <button id="toggle" class="toggle-main toggle-on">
+                    <span class="toggle-label">Ativado</span>
+                </button>
+            </div>
+            <p class="subtitle">Sistema de aprimoramento para interface de minutas</p>
+        </header>
 
-                </th>
-            </tr>
-            
-            <tr>
-                <td>
-                    Permitir ao navegador armazenar senha (no formato <code>*******</code>), como nos formulários web em geral.
-                </td>
-                <td>
-                    Inserindo o atributo <code>[type="password"]</code> nos campos HTML de senha dos formulários de login e de assinatura.
-                </td>
-                <td>
-                    <button id="toggle-ept_password" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
+        <!-- Features -->
+        <main class="features">
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Armazenar Senha</h3>
+                    <p class="feature-description">Permite ao navegador salvar credenciais de acesso</p>
+                </div>
+                <button id="toggle-ept_password" class="toggle-switch toggle-on" aria-label="Ativar armazenamento de senha">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
 
-            <tr>
-                <td>
-                    Oferecer ao usuário foco integral nas minutas a serem trabalhadas.
-                </td>
-                <td>
-                    Escondendo tudo o que não estiver inserido na tabela de minutas, como os inúmeros filtros oferecidos na página.
-                </td>
-                <td>
-                    <button id="toggle-ept_focus" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Modo Foco</h3>
+                    <p class="feature-description">Oculta elementos secundários da interface</p>
+                </div>
+                <button id="toggle-ept_focus" class="toggle-switch toggle-on" aria-label="Ativar modo foco">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
 
-            <tr>
-                <td>
-                    Oferecer ao usuário foco integral nas ações a serem realizadas com as minutas.
-                </td>
-                <td>
-                    Escondendo todos os botões situados na parte superior da tabela de minutas, salvo os de "assinar" e "visualizar".
-                </td>
-                <td>
-                    <button id="toggle-ept_actions" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
-            
-            <tr>
-                <td>
-                    Mostrar o texto de cada minuta já na tabela inicial, evitando a necessidade de se ter de percorrer uma a uma para a visualização.
-                </td>
-                <td>
-                    Removendo diversas colunas e condensando os dados mais relevantes, juntamente com o texto da minuta e os botões mais usados, em uma única coluna da tabela.
-                </td>
-                <td>
-                    <button id="toggle-ept_tabletext" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Focar Ações Principais</h3>
+                    <p class="feature-description">Exibe apenas botões essenciais de assinatura</p>
+                </div>
+                <button id="toggle-ept_actions" class="toggle-switch toggle-on" aria-label="Ativar foco em ações">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
 
-            <tr>
-                <td>
-                    Eliminar um clique no procedimento de edição de minuta.
-                </td>
-                <td>
-                    Automatizando o clique no botão da página de "manter agendamento", que aparece antes de ser aberto o texto da minuta a ser editado.
-                </td>
-                <td>
-                    <button id="toggle-ept_edit" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Visualização de Texto</h3>
+                    <p class="feature-description">Apresenta conteúdo da minuta na listagem</p>
+                </div>
+                <button id="toggle-ept_tabletext" class="toggle-switch toggle-on" aria-label="Ativar visualização de texto">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
 
-            <tr>
-                <td>
-                    Aplicar design moderno e elegante à tabela de minutas.
-                </td>
-                <td>
-                    Melhorando a aparência visual com cores modernas, espaçamento adequado, bordas arredondadas e efeitos hover para melhor experiência do usuário.
-                </td>
-                <td>
-                    <button id="toggle-ept_tablestyle" class="ept-toggle toggle-on">on</button>
-                </td>
-            </tr>
-          </table>
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Edição Automática</h3>
+                    <p class="feature-description">Confirma manutenção de agendamento automaticamente</p>
+                </div>
+                <button id="toggle-ept_edit" class="toggle-switch toggle-on" aria-label="Ativar edição automática">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-content">
+                    <h3 class="feature-title">Interface Aprimorada</h3>
+                    <p class="feature-description">Aplica estilização moderna à tabela de minutas</p>
+                </div>
+                <button id="toggle-ept_tablestyle" class="toggle-switch toggle-on" aria-label="Ativar interface aprimorada">
+                    <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                    </span>
+                </button>
+            </div>
+        </main>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button id="btn-reload" class="btn-action">
+                Recarregar páginas do Eproc
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer-text">Desenvolvido por Mauro Lopes</p>
+            <a href="mailto:trator70@gmail.com" class="footer-link">trator70@gmail.com</a>
+        </footer>
     </div>
-    <div id="reload">
-        <button id="btn-reload">Recarregar abas do eproc</button>
-    </div>
-    <hr>
-    <footer>
-        Criado por Mauro Lopes. Sugestões? trator70@gmail.com
-    </footer>
 </body>
 </html>
 
