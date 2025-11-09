@@ -108,24 +108,25 @@ html = html.replace(/&[a-z]+;/gi, match => entityMap[match] || match);
 
 ---
 
-## 💻 CÓDIGO FUNCIONAL CRIADO
+## 💻 CÓDIGO QUE PRECISA SER CRIADO
 
-### Arquivo: `console-inline-editor.js` (672 linhas)
+### Editor Inline (a ser desenvolvido)
 
-**Status**: ✅ Funciona perfeitamente MAS bloqueia minuta após salvar
+**Objetivo**: Criar um editor inline que funcione SEM bloquear a minuta após salvar
 
-**Funcionalidades implementadas**:
-1. ✅ Adiciona botão "Editar Inline" em cada linha da tabela
-2. ✅ Modal responsivo com overlay
-3. ✅ Carrega conteúdo da minuta via `hrefpreview` (método seguro do EPT)
-4. ✅ Renderiza HTML usando `contenteditable` div
-5. ✅ Salva via POST com hash correto
-6. ✅ Validação XML (XHTML + conversão de entidades)
-7. ✅ Atualiza versão automaticamente
-8. ❌ **PROBLEMA**: Replica comportamento do "Salvar" (bloqueia minuta)
+**Funcionalidades necessárias**:
+1. Adicionar botão "Editar Inline" em cada linha da tabela de minutas
+2. Modal responsivo com overlay
+3. Carregar conteúdo da minuta via `hrefpreview` (método seguro do EPT)
+4. Renderizar HTML usando `contenteditable` div ou CKEditor
+5. Salvar via POST com hash correto
+6. Validação XML (XHTML + conversão de entidades)
+7. Atualizar versão automaticamente
+8. ✅ **CRÍTICO**: Implementar ação de desbloqueio (como "Salvar e Sair")
 
-**Estrutura do Modal**:
+**Estrutura do Modal (exemplo):**
 ```javascript
+// Exemplo de estrutura HTML para o modal
 const modalHtml = `
   <div id="ept-inline-editor-overlay">
     <div id="ept-inline-editor-modal">
@@ -145,16 +146,16 @@ const modalHtml = `
 `;
 ```
 
-**Função de Salvamento**:
+**Função de Salvamento (modelo a seguir):**
 ```javascript
 function saveMinuta() {
   const editableDiv = $('#ept-editor-container');
   let htmlContent = editableDiv.html();
   
-  // Validação XHTML
+  // Validação XHTML - tags self-closing precisam de barra final
   htmlContent = htmlContent.replace(/<(br|hr|img[^>]*)>/gi, '<$1 />');
   
-  // Conversão de entidades
+  // Conversão de entidades - servidor só aceita numéricas
   htmlContent = htmlContent.replace(/&nbsp;/g, '&#160;')
                            .replace(/&quot;/g, '&#34;')
                            .replace(/&amp;/g, '&#38;')
@@ -172,39 +173,70 @@ function saveMinuta() {
   const saveUrl = `controlador_ajax.php?acao_ajax=minuta_salvar&acao_origem=minuta_editar&hash=${currentMinutaData.hash}`;
   
   $.post(saveUrl, formData, function(response) {
-    // Sucesso!
+    if (response.sucesso === '1') {
+      // 🎯 ADICIONAR AQUI: Ação de desbloqueio (descobrir qual é!)
+      // Ex: $.post('controlador_ajax.php?acao_ajax=minuta_desbloquear&id_minuta=XXX&hash=YYY');
+      
+      alert('✅ Minuta salva com sucesso!');
+      closeModal();
+    }
   });
 }
 ```
 
 ---
 
-## 🔬 TENTATIVAS DE CAPTURA DO "SALVAR E SAIR"
+## 🔬 ESTRATÉGIAS PARA CAPTURAR "SALVAR E SAIR"
 
 ### Problema
 O botão "Salvar e Sair" fecha a aba automaticamente após salvar, impossibilitando capturar no DevTools quais requisições são feitas.
 
-### Tentativas Realizadas
+### Tentativas Anteriores (sem sucesso)
 
-#### 1️⃣ Script de Captura v1 (`debug-capture-save-and-exit.js`)
-- Intercepta XHR e Fetch
-- Salva em `localStorage` a cada 500ms
-- **Resultado**: localStorage vazio (aba fecha rápido demais)
+Foram testados scripts de captura via `localStorage`/`sessionStorage` mas a aba fecha rápido demais para persistir os dados.
 
-#### 2️⃣ Script de Captura v2 (`debug-capture-save-and-exit-v2.js`)
-- Save a cada 300ms
-- Dupla garantia: localStorage + sessionStorage
-- Save múltiplo (3x) ao detectar clique em "Salvar"
-- Save 5x no evento `beforeunload`
-- **Resultado**: Ainda não testado completamente
+### Estratégias Recomendadas
 
-### Eventos Monitorados
+#### 1️⃣ Network Tab com "Preserve Log" (MAIS SIMPLES)
+```
+1. F12 → Aba Network
+2. ☑️ Marcar "Preserve log"
+3. Clicar em "Editar" na minuta
+4. Na nova aba, manter DevTools aberto
+5. Clicar em "SALVAR E SAIR"
+6. Copiar todas as requisições antes da aba fechar
+```
+
+#### 2️⃣ Inspecionar Código-Fonte do Botão
 ```javascript
-- click (em qualquer botão com "salvar")
+// No editor de minutas, inspecionar elemento do botão "Salvar e Sair"
+// Buscar por:
+- Atributo onclick
+- Event listeners
+- Funções JavaScript: salvarESair(), fecharJanela(), etc.
+```
+
+#### 3️⃣ Usar Proxy HTTP (Burp Suite / Charles)
+```
+Interceptar TODAS as requisições HTTP e comparar:
+- Requisições após clicar "Salvar" (bloqueia)
+- Requisições após clicar "Salvar e Sair" (não bloqueia)
+```
+
+#### 4️⃣ Script de Captura Aprimorado
+```javascript
+// Eventos a monitorar:
+- XHR/Fetch (interceptar requisições)
+- click (detectar botões de salvar)
 - beforeunload (antes de fechar aba)
 - unload (ao fechar aba)
 - pagehide (alternativa ao unload)
 - visibilitychange (quando aba fica invisível)
+
+// Salvar dados em:
+- localStorage (pode falhar se aba fechar rápido)
+- sessionStorage (backup)
+- Múltiplos saves no beforeunload
 ```
 
 ---
@@ -261,7 +293,7 @@ Pode ser que "Salvar e Sair" limpe algum cookie/session que indica "em edição"
 
 ### Prioridade 2: Implementar Desbloqueio
 
-Após descobrir a ação de desbloqueio, modificar `console-inline-editor.js`:
+Após descobrir a ação de desbloqueio, criar o editor inline com a função de salvamento que inclua o desbloqueio:
 
 ```javascript
 function saveMinuta() {
@@ -270,7 +302,7 @@ function saveMinuta() {
   
   $.post(saveUrl, formData, function(response) {
     if (response.sucesso === '1') {
-      // 🎯 ADICIONAR AQUI: Ação de desbloqueio
+      // 🎯 IMPLEMENTAR AQUI: Ação de desbloqueio descoberta
       // Ex: $.post('controlador_ajax.php?acao_ajax=minuta_desbloquear&id_minuta=XXX&hash=YYY');
       
       alert('✅ Minuta salva com sucesso!');
@@ -300,18 +332,7 @@ function saveMinuta() {
 
 ---
 
-## 📂 ARQUIVOS IMPORTANTES
-
-### Código Funcional (mas bloqueia)
-- **`console-inline-editor.js`** (672 linhas) - Editor completo, pronto para integração
-
-### Scripts de Captura
-- **`debug-capture-save-and-exit.js`** (375 linhas) - v1
-- **`debug-capture-save-and-exit-v2.js`** (novo) - v2 agressiva
-
-### Dados Capturados
-- **`ept-capture-1762628414393.json`** - Primeira captura (antes de descobrir o problema)
-- **`eproc-save-and-exit-1762699077822.json`** - Captura da página LISTA (não do editor)
+## 📂 ARQUIVOS NO REPOSITÓRIO
 
 ### Estrutura EPT Existente
 ```
@@ -397,29 +418,41 @@ X-Requested-With: XMLHttpRequest (para AJAX)
 ## 🎬 PROMPT PARA PRÓXIMO MODELO
 
 ```
-Olá! Preciso que você continue o desenvolvimento de uma funcionalidade de edição inline de minutas jurídicas para a extensão Chrome "eProc Tunado".
+Olá! Preciso que você desenvolva uma funcionalidade de edição inline de minutas jurídicas para a extensão Chrome "eProc Tunado".
 
 CONTEXTO COMPLETO:
-- Leia o arquivo CONTINUACAO-EDITOR-INLINE.md que contém TODAS as descobertas
-- Temos um editor funcional em console-inline-editor.js que FUNCIONA mas BLOQUEIA a minuta após salvar
-- Descobrimos que o botão "Salvar e Sair" do eProc faz algo especial que DESBLOQUEIA a minuta
-- Tentamos capturar o comportamento mas a aba fecha rápido demais
+- Leia o arquivo CONTINUACAO-EDITOR-INLINE.md que contém TODAS as descobertas e documentação técnica
+- A API de salvamento do eProc está completamente documentada e validada
+- Descobrimos que o botão "Salvar" do eProc BLOQUEIA a minuta após salvar
+- Descobrimos que o botão "Salvar e Sair" NÃO BLOQUEIA (faz algo especial que precisamos descobrir)
+- O código base da extensão EPT está intacto e pronto para receber a nova funcionalidade
 
 SUA MISSÃO:
 1. Analisar o arquivo CONTINUACAO-EDITOR-INLINE.md completamente
-2. Propor estratégia para descobrir a ação de desbloqueio do "Salvar e Sair"
-3. Implementar essa ação no editor inline
-4. Garantir que minutas não fiquem bloqueadas após edição inline
+2. Descobrir qual ação o botão "Salvar e Sair" executa para desbloquear a minuta
+   - Usar Network Tab com "Preserve Log" OU
+   - Inspecionar código JavaScript do botão OU
+   - Criar script de captura aprimorado
+3. Desenvolver editor inline de minutas que:
+   - Abre modal na própria página da tabela
+   - Carrega conteúdo via hrefpreview (método seguro documentado)
+   - Salva com validação XML correta (XHTML + entidades numéricas)
+   - Implementa ação de desbloqueio descoberta
+4. Integrar ao EPT existente (manifest.json, content_scripts, etc.)
 
 ARQUIVOS IMPORTANTES:
 - CONTINUACAO-EDITOR-INLINE.md (este arquivo - LEIA PRIMEIRO!)
-- console-inline-editor.js (editor funcional, precisa adicionar desbloqueio)
-- debug-capture-save-and-exit-v2.js (script de captura mais recente)
+- ept.js (código base da extensão)
+- manifest.json (configuração da extensão)
 
-NÃO REFAÇA o que já foi feito. A API de salvamento está documentada e funciona.
-O ÚNICO problema é o bloqueio da minuta após salvar.
+ATENÇÃO:
+- A API está DOCUMENTADA e VALIDADA no arquivo .md
+- NÃO precisa testar/validar a API novamente
+- O FOCO é descobrir o desbloqueio e implementar o editor
+- Use jQuery (já disponível via EPT)
+- Use $.get() e $.post() (não use fetch() direto)
 
-Comece lendo o documento de continuação e me diga qual abordagem você sugere para resolver o problema do bloqueio.
+Comece lendo o documento de continuação e me diga qual estratégia você sugere para descobrir a ação de desbloqueio do "Salvar e Sair".
 ```
 
 ---
@@ -490,10 +523,17 @@ Comece lendo o documento de continuação e me diga qual abordagem você sugere 
 
 ## 🎯 RESUMO EXECUTIVO
 
-**O QUE FUNCIONA**: Editor inline completo que carrega, edita e salva minutas perfeitamente.
+**O QUE TEMOS**: API de salvamento completamente documentada e validada. Sabemos exatamente como salvar minutas.
 
-**O QUE FALTA**: Descobrir e implementar a ação que o botão "Salvar e Sair" executa para desbloquear a minuta após o salvamento.
+**O QUE FALTA**: 
+1. Descobrir a ação que o botão "Salvar e Sair" executa para desbloquear a minuta
+2. Desenvolver o editor inline do zero
+3. Integrar à extensão EPT
 
-**ABORDAGEM**: Capturar requisições HTTP do botão "Salvar e Sair" e replicar no editor inline.
+**ABORDAGEM**: 
+1. Capturar requisições HTTP do botão "Salvar e Sair"
+2. Criar modal de edição inline
+3. Implementar salvamento com desbloqueio
+4. Integrar ao EPT
 
-**PRIORIDADE**: ALTA - Todo o resto está pronto e funcional.
+**PRIORIDADE**: Descobrir ação de desbloqueio ANTES de desenvolver o editor completo.
