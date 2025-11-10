@@ -1,3 +1,655 @@
+window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
+  state: null,
+  stylesInjected: false,
+  overlay: null,
+  ensureStyles() {
+    if (this.stylesInjected) {
+      return;
+    }
+
+    const styleTag = document.createElement("style");
+    styleTag.id = "ept-inline-editor-styles";
+    styleTag.textContent = `
+      .ept-inline-editor-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(53, 34, 69, 0.65);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 48px 24px;
+        z-index: 999999;
+        overflow-y: auto;
+      }
+
+      .ept-inline-editor-modal {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 45px rgba(53, 34, 69, 0.35);
+        width: min(960px, 100%);
+        display: flex;
+        flex-direction: column;
+        animation: eptModalFadeIn 0.25s ease;
+        border-top: 6px solid #F66942;
+        overflow: hidden;
+      }
+
+      .ept-inline-editor-header {
+        background: #352245;
+        padding: 20px 28px;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .ept-inline-editor-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.01em;
+      }
+
+      .ept-inline-editor-subtitle {
+        font-size: 0.875rem;
+        opacity: 0.85;
+      }
+
+      .ept-inline-editor-close {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: #fff;
+        font-size: 1.25rem;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .ept-inline-editor-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .ept-inline-editor-body {
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .ept-inline-editor-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+        color: #4a3358;
+        font-size: 0.875rem;
+      }
+
+      .ept-inline-editor-info span {
+        background: rgba(53, 34, 69, 0.08);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 500;
+      }
+
+      .ept-inline-editor-content {
+        min-height: 320px;
+        max-height: 520px;
+        overflow-y: auto;
+        border: 2px solid rgba(74, 51, 88, 0.12);
+        border-radius: 8px;
+        padding: 20px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #1a202c;
+        background: #f9f7fb;
+      }
+
+      .ept-inline-editor-content[contenteditable="true"]:focus {
+        outline: none;
+        border-color: #4a3358;
+        box-shadow: 0 0 0 3px rgba(74, 51, 88, 0.15);
+        background: #ffffff;
+      }
+
+      .ept-inline-editor-footer {
+        padding: 18px 28px 28px 28px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        background: rgba(53, 34, 69, 0.04);
+      }
+
+      .ept-inline-editor-btn {
+        border: none;
+        border-radius: 6px;
+        padding: 10px 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .ept-inline-editor-btn-cancel {
+        background: #ffffff;
+        color: #352245;
+        border: 2px solid rgba(53, 34, 69, 0.15);
+      }
+
+      .ept-inline-editor-btn-cancel:hover {
+        border-color: rgba(53, 34, 69, 0.35);
+        color: #1f142c;
+      }
+
+      .ept-inline-editor-btn-save {
+        background: #F66942;
+        color: #ffffff;
+        box-shadow: 0 6px 16px rgba(246, 105, 66, 0.35);
+      }
+
+      .ept-inline-editor-btn-save:hover {
+        background: #e25c39;
+        box-shadow: 0 8px 20px rgba(246, 105, 66, 0.45);
+      }
+
+      .ept-inline-editor-btn-save[disabled] {
+        background: #4a3358;
+        box-shadow: none;
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      @keyframes eptModalFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+
+    document.head.appendChild(styleTag);
+    this.stylesInjected = true;
+  },
+  closeModal() {
+    if (this.overlay) {
+      this.overlay.remove();
+      this.overlay = null;
+    }
+    document.removeEventListener("keydown", this.handleEscape, true);
+    window.EPT_INLINE_EDITOR_STATE = null;
+    this.state = null;
+  },
+  handleEscape(event) {
+    if (event.key === "Escape") {
+      EPT_INLINE_EDITOR.closeModal();
+    }
+  },
+  openModal(modalData) {
+    this.ensureStyles();
+    this.closeModal();
+
+    this.state = { ...modalData };
+
+    const overlay = document.createElement("div");
+    overlay.className = "ept-inline-editor-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    const modal = document.createElement("div");
+    modal.className = "ept-inline-editor-modal";
+
+    const header = document.createElement("div");
+    header.className = "ept-inline-editor-header";
+
+    const headerTextWrapper = document.createElement("div");
+    const title = document.createElement("h2");
+    title.className = "ept-inline-editor-title";
+    title.textContent = "Edição rápida da minuta";
+
+    headerTextWrapper.appendChild(title);
+
+    if (modalData.subtitle) {
+      const subtitle = document.createElement("div");
+      subtitle.className = "ept-inline-editor-subtitle";
+      subtitle.textContent = modalData.subtitle;
+      headerTextWrapper.appendChild(subtitle);
+    }
+
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "ept-inline-editor-close";
+    closeBtn.setAttribute("aria-label", "Fechar editor inline");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.addEventListener("click", () => this.closeModal());
+
+    header.appendChild(headerTextWrapper);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "ept-inline-editor-body";
+
+    if (modalData.info && modalData.info.length) {
+      const infoWrapper = document.createElement("div");
+      infoWrapper.className = "ept-inline-editor-info";
+
+      modalData.info.forEach((infoItem) => {
+        const span = document.createElement("span");
+        span.textContent = infoItem;
+        infoWrapper.appendChild(span);
+      });
+
+      body.appendChild(infoWrapper);
+    }
+
+    const contentArea = document.createElement("div");
+    contentArea.className = "ept-inline-editor-content";
+    contentArea.setAttribute("contenteditable", "true");
+    contentArea.setAttribute("spellcheck", "false");
+    contentArea.innerHTML = modalData.editableContent || "";
+
+    body.appendChild(contentArea);
+
+    const footer = document.createElement("div");
+    footer.className = "ept-inline-editor-footer";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "ept-inline-editor-btn ept-inline-editor-btn-cancel";
+    cancelBtn.textContent = "Cancelar";
+    cancelBtn.addEventListener("click", () => this.closeModal());
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "ept-inline-editor-btn ept-inline-editor-btn-save";
+    saveBtn.textContent = "Salvar";
+    saveBtn.disabled = false;
+
+    footer.appendChild(cancelBtn);
+    footer.appendChild(saveBtn);
+
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(footer);
+
+    overlay.appendChild(modal);
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        this.closeModal();
+      }
+    });
+
+    document.addEventListener("keydown", this.handleEscape, true);
+
+    document.body.appendChild(overlay);
+    contentArea.focus();
+
+    this.overlay = overlay;
+    this.state.contentEditableElement = contentArea;
+    this.state.saveButton = saveBtn;
+    this.state.cancelButton = cancelBtn;
+    this.state.overlay = overlay;
+
+    const canSave = Boolean(
+      this.state.idDocumento &&
+        this.state.codDocumento &&
+        this.state.hash &&
+        this.state.baseUrl
+    );
+
+    if (canSave) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Salvar";
+      saveBtn.addEventListener("click", () => this.saveCurrent());
+    } else {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Dados insuficientes";
+    }
+
+    this.state.canSave = canSave;
+    this.setSavingState(false, canSave ? "Salvar" : "Dados insuficientes");
+
+    window.EPT_INLINE_EDITOR_STATE = this.state;
+  },
+  findEditableSection(root) {
+    if (!root) return null;
+
+    if (this.state && this.state.editableSectionId) {
+      try {
+        const selector = `#${window.CSS && CSS.escape ? CSS.escape(this.state.editableSectionId) : this.state.editableSectionId}`;
+        const byId = root.querySelector(selector);
+        if (byId) return byId;
+      } catch (error) {
+        debugLog("EPT: Falha ao buscar section por ID:", error);
+      }
+    }
+
+    return (
+      root.querySelector('section[contenteditable="true"][data-estilo_padrao="paragrafo"]') ||
+      root.querySelector('section[data-estilo_padrao="paragrafo"]') ||
+      root.querySelector('section[contenteditable="true"][data-sin_conteudo_obrigatorio="true"]') ||
+      root.querySelector('section[data-nome="despacho_decisao"]') ||
+      root.querySelector('section[data-sin_permite_texto_padrao="true"]')
+    );
+  },
+  sanitizeHtmlEntities(html) {
+    if (typeof html !== "string") {
+      return "";
+    }
+
+    let sanitized = html;
+
+    const namedEntityMap = {
+      "&nbsp;": "&#160;",
+      "&aacute;": "&#225;",
+      "&Aacute;": "&#193;",
+      "&agrave;": "&#224;",
+      "&Agrave;": "&#192;",
+      "&acirc;": "&#226;",
+      "&Acirc;": "&#194;",
+      "&atilde;": "&#227;",
+      "&Atilde;": "&#195;",
+      "&eacute;": "&#233;",
+      "&Eacute;": "&#201;",
+      "&ecirc;": "&#234;",
+      "&Ecirc;": "&#202;",
+      "&iacute;": "&#237;",
+      "&Iacute;": "&#205;",
+      "&oacute;": "&#243;",
+      "&Oacute;": "&#211;",
+      "&ocirc;": "&#244;",
+      "&Ocirc;": "&#212;",
+      "&otilde;": "&#245;",
+      "&Otilde;": "&#213;",
+      "&uacute;": "&#250;",
+      "&Uacute;": "&#218;",
+      "&ccedil;": "&#231;",
+      "&Ccedil;": "&#199;",
+      "&ordm;": "&#186;",
+      "&ordf;": "&#170;",
+      "&quot;": "&#34;",
+      "&apos;": "&#39;",
+    };
+
+    for (const [named, numeric] of Object.entries(namedEntityMap)) {
+      sanitized = sanitized.split(named).join(numeric);
+    }
+
+    sanitized = sanitized.replace(/[\u0080-\uFFFF]/g, (char) => `&#${char.charCodeAt(0)};`);
+
+    return sanitized;
+  },
+  reconstructArticle(sanitizedEditableContent) {
+    if (!this.state || !this.state.articleHTML) {
+      throw new Error("Dados originais da minuta não encontrados.");
+    }
+
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = this.state.articleHTML;
+
+    const editableSection = this.findEditableSection(tempDiv);
+    if (!editableSection) {
+      throw new Error("Não foi possível localizar a section editável ao reconstruir a minuta.");
+    }
+
+    editableSection.innerHTML = sanitizedEditableContent;
+
+    const article = tempDiv.querySelector("article");
+    if (!article) {
+      throw new Error("Estrutura da minuta inválida ao reconstruir article.");
+    }
+
+    return article.outerHTML;
+  },
+  ensureXhtmlCompliance(html) {
+    if (typeof html !== "string" || !html.length) {
+      return "";
+    }
+
+    const selfClosingTags = ["img", "br", "hr", "meta", "link", "input", "source", "track", "base", "area", "col"];
+
+    selfClosingTags.forEach((tag) => {
+      const regex = new RegExp(`<${tag}([^>]*)>`, "gi");
+      html = html.replace(regex, (match, attrs = "") => {
+        if (/\/>\s*$/.test(match)) {
+          return match;
+        }
+        const cleanedAttrs = attrs.replace(/\s+$/, "");
+        return `<${tag}${cleanedAttrs} />`;
+      });
+    });
+
+    selfClosingTags.forEach((tag) => {
+      const closingRegex = new RegExp(`</\\s*${tag}\\s*>`, "gi");
+      html = html.replace(closingRegex, "");
+    });
+
+    html = html.replace(/<br\s*\/?>/gi, "<br />");
+    html = html.replace(/<br\s*><\/br>/gi, "<br />");
+
+    return html;
+  },
+  buildSavePayload(articleHTML, tamSecEditaveis) {
+    const formData = new URLSearchParams();
+    formData.append("text", articleHTML);
+    formData.append("id_minuta", this.state.idDocumento);
+    formData.append("alterarstatus", "0");
+    formData.append("statusMinutaDesejado", "0");
+    formData.append("sbmCadastrarVersaoConteudo", "1");
+    formData.append("acao", "minuta_salvar");
+    formData.append("cod_tipo_salvamento_versao_conteudo", "2");
+    formData.append("tamSecEditaveis", String(tamSecEditaveis));
+    return formData.toString();
+  },
+  buildUnlockPayload() {
+    const formData = new URLSearchParams();
+    formData.append("text", "");
+    formData.append("id", `${this.state.codDocumento || this.state.idDocumento}_6`);
+    formData.append("id_minuta", this.state.idDocumento);
+    formData.append("sbmDesbloquear", "1");
+    return formData.toString();
+  },
+  setSavingState(isSaving, label) {
+    const button = this.state && this.state.saveButton;
+    if (!button) {
+      return;
+    }
+    if (typeof label === "string") {
+      button.textContent = label;
+    }
+    const forceDisabled = this.state && this.state.canSave === false;
+    button.disabled = forceDisabled ? true : Boolean(isSaving);
+    this.state.isSaving = Boolean(isSaving);
+  },
+  async postForm(url, body) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "include",
+      body,
+    });
+
+    const text = await response.text();
+    let data = {};
+    let successFromRaw = false;
+
+    if (text) {
+      const trimmed = text.trim();
+      try {
+        data = JSON.parse(trimmed);
+      } catch (error) {
+        const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            data = JSON.parse(jsonMatch[0]);
+          } catch (parseError) {
+            data = { raw: trimmed };
+          }
+        } else {
+          data = { raw: trimmed };
+        }
+      }
+    }
+
+    if (!response.ok) {
+      const message = data?.mensagem || data?.erro || response.statusText || "Erro na requisição";
+      throw new Error(message);
+    }
+
+    const failurePatterns = /"sucesso"\s*:\s*"0"|["']sucesso["']\s*=>\s*["']?0|sucesso\s*=\s*0|sucesso\s*:\s*false/i;
+
+    if (data && typeof data.sucesso === "string") {
+      successFromRaw = data.sucesso === "1";
+    } else if (typeof data.sucesso === "number") {
+      successFromRaw = String(data.sucesso) === "1";
+    } else if (!successFromRaw && typeof text === "string") {
+      const lowerText = text.toLowerCase();
+      successFromRaw =
+        /"sucesso"\s*:\s*"1"/i.test(text) ||
+        /"sucesso"\s*:\s*1/i.test(text) ||
+        /'sucesso'\s*=>\s*'1'/.test(lowerText) ||
+        /'sucesso'\s*=>\s*1/.test(lowerText) ||
+        /\[sucesso\]\s*=>\s*1/.test(lowerText);
+    }
+
+    if (!successFromRaw && typeof text === "string" && !failurePatterns.test(text)) {
+      successFromRaw = true;
+    }
+
+    if (!successFromRaw) {
+      data = { ...data, sucesso: "0" };
+    } else if (!data || typeof data !== "object") {
+      data = { sucesso: "1" };
+    } else {
+      data.sucesso = "1";
+    }
+
+    return data;
+  },
+  async saveCurrent() {
+    const state = this.state;
+    if (!state) {
+      alert("EPT: Editor não está ativo.");
+      return;
+    }
+    if (!state.canSave) {
+      alert("EPT: Dados insuficientes para salvar esta minuta.");
+      return;
+    }
+    if (state.isSaving) {
+      return;
+    }
+    if (!state.hash) {
+      alert("EPT: Hash da minuta não encontrado. Recarregue a página e tente novamente.");
+      return;
+    }
+    if (!state.baseUrl) {
+      alert("EPT: Não foi possível determinar a URL base do eProc.");
+      return;
+    }
+
+    const editableElement = state.contentEditableElement;
+    if (!editableElement) {
+      alert("EPT: Conteúdo editável não encontrado.");
+      return;
+    }
+
+    const rawContent = editableElement.innerHTML;
+    if (!rawContent.trim()) {
+      alert("EPT: O conteúdo da minuta está vazio.");
+      return;
+    }
+
+    try {
+      this.setSavingState(true, "Salvando...");
+
+      const sanitizedEditable = this.sanitizeHtmlEntities(rawContent);
+      const reconstructedArticle = this.reconstructArticle(sanitizedEditable);
+      const sanitizedArticle = this.sanitizeHtmlEntities(reconstructedArticle);
+      const xhtmlArticle = this.ensureXhtmlCompliance(sanitizedArticle);
+      const tamSecEditaveis = sanitizedEditable.length;
+
+      this.state.articleHTML = xhtmlArticle;
+      this.state.editableContent = sanitizedEditable;
+
+      const saveUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=minuta_salvar&acao_origem=minuta_editar&hash=${state.hash}`;
+      const savePayload = this.buildSavePayload(xhtmlArticle, tamSecEditaveis);
+
+      EPT_addLog("save:request", {
+        url: saveUrl,
+        tamSecEditaveis,
+        idDocumento: state.idDocumento,
+        codDocumento: state.codDocumento,
+      });
+
+      const saveResult = await this.postForm(saveUrl, savePayload);
+      if (!saveResult || saveResult.sucesso !== "1") {
+        const msg = saveResult?.mensagem || saveResult?.erro || "Resposta inesperada do servidor.";
+        EPT_addLog("save:response", { success: false, msg, raw: saveResult });
+        throw new Error(msg);
+      }
+      EPT_addLog("save:response", { success: true, raw: saveResult });
+
+      let unlockFailedMessage = null;
+      const unlockPayload = this.buildUnlockPayload();
+      try {
+        EPT_addLog("unlock:request", {
+          url: saveUrl,
+          idDocumento: state.idDocumento,
+          codDocumento: state.codDocumento,
+        });
+
+        const unlockResult = await this.postForm(saveUrl, unlockPayload);
+        if (unlockResult && unlockResult.sucesso !== "1") {
+          unlockFailedMessage = unlockResult?.mensagem || unlockResult?.erro || "Desbloqueio não confirmado.";
+          EPT_addLog("unlock:response", { success: false, raw: unlockResult });
+        } else {
+          EPT_addLog("unlock:response", { success: true, raw: unlockResult });
+        }
+      } catch (unlockError) {
+        unlockFailedMessage = unlockError.message || "Não foi possível desbloquear a minuta automaticamente.";
+        EPT_addLog("unlock:error", { message: unlockError.message });
+      }
+
+      try {
+        if (state.rowElement) {
+          EPT_updatePreviewContainer(state.rowElement, sanitizedEditable, 1000);
+        }
+      } catch (updateError) {
+        debugLog("EPT: Erro ao atualizar linha após salvamento:", updateError);
+      }
+
+      this.setSavingState(true, "Minuta salva!");
+
+      if (unlockFailedMessage) {
+        alert(
+          "EPT: Minuta salva com sucesso, mas não foi possível desbloquear automaticamente.\n" +
+            "Mensagem: " +
+            unlockFailedMessage
+        );
+        EPT_addLog("unlock:warning", { message: unlockFailedMessage });
+      }
+
+      setTimeout(() => {
+        this.closeModal();
+      }, 700);
+    } catch (error) {
+      console.error("EPT: Erro ao salvar minuta:", error);
+      EPT_addLog("save:error", { message: error.message, stack: error.stack });
+      alert(`EPT: Não foi possível salvar a minuta.\nMotivo: ${error.message}`);
+      this.setSavingState(false, "Salvar");
+    }
+  },
+};
+
 window.EPT_DEBUG_ENABLED = window.EPT_DEBUG_ENABLED || false;
 
 //window.EPT_DEBUG_ENABLED = true; //descomentar para ativar logs em etapa de desenvolvimento
@@ -6,6 +658,145 @@ window.EPT_DEBUG_ENABLED = window.EPT_DEBUG_ENABLED || false;
 function debugLog(...args) {
   if (window.EPT_DEBUG_ENABLED) {
     console.log(...args);
+  }
+}
+
+function EPT_addLog() {}
+
+function EPT_generatePreviewId() {
+  return `ept-preview-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function EPT_truncatePreviewContent(htmlContent, maxChars = 1000) {
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = htmlContent;
+  const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+  if (textContent.length <= maxChars) {
+    return {
+      content: htmlContent,
+      isTruncated: false,
+      fullContent: htmlContent,
+    };
+  }
+
+  const clonedDiv = tempDiv.cloneNode(true);
+  let charCount = 0;
+  const elementsToKeep = [];
+  const children = Array.from(clonedDiv.children);
+
+  for (let i = 0; i < children.length; i++) {
+    const element = children[i];
+    const elementText = element.textContent || element.innerText || "";
+
+    if (charCount + elementText.length <= maxChars) {
+      charCount += elementText.length;
+      elementsToKeep.push(element.outerHTML);
+    } else {
+      const remainingChars = maxChars - charCount;
+
+      if (remainingChars > 50) {
+        const tempElement = element.cloneNode(true);
+        const walker = document.createTreeWalker(tempElement, NodeFilter.SHOW_TEXT, null, false);
+        let usedChars = 0;
+        let textNode;
+
+        while ((textNode = walker.nextNode())) {
+          const nodeText = textNode.textContent;
+          if (usedChars + nodeText.length <= remainingChars) {
+            usedChars += nodeText.length;
+          } else {
+            const allowedChars = remainingChars - usedChars;
+            textNode.textContent = nodeText.substring(0, allowedChars);
+            let nextNode;
+            while ((nextNode = walker.nextNode())) {
+              nextNode.textContent = "";
+            }
+            break;
+          }
+        }
+
+        elementsToKeep.push(tempElement.outerHTML);
+      }
+      break;
+    }
+  }
+
+  return {
+    content: elementsToKeep.join(""),
+    isTruncated: true,
+    fullContent: htmlContent,
+  };
+}
+
+function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000) {
+  const contentInfo = EPT_truncatePreviewContent(htmlContent, maxChars);
+  const uniqueId = EPT_generatePreviewId();
+
+  if (contentInfo.isTruncated) {
+    return `
+      <div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
+        <div id="${uniqueId}-truncated" style="display: block;">
+          ${contentInfo.content}
+          <span
+            id="${uniqueId}-expand-btn"
+            style="color: #1976d2; cursor: pointer; font-weight: bold; margin-left: 10px; user-select: none;"
+            title="Clique para ver o texto completo"
+            onclick="
+              document.getElementById('${uniqueId}-truncated').style.display = 'none';
+              document.getElementById('${uniqueId}-full').style.display = 'block';
+            "
+          >
+            ▶ Ver texto completo
+          </span>
+        </div>
+        <div id="${uniqueId}-full" style="display: none;">
+          ${contentInfo.fullContent}
+          <span
+            id="${uniqueId}-collapse-btn"
+            style="color: #1976d2; cursor: pointer; font-weight: bold; margin-left: 10px; user-select: none;"
+            title="Clique para ocultar parte do texto"
+            onclick="
+              document.getElementById('${uniqueId}-full').style.display = 'none';
+              document.getElementById('${uniqueId}-truncated').style.display = 'block';
+            "
+          >
+            ▼ Ocultar parte do texto
+          </span>
+        </div>
+      </div>
+    `;
+  }
+
+  return `<div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
+    ${contentInfo.content}
+  </div>`;
+}
+
+function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000) {
+  if (!rowElement) {
+    return;
+  }
+
+  const newMarkup = EPT_buildPreviewMarkup(htmlContent, maxChars);
+  const existingContainer = rowElement.querySelector("[data-ept-preview-container]");
+
+  if (existingContainer) {
+    existingContainer.outerHTML = newMarkup;
+  } else {
+    const contentCell = rowElement.querySelector('td[colspan]') || rowElement.querySelector("td:nth-child(2)");
+    if (contentCell) {
+      const footerDiv = contentCell.querySelector('div[style*="margin-top: 30px"]');
+      if (footerDiv) {
+        footerDiv.insertAdjacentHTML("beforebegin", newMarkup);
+      } else {
+        contentCell.insertAdjacentHTML("beforeend", newMarkup);
+      }
+    }
+  }
+
+  if (window.EPT_TableStyler && typeof window.EPT_TableStyler.enhanceContent === "function") {
+    window.EPT_TableStyler.enhanceContent(rowElement);
   }
 }
 
@@ -208,6 +999,19 @@ async function getStorageData(key) {
               $(this).css("display", "none");
             }
           });
+
+          // Adiciona botão de edição rápida ao final da lista de recursos
+          if (!divBotoes.find(".ept-btn-edicao-rapida").length) {
+            const quickEditButton = $("<a>", {
+              href: "#",
+              class: "infraLink ept-btn-edicao-rapida",
+              text: "edição rápida",
+              title: "Editar minuta inline",
+              "data-ept-quick-edit": "true",
+            });
+            divBotoes.append(quickEditButton);
+          }
+
           //armazenando os botões...
           let botoes = divBotoes.html();
   
@@ -316,46 +1120,8 @@ async function getStorageData(key) {
                 };
               }
               
-              const contentInfo = truncateContent(section.innerHTML, 1000);
-              
-              // Criar o conteúdo da seção com possibilidade de expansão
-              let sectionContent = '';
-              if (contentInfo.isTruncated) {
-                const uniqueId = `minuta-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                sectionContent = `
-                  <div id="${uniqueId}-truncated" style="display: block;">
-                    ${contentInfo.content}
-                    <span 
-                      id="${uniqueId}-expand-btn" 
-                      style="color: #1976d2; cursor: pointer; font-weight: bold; margin-left: 10px; user-select: none;"
-                      title="Clique para ver o texto completo"
-                      onclick="
-                        document.getElementById('${uniqueId}-truncated').style.display = 'none';
-                        document.getElementById('${uniqueId}-full').style.display = 'block';
-                      "
-                    >
-                      ▶ Ver texto completo
-                    </span>
-                  </div>
-                  <div id="${uniqueId}-full" style="display: none;">
-                    ${contentInfo.fullContent}
-                    <span 
-                      id="${uniqueId}-collapse-btn" 
-                      style="color: #1976d2; cursor: pointer; font-weight: bold; margin-left: 10px; user-select: none;"
-                      title="Clique para ocultar parte do texto"
-                      onclick="
-                        document.getElementById('${uniqueId}-full').style.display = 'none';
-                        document.getElementById('${uniqueId}-truncated').style.display = 'block';
-                      "
-                    >
-                      ▼ Ocultar parte do texto
-                    </span>
-                  </div>
-                `;
-              } else {
-                sectionContent = contentInfo.content;
-              }
-              
+              const sectionContent = EPT_buildPreviewMarkup(section.innerHTML, 1000);
+
               //let section = htmlObject.querySelector('body');
               let cabecalho = `<div style="display:flex; justify-content: space-between; margin-bottom: 30px; margin-top: 15px;">
                                                       <span>${processo}</span> 
@@ -1113,7 +1879,233 @@ async function getStorageData(key) {
           currentPasswordObserver.observe(document.body, config);
         }
       }
-  
+
+      function getEprocBaseUrl() {
+        if (window.EPT_EPROC_BASE_URL) {
+          return window.EPT_EPROC_BASE_URL;
+        }
+        const currentUrl = window.location.href;
+        let baseUrl = "";
+
+        if (currentUrl.includes("eproc/")) {
+          baseUrl = currentUrl.split("eproc/")[0] + "eproc";
+        } else {
+          const pathParts = window.location.pathname.split("/");
+          const eprocIndex = pathParts.findIndex((part) => part === "eproc");
+          if (eprocIndex !== -1) {
+            baseUrl = `${window.location.origin}/${pathParts.slice(1, eprocIndex + 1).join("/")}`;
+          } else {
+            baseUrl = window.location.origin;
+          }
+        }
+
+        window.EPT_EPROC_BASE_URL = baseUrl;
+        return baseUrl;
+      }
+
+      function buildPreviewUrl(relativePath) {
+        if (!relativePath) {
+          return getEprocBaseUrl();
+        }
+
+        const trimmedPath = relativePath.trim();
+        if (/^https?:\/\//i.test(trimmedPath)) {
+          return trimmedPath;
+        }
+
+        const baseUrl = getEprocBaseUrl();
+        if (trimmedPath.startsWith("/")) {
+          return `${baseUrl}${trimmedPath}`;
+        }
+
+        return `${baseUrl}/${trimmedPath}`;
+      }
+
+      async function handleQuickEditClick(button) {
+        const $button = $(button);
+        const row = $button.closest("tr");
+
+        if (!row.length) {
+          debugLog("EPT: Não foi possível localizar a linha da minuta para edição rápida.");
+          return;
+        }
+
+        const linkPreview = row.find("a.linkMinuta").first();
+        const hrefPreview = linkPreview.attr("hrefpreview");
+
+        if (!hrefPreview) {
+          alert("EPT: Não foi possível localizar o conteúdo original da minuta.");
+          return;
+        }
+
+        const baseUrl = getEprocBaseUrl();
+        const previewUrl = buildPreviewUrl(hrefPreview);
+        if (!previewUrl) {
+          alert("EPT: URL de preview inválida.");
+          return;
+        }
+
+        $button.addClass("ept-btn-edicao-rapida--loading");
+        const originalText = $button.text();
+        $button.text("carregando...");
+
+        try {
+        EPT_addLog("preview:request", { url: previewUrl });
+
+        const response = await fetch(previewUrl, { credentials: "include" });
+          if (!response.ok) {
+          EPT_addLog("preview:error", {
+            status: response.status,
+            statusText: response.statusText,
+          });
+            throw new Error(`Status ${response.status}`);
+          }
+
+          const buffer = await response.arrayBuffer();
+          const parser = new DOMParser();
+
+          const utf8Decoder = new TextDecoder("utf-8");
+          let decodedHtml = utf8Decoder.decode(buffer);
+          let doc = parser.parseFromString(decodedHtml, "text/html");
+
+          const contentType = response.headers.get("content-type");
+          let declaredCharset = null;
+
+          if (contentType) {
+            const match = contentType.match(/charset=([^;]+)/i);
+            if (match) {
+              declaredCharset = match[1].trim().toLowerCase();
+            }
+          }
+
+          if (!declaredCharset) {
+            const metaCharset = doc.querySelector("meta[charset]");
+            if (metaCharset) {
+              declaredCharset = metaCharset.getAttribute("charset")?.trim().toLowerCase() || null;
+            }
+          }
+
+          if (!declaredCharset) {
+            const metaContentType = doc.querySelector("meta[http-equiv='Content-Type']");
+            if (metaContentType) {
+              const contentAttr = metaContentType.getAttribute("content");
+              if (contentAttr) {
+                const match = contentAttr.match(/charset=([^;]+)/i);
+                if (match) {
+                  declaredCharset = match[1].trim().toLowerCase();
+                }
+              }
+            }
+          }
+
+          if (declaredCharset && /(?:iso-8859-1|latin1|windows-1252)/i.test(declaredCharset)) {
+            const latinDecoder = new TextDecoder("latin1");
+            decodedHtml = latinDecoder.decode(buffer);
+            doc = parser.parseFromString(decodedHtml, "text/html");
+          }
+
+          const body = doc.body;
+          if (body.querySelector("meta[http-equiv='Content-Type'][content*='iso-8859-1']")) {
+            const latin1Decoder = new TextDecoder("latin1");
+            const latin1Html = latin1Decoder.decode(buffer);
+            const docLatin1 = parser.parseFromString(latin1Html, "text/html");
+            if (docLatin1.querySelector("article")) {
+              doc.body.innerHTML = docLatin1.body.innerHTML;
+            }
+          }
+
+          const article = doc.querySelector("article");
+
+          if (!article) {
+            EPT_addLog("preview:error", { reason: "Article não encontrado" });
+            throw new Error("Article não encontrado no preview da minuta.");
+          }
+
+          const editableSection =
+            article.querySelector('section[contenteditable="true"][data-estilo_padrao="paragrafo"]') ||
+            article.querySelector('section[data-estilo_padrao="paragrafo"]') ||
+            article.querySelector('section[contenteditable="true"][data-sin_conteudo_obrigatorio="true"]') ||
+            article.querySelector('section[data-nome="despacho_decisao"]') ||
+            article.querySelector('section[data-sin_permite_texto_padrao="true"]');
+
+          if (!editableSection) {
+            throw new Error("Section editável não encontrada na minuta.");
+          }
+
+          const idDocumento = article.getAttribute("data-id_documento") || "";
+          const codDocumento = article.getAttribute("data-cod_documento") || "";
+          const idModelo = article.getAttribute("data-id_modelo") || "";
+          const sectionId = editableSection.id || "";
+
+          const hashMatch = hrefPreview.match(/[a-f0-9]{32}/i);
+          const hash = hashMatch ? hashMatch[0] : "";
+
+          EPT_addLog("preview:loaded", {
+            idDocumento,
+            codDocumento,
+            idModelo,
+            editableSectionId: sectionId,
+            hash,
+          });
+
+          const tituloSection = article.querySelector('section[data-nome="titulo"] .titulo');
+          const processoSpan = article.querySelector('section[data-nome="identificacao_processo"] span[data-numero_processo]');
+          const orgaoDiv = article.querySelector(".timbre_orgao");
+          const versaoSpan = article.querySelector('span[data-versao_documento_rodape]');
+
+          const subtitle = processoSpan ? `Processo ${processoSpan.textContent.trim()}` : null;
+          const infoItems = [];
+
+          if (tituloSection) {
+            infoItems.push(`Título: ${tituloSection.textContent.trim()}`);
+          }
+          if (orgaoDiv) {
+            infoItems.push(`Órgão: ${orgaoDiv.textContent.trim()}`);
+          }
+          if (versaoSpan) {
+            infoItems.push(`Versão: ${versaoSpan.textContent.trim()}`);
+          }
+          if (codDocumento) {
+            infoItems.push(`Documento: ${codDocumento}`);
+          }
+
+          const modalState = {
+            articleHTML: article.outerHTML,
+            editableContent: editableSection.innerHTML,
+            editableSectionId: sectionId,
+            idDocumento,
+            codDocumento,
+            idModelo,
+            baseUrl,
+            hash,
+            subtitle,
+            info: infoItems,
+            rowElement: row[0],
+          };
+
+          window.EPT_INLINE_EDITOR_STATE = modalState;
+          EPT_INLINE_EDITOR.openModal(modalState);
+        } catch (error) {
+          console.error("EPT: Erro ao abrir editor inline:", error);
+        EPT_addLog("preview:error", { message: error.message });
+          alert("EPT: Não foi possível carregar a minuta para edição. Tente novamente.");
+        } finally {
+          $button.removeClass("ept-btn-edicao-rapida--loading");
+          $button.text(originalText);
+        }
+      }
+
+      $(document).on("click", ".ept-btn-edicao-rapida", async function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if ($(this).hasClass("ept-btn-edicao-rapida--loading")) {
+          return;
+        }
+
+        await handleQuickEditClick(this);
+      });
+
       // Função legada mantida para compatibilidade (simplificada)
       function startObservingMinutaAssinar() {
         const config = { attributes: true, childList: true, subtree: true };

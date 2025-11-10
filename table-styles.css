@@ -138,7 +138,7 @@
 }
 
 /* Esconde todos os outros botões que não são os 4 principais */
-.ept-minuta-footer #divListaRecursosMinuta a:not([href*="minuta_verificar_agendamento"]):not([href*="minuta_assinar"]):not([href*="minuta_devolver"]):not([href*="minuta_lembrete"]) {
+.ept-minuta-footer #divListaRecursosMinuta a:not([href*="minuta_verificar_agendamento"]):not([href*="minuta_assinar"]):not([href*="minuta_devolver"]):not([href*="minuta_lembrete"]):not(.ept-btn-edicao-rapida) {
     display: none !important;
 }
 
@@ -161,3 +161,17 @@
 }
 
 /* Adicione seus estilos personalizados abaixo */ 
+
+/* Botão Edição Rápida */
+.ept-minuta-footer #divListaRecursosMinuta a.ept-btn-edicao-rapida {
+    background: #4a3358 !important;
+    color: white !important;
+    margin-left: 12px !important;
+    font-weight: 600 !important;
+}
+
+.ept-minuta-footer #divListaRecursosMinuta a.ept-btn-edicao-rapida:hover {
+    background: #352245 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(74, 51, 88, 0.35) !important;
+}

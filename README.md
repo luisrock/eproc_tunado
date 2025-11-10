@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-0.0.6-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-0.0.9-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -24,6 +24,52 @@ O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora significativamente 
 - **Solução implementada**: Preservação dos links essenciais (`a.linkMinuta`) durante a modificação da estrutura da tabela
 - **Técnica utilizada**: Reincorporação dos links com posicionamento absoluto para garantir funcionalidade da função `visualizar()` do eproc
 - **Resultado**: Mantém todas as funcionalidades visuais aprimoradas sem interferir na navegação nativa do sistema
+
+### ✏️ Editor Inline de Minutas (0.0.9)
+
+- Botão `edição rápida` disponível na lista de minutas quando o EPT está ativo.
+- Modal próprio com editor `contenteditable`, sanitização para XHTML e salvamento/desbloqueio automáticos (`controlador_ajax.php`).
+- Atualização imediata da linha da tabela após salvar (sem `window.location.reload()`).
+- Sistema de logs em overlay removido para reduzir atrito de uso e evitar interferência com o editor nativo.
+
+#### Problema conhecido: alerta “Houve uma mudança no perfil do usuário”
+
+- O alerta só aparece depois do salvamento inline, ao clicar em **Retunar** (GET de recarga).
+- O fluxo nativo (“Salvar e Sair”) não dispara o alerta nas mesmas condições.
+- Cookies e headers permanecem idênticos entre os fluxos; a diferença provável está no payload enviado.
+- Status atual: investigação pendente. Não há impacto no salvamento, mas o alerta interrompe o fluxo ideal.
+
+#### Próximos passos sugeridos
+
+- Capturar e comparar o `POST controlador_ajax.php?acao_ajax=minuta_salvar` realizado pelo editor nativo com o payload enviado pelo inline.
+- Verificar parâmetros adicionais (ex.: `sbmCadastrarVersaoConteudo`, `cod_tipo_salvamento_versao_conteudo`, `tamSecEditaveis`) e eventuais flags de sessão.
+- Avaliar necessidade de reproduzir o comportamento do CKEditor nativo (headers adicionais, campos ocultos, etc.).
+
+#### Prompt sugerido para investigação externa
+
+```
+Contexto: Extensão Chrome “Eproc Tunado (EPT)” implementou um editor inline de minutas.
+Fluxo: botão “edição rápida” → modal próprio → POST em controlador_ajax.php (salvar) → POST (sbmDesbloquear) → atualização da tabela sem reload.
+Problema: após salvar inline e clicar em “Retunar” (recarregar a lista), o eProc exibe o alerta “Houve uma mudança no perfil do usuário”. O mesmo não ocorre quando a minuta é salva pelo editor nativo.
+
+O que já sabemos:
+- Cookies e headers estão idênticos entre os fluxos inline e nativo.
+- O alerta surge apenas no primeiro GET subsequente ao salvamento inline.
+- O payload inline envia: text (article completo, XHTML sanitizado), id_minuta, alterarstatus=0, statusMinutaDesejado=0, sbmCadastrarVersaoConteudo=1, acao=minuta_salvar, cod_tipo_salvamento_versao_conteudo=2, tamSecEditaveis.
+- Após salvar, um segundo POST executa `sbmDesbloquear=1` com `id={cod_documento}_6`.
+
+Objetivo da análise:
+1. Capturar exatamente o POST do editor nativo (salvar e desbloquear) e comparar com o payload inline.
+2. Identificar parâmetros ausentes ou valores divergentes que possam disparar o alerta de “mudança de perfil”.
+3. Sugerir ajustes no payload inline para replicar fielmente o comportamento do editor oficial.
+
+Por onde começar:
+- Inspecionar a chamada `controlador_ajax.php?acao_ajax=minuta_salvar` no editor nativo.
+- Anotar todos os campos enviados (incluindo hidden inputs) e qualquer header adicional.
+- Checar se há POST intermediário ou flags que deixamos de enviar.
+
+Entregável esperado: lista das diferenças relevantes e recomendações de ajustes no payload inline do EPT.
+```
 
 ## 🏛️ Tribunais Suportados
 
@@ -376,7 +422,14 @@ Este projeto é desenvolvido para uso pessoal e profissional de magistrados e se
 
 ## 🔄 Changelog
 
-### v0.0.6 (Atual)
+### v0.0.9 (Atual)
+- ✅ **Editor inline de minutas** com modal dedicado, sanitização XHTML e desbloqueio automático.
+- ✅ **Atualização imediata da tabela** após salvar, sem recarregar a página.
+- ✅ **Remoção do painel de logs experimental** para evitar conflitos com o editor nativo.
+- ⚠️ **Problema conhecido documentado**: alerta “Houve uma mudança no perfil do usuário” após Retunar.
+- ✅ Documentação atualizada com resumo do fluxo e prompt para investigação futura.
+
+### v0.0.6
 - ✅ **Correção crítica** para compatibilidade com eproc 9.15
 - ✅ **Preservação dos links** de visualização de minutas
 - ✅ **Manutenção da funcionalidade nativa** do sistema eproc
