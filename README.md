@@ -32,44 +32,17 @@ O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora significativamente 
 - Atualização imediata da linha da tabela após salvar (sem `window.location.reload()`).
 - Sistema de logs em overlay removido para reduzir atrito de uso e evitar interferência com o editor nativo.
 
-#### Problema conhecido: alerta “Houve uma mudança no perfil do usuário”
+#### Correção: alerta “Houve uma mudança no perfil do usuário”
 
-- O alerta só aparece depois do salvamento inline, ao clicar em **Retunar** (GET de recarga).
-- O fluxo nativo (“Salvar e Sair”) não dispara o alerta nas mesmas condições.
-- Cookies e headers permanecem idênticos entre os fluxos; a diferença provável está no payload enviado.
-- Status atual: investigação pendente. Não há impacto no salvamento, mas o alerta interrompe o fluxo ideal.
-
-#### Próximos passos sugeridos
-
-- Capturar e comparar o `POST controlador_ajax.php?acao_ajax=minuta_salvar` realizado pelo editor nativo com o payload enviado pelo inline.
-- Verificar parâmetros adicionais (ex.: `sbmCadastrarVersaoConteudo`, `cod_tipo_salvamento_versao_conteudo`, `tamSecEditaveis`) e eventuais flags de sessão.
-- Avaliar necessidade de reproduzir o comportamento do CKEditor nativo (headers adicionais, campos ocultos, etc.).
-
-#### Prompt sugerido para investigação externa
-
-```
-Contexto: Extensão Chrome “Eproc Tunado (EPT)” implementou um editor inline de minutas.
-Fluxo: botão “edição rápida” → modal próprio → POST em controlador_ajax.php (salvar) → POST (sbmDesbloquear) → atualização da tabela sem reload.
-Problema: após salvar inline e clicar em “Retunar” (recarregar a lista), o eProc exibe o alerta “Houve uma mudança no perfil do usuário”. O mesmo não ocorre quando a minuta é salva pelo editor nativo.
-
-O que já sabemos:
-- Cookies e headers estão idênticos entre os fluxos inline e nativo.
-- O alerta surge apenas no primeiro GET subsequente ao salvamento inline.
-- O payload inline envia: text (article completo, XHTML sanitizado), id_minuta, alterarstatus=0, statusMinutaDesejado=0, sbmCadastrarVersaoConteudo=1, acao=minuta_salvar, cod_tipo_salvamento_versao_conteudo=2, tamSecEditaveis.
-- Após salvar, um segundo POST executa `sbmDesbloquear=1` com `id={cod_documento}_6`.
-
-Objetivo da análise:
-1. Capturar exatamente o POST do editor nativo (salvar e desbloquear) e comparar com o payload inline.
-2. Identificar parâmetros ausentes ou valores divergentes que possam disparar o alerta de “mudança de perfil”.
-3. Sugerir ajustes no payload inline para replicar fielmente o comportamento do editor oficial.
-
-Por onde começar:
-- Inspecionar a chamada `controlador_ajax.php?acao_ajax=minuta_salvar` no editor nativo.
-- Anotar todos os campos enviados (incluindo hidden inputs) e qualquer header adicional.
-- Checar se há POST intermediário ou flags que deixamos de enviar.
-
-Entregável esperado: lista das diferenças relevantes e recomendações de ajustes no payload inline do EPT.
-```
+- Corrigido: após salvar inline e recarregar a lista, o alerta não aparece mais.
+- Como foi resolvido: após o `minuta_salvar` e o `sbmDesbloquear`, o EPT agora emula a chamada nativa de pós-salvar:
+   - `controlador_ajax.php?acao_ajax=atualizar_info_minuta&acao_origem=minuta_area_trabalho&hash=...`
+- Mantido alinhamento com o nativo:
+   - `alterarstatus=1` e `cod_tipo_salvamento_versao_conteudo=6` no salvar.
+   - Preservação do rodapé da minuta (criador/editor/versão) para evitar impactos em métricas/auditoria.
+- Logs de diagnóstico (opcional):
+   - Ative no console: `window.EPT_DEBUG_ENABLED = true`
+   - Inspecione o histórico: `window.EPT_LOGS`
 
 ## 🏛️ Tribunais Suportados
 
@@ -426,8 +399,8 @@ Este projeto é desenvolvido para uso pessoal e profissional de magistrados e se
 - ✅ **Editor inline de minutas** com modal dedicado, sanitização XHTML e desbloqueio automático.
 - ✅ **Atualização imediata da tabela** após salvar, sem recarregar a página.
 - ✅ **Remoção do painel de logs experimental** para evitar conflitos com o editor nativo.
-- ⚠️ **Problema conhecido documentado**: alerta “Houve uma mudança no perfil do usuário” após Retunar.
-- ✅ Documentação atualizada com resumo do fluxo e prompt para investigação futura.
+- ✅ **Correção do alerta** “Houve uma mudança no perfil do usuário” em recarga após salvar inline (emulação do `atualizar_info_minuta`).
+- ✅ Logs leves internos (`window.EPT_LOGS`) e debug opcional (`window.EPT_DEBUG_ENABLED = true`).
 
 ### v0.0.6
 - ✅ **Correção crítica** para compatibilidade com eproc 9.15

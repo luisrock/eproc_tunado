@@ -398,6 +398,10 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     }
 
     editableSection.innerHTML = sanitizedEditableContent;
+    // Atribui contenteditable="true" conforme padrão observado no editor nativo
+    try {
+      editableSection.setAttribute("contenteditable", "true");
+    } catch (e) {}
 
     const article = tempDiv.querySelector("article");
     if (!article) {
@@ -438,11 +442,11 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     const formData = new URLSearchParams();
     formData.append("text", articleHTML);
     formData.append("id_minuta", this.state.idDocumento);
-    formData.append("alterarstatus", "0");
+    formData.append("alterarstatus", "1");
     formData.append("statusMinutaDesejado", "0");
     formData.append("sbmCadastrarVersaoConteudo", "1");
     formData.append("acao", "minuta_salvar");
-    formData.append("cod_tipo_salvamento_versao_conteudo", "2");
+    formData.append("cod_tipo_salvamento_versao_conteudo", "6");
     formData.append("tamSecEditaveis", String(tamSecEditaveis));
     return formData.toString();
   },
@@ -627,6 +631,20 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
         debugLog("EPT: Erro ao atualizar linha após salvamento:", updateError);
       }
 
+      // Após salvar e tentar desbloquear, emular chamada nativa de atualização de contexto
+      try {
+        const areaTrabalhoHashMatch = (window.location.href || "").match(/[a-f0-9]{32}/i);
+        const areaTrabalhoHash = areaTrabalhoHashMatch ? areaTrabalhoHashMatch[0] : (state.hash || "");
+        const atualizarUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=atualizar_info_minuta&acao_origem=minuta_area_trabalho${areaTrabalhoHash ? `&hash=${areaTrabalhoHash}` : ""}`;
+
+        EPT_addLog("postsave:update_info:request", { url: atualizarUrl });
+        const atualizarResult = await this.postForm(atualizarUrl, "");
+        EPT_addLog("postsave:update_info:response", { success: atualizarResult?.sucesso === "1", raw: atualizarResult });
+      } catch (postSaveUpdateErr) {
+        debugLog("EPT: Falha ao emular atualização pós-salvar:", postSaveUpdateErr);
+        EPT_addLog("postsave:update_info:error", { message: postSaveUpdateErr?.message });
+      }
+
       this.setSavingState(true, "Minuta salva!");
 
       if (unlockFailedMessage) {
@@ -661,7 +679,26 @@ function debugLog(...args) {
   }
 }
 
-function EPT_addLog() {}
+function EPT_addLog(event, payload) {
+  try {
+    // Buffer em memória para inspeção rápida
+    window.EPT_LOGS = window.EPT_LOGS || [];
+    const entry = {
+      ts: new Date().toISOString(),
+      event: event || "log",
+      payload: payload || null,
+    };
+    window.EPT_LOGS.push(entry);
+
+    // Saída opcional no console quando o debug estiver habilitado
+    if (window.EPT_DEBUG_ENABLED) {
+      // Formato compacto para facilitar leitura
+      console.log("[EPT]", entry.event, entry.payload);
+    }
+  } catch (e) {
+    // Silencioso por segurança
+  }
+}
 
 function EPT_generatePreviewId() {
   return `ept-preview-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
