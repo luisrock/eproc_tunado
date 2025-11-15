@@ -1,3 +1,24 @@
+// Handle installation and updates - show changelog
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    // First installation - open changelog
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('changelog.html')
+    });
+  } else if (details.reason === 'update') {
+    // Extension was updated - open changelog
+    const currentVersion = chrome.runtime.getManifest().version;
+    const previousVersion = details.previousVersion;
+
+    // Only open if version actually changed
+    if (previousVersion !== currentVersion) {
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('changelog.html')
+      });
+    }
+  }
+});
+
 // This function checks if the data object has the property and if not sets it to true
 async function checkAndSetDefault(data, property) {
   if (!data.hasOwnProperty(property)) {

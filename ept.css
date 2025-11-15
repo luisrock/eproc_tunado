@@ -87,11 +87,31 @@ body {
     margin-bottom: var(--spacing-sm);
 }
 
+.title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
 .title {
     font-size: 1.25rem;
     font-weight: 600;
     letter-spacing: -0.025em;
     color: white;
+}
+
+.version-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.688rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    font-family: 'Courier New', monospace;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(4px);
 }
 
 .subtitle {
@@ -279,6 +299,32 @@ body {
 .btn-action:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Info Section */
+.info-section {
+    padding: var(--spacing-md) var(--spacing-xxl);
+    background: var(--color-bg-alt);
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+}
+
+.info-link {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-size: 0.813rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    padding: var(--spacing-xs) 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.info-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    transform: translateX(2px);
 }
 
 /* Footer */

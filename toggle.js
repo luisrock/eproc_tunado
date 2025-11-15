@@ -68,6 +68,25 @@ async function updateTab(tabId) {
 }
 
 document.addEventListener("DOMContentLoaded", (event) => {
+  // Display extension version from manifest
+  const version = chrome.runtime.getManifest().version;
+  const versionElement = document.getElementById("extension-version");
+  if (versionElement) {
+    versionElement.textContent = `v${version}`;
+  }
+
+  // Changelog button handler
+  const btnChangelog = document.getElementById("btn-changelog");
+  if (btnChangelog) {
+    btnChangelog.addEventListener("click", (e) => {
+      e.preventDefault();
+      chrome.tabs.create({
+        url: chrome.runtime.getURL("changelog.html")
+      });
+      window.close();
+    });
+  }
+
   let btnGeral = document.getElementById("toggle");
   let ept_enabled;
   let ept_password;

@@ -925,7 +925,7 @@ async function getStorageData(key) {
           btnRetunar.className = 'infraButton';
           btnRetunar.textContent = 'Retunar';
           btnRetunar.onclick = () => location.reload();
-          btnRetunar.style.cssText = 'background: #4a90e2; color: white;';
+          btnRetunar.style.cssText = 'background: #352245; color: white; border: 1px solid #F66942; margin-left: 20px;';
           btnRetunar.title = 'Recarregar e reaplicar formatação EPT';
           
           // Inserir após o botão Assinar

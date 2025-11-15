@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novidades - Eproc Tunado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary: #352245;
+            --color-primary-light: #4a3358;
+            --color-accent: #F66942;
+            --color-bg: #ffffff;
+            --color-bg-alt: #f7fafc;
+            --color-border: #e2e8f0;
+            --color-text-primary: #1a202c;
+            --color-text-secondary: #4a5568;
+            --color-text-muted: #718096;
+            --color-success: #2f855a;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--color-bg-alt);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--color-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            padding: 48px 40px;
+            color: white;
+            text-align: center;
+            border-bottom: 4px solid var(--color-accent);
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                var(--color-accent) 50%,
+                transparent 100%);
+            opacity: 0.5;
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
+        }
+
+        .logo-ep {
+            color: white;
+        }
+
+        .logo-t {
+            color: var(--color-accent);
+        }
+
+        .tagline {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Content */
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-icon {
+            font-size: 1.75rem;
+        }
+
+        .changelog-item {
+            margin-bottom: 32px;
+            padding: 20px;
+            background: var(--color-bg-alt);
+            border-radius: 8px;
+            border-left: 4px solid var(--color-accent);
+        }
+
+        .changelog-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .changelog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .changelog-version {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .changelog-date {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .changelog-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .changelog-list li {
+            padding: 8px 0 8px 32px;
+            position: relative;
+            color: var(--color-text-secondary);
+            line-height: 1.6;
+        }
+
+        .changelog-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 8px;
+            color: var(--color-success);
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        /* Call to Action */
+        .cta-section {
+            background: linear-gradient(135deg, #f6f9fc 0%, #e9ecef 100%);
+            padding: 32px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .cta-title {
+            font-size: 1.375rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 16px;
+        }
+
+        .cta-text {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+            box-shadow: 0 4px 6px rgba(246, 105, 66, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #e25c39;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(246, 105, 66, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--color-primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(53, 34, 69, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(53, 34, 69, 0.4);
+        }
+
+        .btn-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            text-align: center;
+            padding: 24px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid var(--color-border);
+            margin-top: 32px;
+        }
+
+        .contact-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 12px;
+        }
+
+        .contact-text {
+            font-size: 0.938rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .contact-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.063rem;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .contact-email:hover {
+            background: var(--color-bg-alt);
+            transform: translateY(-1px);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--color-bg-alt);
+            padding: 24px 40px;
+            text-align: center;
+            border-top: 2px solid var(--color-border);
+        }
+
+        .footer-text {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+            margin-bottom: 8px;
+        }
+
+        .footer-link {
+            color: var(--color-accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .header {
+                padding: 32px 24px;
+            }
+
+            .logo {
+                font-size: 2.25rem;
+            }
+
+            .content {
+                padding: 24px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-ep">EP</span><span class="logo-t">T</span>
+            </div>
+            <div class="tagline">Eproc Tunado - Novidades e Atualizações</div>
+            <div class="version-badge">Versão 0.0.9</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Novidades -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎉</span>
+                    Novidades desta Versão
+                </h2>
+
+                <div class="changelog-item">
+                    <div class="changelog-header">
+                        <span class="changelog-version">v0.0.9</span>
+                        <span class="changelog-date">Novembro 2024</span>
+                    </div>
+                    <ul class="changelog-list">
+                        <li><strong>Editor Inline de Minutas:</strong> Novo modal dedicado para edição rápida com sanitização XHTML e desbloqueio automático</li>
+                        <li><strong>Atualização Inteligente:</strong> Tabela atualiza imediatamente após salvar, sem recarregar a página completa</li>
+                        <li><strong>Revisão de Texto no Popup :</strong> As configurações passam a expressar melhor o que cada uma faz</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Call to Action - Avaliação -->
+            <div class="cta-section">
+                <h3 class="cta-title">Gostou do Eproc Tunado?</h3>
+                <p class="cta-text">
+                    Sua avaliação ajuda outros magistrados e servidores a descobrirem esta ferramenta!<br>
+                    Deixe suas ⭐⭐⭐⭐⭐ na Chrome Web Store.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://chrome.google.com/webstore/detail/fhcdmjaklajdjbppdannijjbcmckhhec" target="_blank" class="btn btn-primary">
+                        <span class="btn-icon">⭐</span>
+                        Avaliar Extensão
+                    </a>
+                    <a href="mailto:trator70@gmail.com" class="btn btn-secondary">
+                        <span class="btn-icon">✉️</span>
+                        Enviar Sugestão
+                    </a>
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div class="contact-section">
+                <h3 class="contact-title">Precisa de Ajuda ou Encontrou um Bug?</h3>
+                <p class="contact-text">
+                    Entre em contato diretamente comigo.
+                </p>
+                <a href="mailto:trator70@gmail.com" class="contact-email">
+                    <span>✉️</span>
+                    trator70@gmail.com
+                </a>
+            </div>
+
+            <!-- Recursos -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">🎛️</span>
+                    Funcionalidades Disponíveis
+                </h2>
+                <ul class="changelog-list">
+                    <li><strong>Armazenar Senha:</strong> Permite ao navegador salvar credenciais de acesso</li>
+                    <li><strong>Modo Foco:</strong> Oculta elementos secundários para concentração máxima</li>
+                    <li><strong>Focar Ações Principais:</strong> No topo da tabela, exibe apenas botões essenciais de visualização e assinatura</li>
+                    <li><strong>Visualização de Texto:</strong> Apresenta conteúdo da minuta na listagem</li>
+                    <li><strong>Clique Automático:</strong> Na edição da minuta, confirma manutenção de agendamento automaticamente</li>
+                    <li><strong>Interface Aprimorada:</strong> Aplica estilização moderna à tabela de minutas</li>
+                </ul>
+            </div>
+
+            <!-- Tribunais -->
+            <div class="section">
+                <h2 class="section-title">
+                    <span class="section-icon">⚖️</span>
+                    Tribunais Suportados
+                </h2>
+                <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
+                    A extensão funciona em 21 sistemas eproc de tribunais federais e estaduais, incluindo:
+                </p>
+                <ul class="changelog-list" style="columns: 2; column-gap: 24px;">
+                    <li>JFRJ - Rio de Janeiro</li>
+                    <li>JFES - Espírito Santo</li>
+                    <li>TRF2, TRF4, TRF6</li>
+                    <li>JFRS, JFSC, JFPR</li>
+                    <li>TJRS - Rio Grande do Sul</li>
+                    <li>TJSC - Santa Catarina</li>
+                    <li>TJTO - Tocantins</li>
+                    <li>TJRJ - Rio de Janeiro</li>
+                    <li>TJSP - São Paulo</li>
+                    <li>TJMG - Minas Gerais</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="footer-text">Desenvolvido por <strong>Mauro Lopes</strong></p>
+            <p class="footer-text">
+                <a href="https://maurolopes.com.br" target="_blank" class="footer-link">maurolopes.com.br</a>
+            </p>
+            <p class="footer-text" style="margin-top: 12px; font-size: 0.813rem;">
+                ⚖️ Desenvolvido por magistrado, para magistrados
+            </p>
+        </div>
+    </div>
+</body>
+</html>
