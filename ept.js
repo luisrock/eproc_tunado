@@ -278,11 +278,12 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
     overlay.appendChild(modal);
 
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) {
-        this.closeModal();
-      }
-    });
+    // Removido: fechamento ao clicar fora do modal para evitar perda acidental de trabalho
+    // overlay.addEventListener("click", (event) => {
+    //   if (event.target === overlay) {
+    //     this.closeModal();
+    //   }
+    // });
 
     document.addEventListener("keydown", this.handleEscape, true);
 
