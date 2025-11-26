@@ -209,6 +209,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     const headerTextWrapper = document.createElement("div");
     const title = document.createElement("h2");
     title.className = "ept-inline-editor-title";
+    title.id = "ept-editor-title";
     title.textContent = "Edição rápida da minuta";
 
     headerTextWrapper.appendChild(title);
@@ -249,7 +250,8 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     const contentArea = document.createElement("div");
     contentArea.className = "ept-inline-editor-content";
     contentArea.setAttribute("contenteditable", "true");
-    contentArea.setAttribute("spellcheck", "false");
+    contentArea.setAttribute("role", "textbox");
+    contentArea.setAttribute("aria-labelledby", "ept-editor-title");
     contentArea.innerHTML = modalData.editableContent || "";
 
     body.appendChild(contentArea);
