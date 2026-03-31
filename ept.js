@@ -682,6 +682,18 @@ function debugLog(...args) {
   }
 }
 
+/** Fecha o tooltip global do Infra (mesmo mecanismo dos onmouseout do eproc), evitando balão preso após mutar o DOM. */
+function EPT_tryHideInfraTooltip() {
+  try {
+    const fn = window.infraTooltipOcultar;
+    if (typeof fn === "function") {
+      fn();
+    }
+  } catch (e) {
+    /* silencioso */
+  }
+}
+
 function EPT_addLog(event, payload) {
   try {
     // Buffer em memória para inspeção rápida
@@ -838,6 +850,8 @@ function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000) {
   if (window.EPT_TableStyler && typeof window.EPT_TableStyler.enhanceContent === "function") {
     window.EPT_TableStyler.enhanceContent(rowElement);
   }
+
+  EPT_tryHideInfraTooltip();
 }
 
 // Utility function to get data from chrome storage
@@ -1206,6 +1220,8 @@ async function getStorageData(key) {
               if (ept_tablestyleData.ept_tablestyle && window.EPT_TableStyler) {
                 window.EPT_TableStyler.enhanceContent(row[0]);
               }
+
+              EPT_tryHideInfraTooltip();
             });
           } else {
             // SE NÃO HÁ URLPREVIEW, AINDA PRESERVAR OS LINKS ORIGINAIS
@@ -1229,6 +1245,8 @@ async function getStorageData(key) {
                 row.append(newLink);
               }
             });
+
+            EPT_tryHideInfraTooltip();
           } //end if(urlPreview)
         }); //end foreach
         //End texto de cada minuta da lista

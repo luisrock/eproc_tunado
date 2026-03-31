@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-0.0.9-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-0.0.11-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -107,9 +107,9 @@ git clone https://github.com/maurolopes/eproc_tunado.git
 ## 🛠️ Configuração
 
 ### Ativação Básica
-Na popup da extensão, ative:
-- ✅ **"Mostrar texto na tabela"** - Para expandir minutas
-- ✅ **"Aplicar design moderno"** - Para aplicar estilos customizados
+Na popup da extensão, ative (entre outras):
+- ✅ **Visualização de texto** — mostra o conteúdo da minuta na listagem
+- ✅ **Interface aprimorada** — aplica o design moderno à tabela (`table-styles.css`)
 
 ### Configurações Avançadas
 - **Toggle individual** para cada funcionalidade
@@ -207,7 +207,7 @@ node test-urls.js
 ```
 
 #### O que o teste faz
-- ✅ **Verifica 21 URLs** de diferentes tribunais
+- ✅ **Verifica 21 URLs** de diferentes tribunais (no script Node, só **TJRJ** usa `…/eproc/` no fim; os demais hosts são testados na raiz, como antes)
 - ✅ **Gera relatório detalhado** com status de cada servidor
 - ✅ **Identifica URLs problemáticas** e possíveis causas
 - ✅ **Salva resultados** em `url-test-report.json`
@@ -266,10 +266,9 @@ node test-urls.js
    - Verifique se salva preferências
 
 3. **Teste por Tribunal**
-   - Navegue até área de minutas
-   - Teste "Mostrar texto na tabela"
-   - Teste "Aplicar design moderno"
-   - Verifique aplicação de CSS customizado
+   - Navegue até a área de minutas
+   - Teste **Visualização de texto** e **Interface aprimorada** na popup
+   - Verifique a aplicação do CSS customizado em `table-styles.css`
 
 ### 📊 Monitoramento e Manutenção
 - **Execute testes periodicamente** para verificar disponibilidade
@@ -319,11 +318,11 @@ eproc_tunado/
 
 ### Debug
 ```javascript
-// Console do navegador - verificar classes aplicadas
+// Console do navegador — verificar classes aplicadas
 document.querySelectorAll('.ept-minuta-header').length
 
-// Verificar se EPT está ativo
-window.EPT_CONFIG
+// Logs opcionais do EPT (ativar antes de reproduzir o fluxo)
+window.EPT_DEBUG_ENABLED = true
 ```
 
 ## 🐛 Troubleshooting
@@ -335,7 +334,7 @@ window.EPT_CONFIG
 4. ✅ Verifique o console para erros JavaScript
 
 ### Estilos não aplicados?
-1. ✅ Confirme que "Aplicar design moderno" está ativo
+1. ✅ Confirme que **Interface aprimorada** está ativa (e, para o texto expandido, **Visualização de texto**)
 2. ✅ Use `!important` nos estilos customizados
 3. ✅ Verifique se as classes CSS estão corretas
 4. ✅ Inspecione elementos com DevTools
@@ -373,7 +372,7 @@ window.EPT_CONFIG
 1. **Fork o repositório**
 2. **Crie uma branch** para sua feature
 3. **Faça suas modificações**
-4. **Teste thoroughly** em diferentes tribunais
+4. **Teste de ponta a ponta** em diferentes tribunais
 5. **Execute testes de URL** antes do commit
 6. **Abra um Pull Request**
 
@@ -395,7 +394,16 @@ Este projeto é desenvolvido para uso pessoal e profissional de magistrados e se
 
 ## 🔄 Changelog
 
-### v0.0.9 (Atual)
+### v0.0.11 (atual)
+- ✅ **Language Tools e similares:** remoção de `spellcheck="false"` no editor inline para permitir revisão gramatical no modal.
+- ✅ **Acessibilidade:** `role="textbox"` e `aria-labelledby` no campo de edição rápida.
+- ✅ **Tooltips Infra:** após reconstruir a linha ou atualizar o preview, chamada a `infraTooltipOcultar` quando existir, reduzindo balões presos na listagem condensada.
+- ✅ **Service worker:** título do ícone da extensão (“tunado” / “não tunado”) passa a refletir corretamente `ept_enabled` (valores assíncronos aguardados; atualização ao mudar o storage).
+
+### v0.0.10
+- ✅ **Modal de edição rápida:** fechamento apenas pelos botões próprios (X ou Cancelar), evitando perda ao clicar fora.
+
+### v0.0.9
 - ✅ **Editor inline de minutas** com modal dedicado, sanitização XHTML e desbloqueio automático.
 - ✅ **Atualização imediata da tabela** após salvar, sem recarregar a página.
 - ✅ **Remoção do painel de logs experimental** para evitar conflitos com o editor nativo.

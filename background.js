@@ -39,13 +39,23 @@ async function setTabData() {
     "ept_edit",
     "ept_tablestyle",
   ]);
-  let ept_enabled = checkAndSetDefault(data, "ept_enabled");
-  let ept_focus = checkAndSetDefault(data, "ept_focus");
-  let ept_password = checkAndSetDefault(data, "ept_password");
-  let ept_actions = checkAndSetDefault(data, "ept_actions");
-  let ept_tableText = checkAndSetDefault(data, "ept_tabletext");
-  let ept_edit = checkAndSetDefault(data, "ept_edit");
-  let ept_tablestyle = checkAndSetDefault(data, "ept_tablestyle");
+  const [
+    ept_enabled,
+    ept_focus,
+    ept_password,
+    ept_actions,
+    ept_tableText,
+    ept_edit,
+    ept_tablestyle,
+  ] = await Promise.all([
+    checkAndSetDefault(data, "ept_enabled"),
+    checkAndSetDefault(data, "ept_focus"),
+    checkAndSetDefault(data, "ept_password"),
+    checkAndSetDefault(data, "ept_actions"),
+    checkAndSetDefault(data, "ept_tabletext"),
+    checkAndSetDefault(data, "ept_edit"),
+    checkAndSetDefault(data, "ept_tablestyle"),
+  ]);
 
   let titleToBe = ept_enabled ? "está tunado!" : "não está tunado.";
   chrome.action.setTitle({
@@ -63,14 +73,16 @@ async function updateIcon() {
   chrome.action.setIcon({ path: { 16: `icons/${iconToBe}` } });
 }
 
-// Call updateIcon() when the extension starts
+// Call updateIcon() and sync action title when the extension starts
 updateIcon();
+setTabData();
 
 // Listen for storage changes and update the icon if 'ept_enabled' changes
 chrome.storage.onChanged.addListener(function (changes, namespace) {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
     if (key === "ept_enabled" && oldValue !== newValue) {
       updateIcon();
+      setTabData();
     }
   }
 });

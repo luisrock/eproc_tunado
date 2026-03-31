@@ -1,2 +1,5 @@
 .DS_Store
 .cursor/
+
+# Pacote para Chrome Web Store (gerado localmente)
+eproc-tunado-store.zip

@@ -3,7 +3,7 @@
 echo "🚀 EPT - Teste Automático de URLs no Chrome"
 echo "============================================="
 
-# URLs dos tribunais
+# URLs dos tribunais (só TJRJ com /eproc/ no fim — demais na raiz do host)
 urls=(
     "https://eproc.jfrj.jus.br"
     "https://eproc.jfes.jus.br"
@@ -20,8 +20,8 @@ urls=(
     "https://eproc2g.tjsc.jus.br"
     "https://eproc1.tjto.jus.br"
     "https://eproc2.tjto.jus.br"
-    "https://eproc1g.tjrj.jus.br"
-    "https://eproc2g.tjrj.jus.br"
+    "https://eproc1g.tjrj.jus.br/eproc/"
+    "https://eproc2g.tjrj.jus.br/eproc/"
     "https://eproc1g.tjsp.jus.br"
     "https://eproc2g.tjsp.jus.br"
     "https://eproc1g.tjmg.jus.br"

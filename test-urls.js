@@ -2,7 +2,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 
-// URLs extraídas do manifest.json
+// URLs extraídas do manifest.json (raiz do host). TJRJ: /eproc/ no final evita 403 na raiz.
 const urls = [
   'https://eproc.jfrj.jus.br',
   'https://eproc.jfes.jus.br',
@@ -19,12 +19,12 @@ const urls = [
   'https://eproc2g.tjsc.jus.br',
   'https://eproc1.tjto.jus.br',
   'https://eproc2.tjto.jus.br',
-  'https://eproc1g.tjrj.jus.br',
-  'https://eproc2g.tjrj.jus.br',
+  'https://eproc1g.tjrj.jus.br/eproc/',
+  'https://eproc2g.tjrj.jus.br/eproc/',
   'https://eproc1g.tjsp.jus.br',
   'https://eproc2g.tjsp.jus.br',
   'https://eproc1g.tjmg.jus.br',
-  'https://eproc2g.tjmg.jus.br'
+  'https://eproc2g.tjmg.jus.br',
 ];
 
 // Função para testar uma URL
