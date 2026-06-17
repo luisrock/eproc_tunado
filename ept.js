@@ -854,6 +854,276 @@ function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000) {
   EPT_tryHideInfraTooltip();
 }
 
+// =====================================================================
+// Helpers de mapeamento de colunas e reconstrução de linha
+// Robustos a qualquer combinação de critérios de exibição do eProc.
+// =====================================================================
+
+// onclick="infraAcaoOrdenar('CAMPO', ...)" -> chave semântica estável.
+const EPT_COLUMN_FIELD_MAP = {
+  DesTipoDocumentoMinuta: "tipo",
+  CodDocumento: "codigo",
+  SigOrgao: "orgao",
+  SigOrgaoJuizoProcesso: "juizo",
+  NumProcesso: "processo",
+  CodAssuntoPrincipal: "cod_assunto",
+  IdentPrincipalUsuarioInclusao: "usuario",
+  Inclusao: "criacao",
+  DesStatusMinuta: "status",
+  IdentPrincipalUsuarioAssinanteIndicado: "assinante_indicado",
+  IdMinutaAgendamento: "agendamento",
+  SigLocalizadorPrincipal: "localizadores",
+};
+
+// Fallback por rótulo limpo (td.infraTdRotuloOrdenacao) quando não houver
+// link de ordenação no <th>.
+const EPT_COLUMN_LABEL_MAP = {
+  "tipo": "tipo",
+  "código": "codigo",
+  "codigo": "codigo",
+  "órgão": "orgao",
+  "orgao": "orgao",
+  "nro. processo": "processo",
+  "processo": "processo",
+  "usuário": "usuario",
+  "usuario": "usuario",
+  "data criação": "criacao",
+  "data criacao": "criacao",
+  "status": "status",
+  "recursos disponíveis": "recursos",
+  "recursos": "recursos",
+};
+
+/**
+ * Varre os <th> do cabeçalho da tabela e devolve { map, totalCols }.
+ * map: { chaveSemântica -> índice da coluna }. "recursos" é garantido
+ * pela última coluna quando não detectado pelo rótulo.
+ */
+function EPT_buildColumnMap(table) {
+  const result = { map: {}, totalCols: 0 };
+  if (!table) {
+    return result;
+  }
+
+  const headerRow = $(table)
+    .find("tr:not(.infraTrOrdenacao)")
+    .filter(function () {
+      return $(this).children("th").length > 0;
+    })
+    .first();
+
+  if (!headerRow.length) {
+    return result;
+  }
+
+  const headerCells = headerRow.children("th");
+  result.totalCols = headerCells.length;
+
+  headerCells.each(function (index) {
+    const th = $(this);
+    let key = null;
+
+    if (th.find("#lnkInfraCheck, .infraCheckbox, input[type='checkbox']").length) {
+      key = "checkbox";
+    }
+
+    if (!key) {
+      let campo = null;
+      th.find("a[onclick*='infraAcaoOrdenar']").each(function () {
+        const onclick = $(this).attr("onclick") || "";
+        const m = onclick.match(/infraAcaoOrdenar\(\s*['"]([^'"]+)['"]/);
+        if (m) {
+          campo = m[1];
+          return false;
+        }
+      });
+      if (campo && EPT_COLUMN_FIELD_MAP[campo]) {
+        key = EPT_COLUMN_FIELD_MAP[campo];
+      }
+    }
+
+    if (!key) {
+      const rotulo = (
+        th.find(".infraTdRotuloOrdenacao").first().text() ||
+        th.text() ||
+        ""
+      )
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+      if (rotulo.includes("recurso")) {
+        key = "recursos";
+      } else if (EPT_COLUMN_LABEL_MAP[rotulo]) {
+        key = EPT_COLUMN_LABEL_MAP[rotulo];
+      }
+    }
+
+    if (key && !(key in result.map)) {
+      result.map[key] = index;
+    }
+  });
+
+  if (!("recursos" in result.map) && result.totalCols > 0) {
+    result.map.recursos = result.totalCols - 1;
+  }
+
+  return result;
+}
+
+/**
+ * Texto (ou HTML, via options.html) da célula de `row` na coluna `key`.
+ * Retorna "" se a coluna não existir — nunca undefined.
+ */
+function EPT_getCellText(row, columnMap, key, options) {
+  options = options || {};
+  if (!columnMap || typeof columnMap[key] !== "number") {
+    return "";
+  }
+  const cell = $(row).children("td").eq(columnMap[key]);
+  if (!cell.length) {
+    return "";
+  }
+  const value = options.html ? cell.html() : cell.text();
+  return value == null ? "" : value.trim();
+}
+
+/**
+ * Colapsa a linha mantendo checkbox + contentTd (+ recursosTd quando
+ * options.keepRecursosTd), remove os demais <td> e ajusta o colspan do
+ * contentTd para preservar a largura total da linha.
+ */
+function EPT_collapseRow(row, options) {
+  options = options || {};
+  const $row = $(row);
+  const contentTd =
+    options.contentTd && options.contentTd.length ? options.contentTd : null;
+  if (!contentTd) {
+    return;
+  }
+
+  const allTds = $row.children("td");
+  const totalCols = allTds.length;
+
+  const checkboxTd = $row.find(".infraCheckbox").closest("td");
+  const keepCheckbox = checkboxTd.length ? checkboxTd.first() : allTds.first();
+
+  const keepRecursosTd =
+    options.keepRecursosTd && options.keepRecursosTd.length
+      ? options.keepRecursosTd.first()
+      : null;
+
+  const keepNodes = [];
+  if (keepCheckbox && keepCheckbox.length) {
+    keepNodes.push(keepCheckbox[0]);
+  }
+  keepNodes.push(contentTd[0]);
+  if (keepRecursosTd) {
+    keepNodes.push(keepRecursosTd[0]);
+  }
+
+  allTds.each(function () {
+    if (keepNodes.indexOf(this) === -1) {
+      $(this).remove();
+    }
+  });
+
+  const keptOthers = $row.children("td").length - 1;
+  const colspan = Math.max(1, totalCols - keptOthers);
+  contentTd.attr("colspan", colspan);
+}
+
+// ---- Detecção robusta de ações dos botões de "Recursos disponíveis" ----
+
+// Ações essenciais (mantidas no rodapé curado) -> categoria p/ estilo/rótulo.
+// "Conferir" (minuta_conferir) é intencionalmente omitido: muda de estado ao
+// clicar (altera o status) e deve ficar junto do "encaminhar para conferência".
+// Quem precisar dele usará a célula original (opção "Manter botões originais").
+const EPT_ACTION_CATEGORY = {
+  minuta_verificar_agendamento: "editar",
+  minuta_editar: "editar",
+  minuta_assinar: "assinar",
+  minuta_devolver: "devolver",
+  minuta_lembrete_cadastrar: "lembrete",
+};
+
+/**
+ * Extrai a ação de um botão (<a> ou wrapper) na ordem:
+ * 1) acao=... no href; 2) atributo `acao` do <img> interno; 3) alt/tooltip.
+ * Botões AJAX (Conferir etc.) guardam a ação no `acao` do <img>.
+ */
+function EPT_getButtonAction(aEl) {
+  const $el = $(aEl);
+  const $a = $el.is("a") ? $el : $el.find("a").first();
+
+  const href = ($a.length ? $a.attr("href") : "") || $el.attr("href") || "";
+  let m = href.match(/acao=([a-z_]+)/i);
+  if (m) {
+    return m[1];
+  }
+
+  const img = $el.find("img").first();
+  if (img.length && img.attr("acao")) {
+    return img.attr("acao");
+  }
+
+  const alt =
+    (img.length && (img.attr("alt") || img.attr("title"))) ||
+    ($a.length && ($a.attr("title") || $a.attr("data-tooltip_titulo"))) ||
+    $el.attr("title") ||
+    "";
+  return (alt || "").trim();
+}
+
+/**
+ * Categoria semântica (editar/assinar/conferir/devolver/lembrete) ou null se
+ * não for essencial. "Editar" das sentenças (AJAX) é reconhecido pelo
+ * alt/tooltip "Editar minuta".
+ */
+function EPT_getActionCategory(action, aEl) {
+  if (action && EPT_ACTION_CATEGORY[action]) {
+    return EPT_ACTION_CATEGORY[action];
+  }
+
+  const labels = [];
+  if (action) {
+    labels.push(action);
+  }
+  if (aEl) {
+    const $el = $(aEl);
+    const $a = $el.is("a") ? $el : $el.find("a").first();
+    const img = $el.find("img").first();
+    if (img.length) {
+      labels.push(img.attr("alt") || "", img.attr("title") || "");
+    }
+    if ($a.length) {
+      labels.push($a.attr("title") || "", $a.attr("data-tooltip_titulo") || "");
+    }
+    labels.push($el.attr("title") || "");
+  }
+
+  if (labels.join(" ").toLowerCase().includes("editar minuta")) {
+    return "editar";
+  }
+
+  return null;
+}
+
+/** Whitelist do handoff: a ação essencial deve ser mantida no rodapé curado. */
+function EPT_isEssentialAction(action, aEl) {
+  return EPT_getActionCategory(action, aEl) !== null;
+}
+
+/** Cria o link "edição rápida" (handler delegado por .ept-btn-edicao-rapida). */
+function EPT_createQuickEditLink() {
+  return $("<a>", {
+    href: "#",
+    class: "infraLink ept-btn-edicao-rapida",
+    text: "edição rápida",
+    title: "Editar minuta inline",
+    "data-ept-quick-edit": "true",
+  });
+}
+
 // Utility function to get data from chrome storage
 async function getStorageData(key) {
     return new Promise((resolve, reject) => {
@@ -878,6 +1148,7 @@ async function getStorageData(key) {
       "ept_tabletext",
       "ept_edit",
       "ept_tablestyle",
+      "ept_keep_actions",
     ]);
   
     // If extension is not enabled, log message and terminate
@@ -956,6 +1227,9 @@ async function getStorageData(key) {
       // Handle text setting
       const ept_tabletextData = await getStorageData("ept_tabletext");
       const ept_tablestyleData = await getStorageData("ept_tablestyle");
+      // Flag "Manter botões originais" (padrão OFF: undefined -> false).
+      const ept_keepActionsData = await getStorageData("ept_keep_actions");
+      const keepActions = !!ept_keepActionsData.ept_keep_actions;
   
       // console.log(ept_tabletextData);
   
@@ -976,6 +1250,13 @@ async function getStorageData(key) {
         //2. adiciona coluna TEXTO
         //3. fetch para cada URL usada no mouse hover do link com o código da minuta
         //4. Agregar o resultado filtrado na <td> (coluna) de texto
+
+        // Mapa de colunas derivado do cabeçalho (independe da seleção de
+        // critérios de exibição). Calculado uma única vez, antes do laço.
+        const { map: columnMap, totalCols } = EPT_buildColumnMap(
+          document.getElementById("tabelaMinutas")
+        );
+
         $("#tabelaMinutas tr:not(.infraTrOrdenacao)").each(function () {
           let row = $(this);
   
@@ -989,85 +1270,100 @@ async function getStorageData(key) {
                                               </tbody>
                                           </table>`;
   
-          //substituindo a coluna "código" por "Preview"
-          let th = row.children("th:eq(2)");
-          if (th) {
-            //primeira linha (título das colunas)
-            // Remove todas as colunas de cabeçalho exceto checkbox e preview
-            row.children('th:eq(1),th:eq(3),th:eq(4),th:eq(5),th:eq(6),th:eq(7),th:eq(8),th:eq(9),th:eq(10),th:eq(11),th:eq(12),th:eq(13),th:eq(14),th:eq(15),th:eq(16),th:eq(17),th:eq(18),th:eq(19),th:eq(20)').remove();
-            th.attr("width", "70%").html(lThContent);
-          }
-          // console.log("row 1: ", row.children("td:eq(1)").text());
-          // console.log("row 2: ", row.children("td:eq(2)").text());
-          // console.log("row 3: ", row.children("td:eq(3)").text());
-          // console.log("row 4: ", row.children("td:eq(4)").text());
-          // console.log("row 5: ", row.children("td:eq(5)").text());
-          // console.log("row 6: ", row.children("td:eq(6)").text());
-          // console.log("row 7: ", row.children("td:eq(7)").text());
-          // console.log("row 8: ", row.children("td:eq(8)").text());
-          // console.log("row 9: ", row.children("td:eq(9)").text());
-  
-          let tdProcesso = row.children("td:eq(5)");
-          let linkProcesso = tdProcesso.children("a");
-          let processo = tdProcesso.html();
-  
-          let tdOrgao = row.children("td:eq(3)");
-          let orgao = tdOrgao.text();
-  
-          let servidor = "";
-          servidor = row.children("td:eq(7)").text();
-          // if (tdServidor) {
-          //   let labelServidor = tdServidor.children("label");
-          //   if (labelServidor) {
-          //     let onMouseServidor = labelServidor.attr("onmouseover");
-          //     if (onMouseServidor) {
-          //       servidor = onMouseServidor.split("('").pop().split("<br/>")[0];
-          //       //servidor = onMouseServidor;
-          //     }
-          //   }
-          // }
-  
-          let status = "";
-          let tdStatus = row.children("td:eq(9)");
-          let labelStatus = tdStatus.children("label");
-          status = labelStatus.text().replace(/ *\([^)]*\) */g, "");
-  
-          let tdCriacao = row.children("td:eq(8)");
-          let criacao = tdCriacao.text();
-  
-          let divBotoes = row.find("#divListaRecursosMinuta");
-          //por ora, mantendo apenas os botões de assinar, devolver, conferir, editar e lembretes
-          divBotoes.children().each(function () {
-            if (
-              !$(this).attr("href") ||
-              ($(this).attr("href").includes("acao=minuta_assinar") === false &&
-                $(this).attr("href").includes("acao=minuta_devolver") === false &&
-                $(this).attr("href").includes("acao=minuta_conferir") === false &&
-                $(this)
-                  .attr("href")
-                  .includes("acao=minuta_verificar_agendamento") === false &&
-                $(this)
-                  .attr("href")
-                  .includes("acao=minuta_lembrete_cadastrar") === false)
-            ) {
-              $(this).css("display", "none");
+          // Cabeçalho da tabela (linha que possui <th>): mantém apenas
+          // checkbox + "Prévia" (coluna Código) usando o mapa de colunas.
+          const headerThs = row.children("th");
+          if (headerThs.length) {
+            const codigoIdx =
+              typeof columnMap.codigo === "number" ? columnMap.codigo : 2;
+            const checkboxIdx =
+              typeof columnMap.checkbox === "number" ? columnMap.checkbox : 0;
+            const previewTh = headerThs.eq(codigoIdx);
+            if (previewTh.length) {
+              const keepHeaderIdx = [checkboxIdx, codigoIdx];
+              // Modo "Manter botões originais": preserva também o <th>
+              // "Recursos disponíveis" (última coluna).
+              const recursosIdx =
+                typeof columnMap.recursos === "number" ? columnMap.recursos : -1;
+              if (keepActions && recursosIdx !== -1) {
+                keepHeaderIdx.push(recursosIdx);
+              }
+              headerThs.each(function (i) {
+                if (keepHeaderIdx.indexOf(i) === -1) {
+                  $(this).remove();
+                }
+              });
+              previewTh.attr("width", "70%").html(lThContent);
+              // No modo ON, empurra "Recursos" para a última coluna alinhando
+              // com a célula preservada da linha de dados.
+              if (keepActions && recursosIdx !== -1 && totalCols > 2) {
+                previewTh.attr("colspan", totalCols - 2);
+              }
             }
-          });
-
-          // Adiciona botão de edição rápida ao final da lista de recursos
-          if (!divBotoes.find(".ept-btn-edicao-rapida").length) {
-            const quickEditButton = $("<a>", {
-              href: "#",
-              class: "infraLink ept-btn-edicao-rapida",
-              text: "edição rápida",
-              title: "Editar minuta inline",
-              "data-ept-quick-edit": "true",
-            });
-            divBotoes.append(quickEditButton);
+            return;
           }
 
-          //armazenando os botões...
-          let botoes = divBotoes.html();
+          // ----- Linhas de dados -----
+          let processo = EPT_getCellText(row, columnMap, "processo", { html: true });
+          let orgao = EPT_getCellText(row, columnMap, "orgao");
+          let servidor = EPT_getCellText(row, columnMap, "usuario");
+
+          let status = EPT_getCellText(row, columnMap, "status");
+          if (status) {
+            status = status.replace(/ *\([^)]*\) */g, "");
+          }
+
+          let criacao = EPT_getCellText(row, columnMap, "criacao");
+
+          // Âncora estrutural do conteúdo (coluna Código, sempre presente).
+          let contentTd = row.find(".linkMinuta").first().closest("td");
+          if (!contentTd.length && typeof columnMap.codigo === "number") {
+            contentTd = row.children("td").eq(columnMap.codigo);
+          }
+
+          let divBotoes = row.find("#divListaRecursosMinuta");
+          // Âncora da célula original de recursos (modo "Manter botões
+          // originais"). Capturada antes de qualquer mutação.
+          let recursosTd = divBotoes.closest("td");
+          if (!recursosTd.length) {
+            recursosTd = row.children("td").last();
+          }
+
+          let botoes = "";
+          let quickEditHtml = "";
+
+          if (keepActions) {
+            // Modo ON: preserva a célula original intacta (todos os botões,
+            // inclusive Conferir). A "edição rápida" vai standalone no rodapé.
+            quickEditHtml = EPT_createQuickEditLink()[0].outerHTML;
+          } else {
+            // Modo curado: mantém só as ações essenciais (editar, assinar,
+            // devolver, lembrete), detectadas por href, atributo `acao` do
+            // <img> ou alt/tooltip. Marca cada essencial com data-ept-action
+            // para estilização independente do href (corrige Editar AJAX).
+            divBotoes.children().each(function () {
+              const $child = $(this);
+              if ($child.hasClass("ept-btn-edicao-rapida")) {
+                return;
+              }
+              const $anchor = $child.is("a") ? $child : $child.find("a").first();
+              const action = EPT_getButtonAction(this);
+              const category = EPT_getActionCategory(action, this);
+              if (category) {
+                ($anchor.length ? $anchor : $child).attr("data-ept-action", category);
+              } else {
+                $child.css("display", "none");
+              }
+            });
+
+            // Adiciona botão de edição rápida ao final da lista de recursos
+            if (!divBotoes.find(".ept-btn-edicao-rapida").length) {
+              divBotoes.append(EPT_createQuickEditLink());
+            }
+
+            //armazenando os botões...
+            botoes = divBotoes.html();
+          }
   
           let l = row.find(".linkMinuta");
           let urlPreview = l.attr("hrefpreview");
@@ -1096,109 +1392,48 @@ async function getStorageData(key) {
                 'section[data-estilo_padrao="paragrafo"]'
               );
               
-              // Função para truncar conteúdo HTML preservando estrutura
-              function truncateContent(htmlContent, maxChars = 1000) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = htmlContent;
-                const textContent = tempDiv.textContent || tempDiv.innerText || '';
-                
-                if (textContent.length <= maxChars) {
-                  return {
-                    content: htmlContent,
-                    isTruncated: false,
-                    fullContent: htmlContent
-                  };
-                }
-                
-                // Criar uma versão truncada removendo elementos inteiros quando necessário
-                const clonedDiv = tempDiv.cloneNode(true);
-                let charCount = 0;
-                let elementsToKeep = [];
-                
-                // Percorrer todos os elementos filhos diretos
-                const children = Array.from(clonedDiv.children);
-                
-                for (let i = 0; i < children.length; i++) {
-                  const element = children[i];
-                  const elementText = element.textContent || element.innerText || '';
-                  
-                  if (charCount + elementText.length <= maxChars) {
-                    // Este elemento cabe inteiro
-                    charCount += elementText.length;
-                    elementsToKeep.push(element.outerHTML);
-                  } else {
-                    // Este elemento faria ultrapassar o limite
-                    const remainingChars = maxChars - charCount;
-                    
-                    if (remainingChars > 50) { // Só trunca se sobrar um espaço razoável
-                      // Truncar o texto deste elemento
-                      const tempElement = element.cloneNode(true);
-                      const walker = document.createTreeWalker(
-                        tempElement,
-                        NodeFilter.SHOW_TEXT,
-                        null,
-                        false
-                      );
-                      
-                      let usedChars = 0;
-                      let textNode;
-                      
-                      while (textNode = walker.nextNode()) {
-                        const nodeText = textNode.textContent;
-                        if (usedChars + nodeText.length <= remainingChars) {
-                          usedChars += nodeText.length;
-                        } else {
-                          // Truncar este nó de texto
-                          const allowedChars = remainingChars - usedChars;
-                          textNode.textContent = nodeText.substring(0, allowedChars);
-                          // Remover todos os nós de texto seguintes
-                          let nextNode;
-                          while (nextNode = walker.nextNode()) {
-                            nextNode.textContent = '';
-                          }
-                          break;
-                        }
-                      }
-                      
-                      elementsToKeep.push(tempElement.outerHTML);
-                    }
-                    // Parar aqui - não incluir mais elementos
-                    break;
-                  }
-                }
-                
-                return {
-                  content: elementsToKeep.join(''),
-                  isTruncated: true,
-                  fullContent: htmlContent
-                };
-              }
-              
               const sectionContent = EPT_buildPreviewMarkup(section.innerHTML, 1000);
 
-              //let section = htmlObject.querySelector('body');
+              // Omissão limpa: status só entra se existir (sem <br> solto).
+              const statusLinha = status ? `<br>${status}` : "";
               let cabecalho = `<div style="display:flex; justify-content: space-between; margin-bottom: 30px; margin-top: 15px;">
                                                       <span>${processo}</span> 
-                                                      <span align="center">${titulo}<br>${status}&nbsp;</span>
+                                                      <span align="center">${titulo}${statusLinha}&nbsp;</span>
                                                       <span>${orgao}</span>
                                                   </div>`;
 
+              // Omissão limpa de servidor/criação (sem ", em " órfão).
+              let assinaturaInfo = "";
+              if (servidor && criacao) {
+                assinaturaInfo = `${servidor}, em ${criacao}`;
+              } else if (servidor) {
+                assinaturaInfo = servidor;
+              } else if (criacao) {
+                assinaturaInfo = `em ${criacao}`;
+              }
+
+              // Modo ON: rodapé só com "edição rápida" standalone (sem clonar
+              // #divListaRecursosMinuta, que permanece único na célula original).
+              // Modo OFF: rodapé com os botões curados dentro do #divListaRecursosMinuta.
+              let acoesHtml = keepActions
+                ? `<div class="ept-acoes-minuta" style="margin:0">${quickEditHtml}</div>`
+                : `<div id="divListaRecursosMinuta" class="ept-acoes-minuta" style="margin:0">${botoes}</div>`;
+
               let footer = `<div style="display:flex;justify-content:space-between;margin-bottom: 5px;margin-top: 30px;">
-                                                  <div id="divListaRecursosMinuta" style="margin:0">${botoes}</div>
-                                                  <span style="font-size: 0.8em;">${servidor}, em ${criacao}</span> 
+                                                  ${acoesHtml}
+                                                  <span style="font-size: 0.8em;">${assinaturaInfo}</span> 
                                               </div>`;
-              row
-                .children("td:eq(2)")
+              contentTd
                 .attr("align", "left")
-                .attr("colspan", "12")
                 .css("padding", "20px")
                 .html(cabecalho + sectionContent + footer);
-              // Remove todas as colunas exceto a primeira (checkbox) e a segunda (que se torna o conteúdo expandido)
-              row
-                .children(
-                  "td:eq(1),td:eq(3),td:eq(4),td:eq(5),td:eq(6),td:eq(7),td:eq(8),td:eq(9),td:eq(10),td:eq(11),td:eq(12),td:eq(13),td:eq(14),td:eq(15),td:eq(16),td:eq(17),td:eq(18),td:eq(19),td:eq(20)"
-                )
-                .remove();
+
+              // Colapsa mantendo checkbox + conteúdo (+ célula de recursos no
+              // modo ON), removendo as demais colunas. Independe dos critérios.
+              EPT_collapseRow(
+                row,
+                keepActions ? { contentTd, keepRecursosTd: recursosTd } : { contentTd }
+              );
                 
                              // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
                originalLinks.forEach(function(linkData) {
@@ -1225,10 +1460,11 @@ async function getStorageData(key) {
             });
           } else {
             // SE NÃO HÁ URLPREVIEW, AINDA PRESERVAR OS LINKS ORIGINAIS
-            // Remove todas as colunas exceto a primeira (checkbox) e a segunda (que se torna o conteúdo expandido)
-            row
-              .children("td:eq(1),td:eq(3),td:eq(4),td:eq(5),td:eq(6),td:eq(7),td:eq(8),td:eq(9),td:eq(10),td:eq(11),td:eq(12),td:eq(13),td:eq(14),td:eq(15),td:eq(16),td:eq(17),td:eq(18),td:eq(19),td:eq(20)")
-              .remove();
+            // Colapsa mantendo checkbox + conteúdo (+ recursos no modo ON).
+            EPT_collapseRow(
+              row,
+              keepActions ? { contentTd, keepRecursosTd: recursosTd } : { contentTd }
+            );
             
             // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
             originalLinks.forEach(function(linkData) {

@@ -13,12 +13,13 @@
  * .ept-minuta-text - Conteúdo do texto da minuta
  * .ept-minuta-footer - Rodapé com botões e informações do servidor
  * 
- * BOTÕES ESPECÍFICOS:
- * .ept-minuta-footer a[href*="minuta_assinar"] - Botão Assinar
- * .ept-minuta-footer a[href*="minuta_devolver"] - Botão Devolver  
- * .ept-minuta-footer a[href*="minuta_conferir"] - Botão Conferir
- * .ept-minuta-footer a[href*="minuta_verificar_agendamento"] - Botão Editar
- * .ept-minuta-footer a[href*="minuta_lembrete_cadastrar"] - Botão Lembretes
+ * BOTÕES ESPECÍFICOS (chave estável via data-ept-action, setada no ept.js;
+ * funciona para links normais e botões AJAX):
+ * .ept-minuta-footer a[data-ept-action="assinar"] - Botão Assinar
+ * .ept-minuta-footer a[data-ept-action="devolver"] - Botão Devolver
+ * .ept-minuta-footer a[data-ept-action="editar"] - Botão Editar
+ * .ept-minuta-footer a[data-ept-action="lembrete"] - Botão Lembretes
+ * (Conferir fica oculto no rodapé curado; disponível na célula original.)
  * 
  * button[onclick*="window.location.reload"] - Botão "Retornar tabela"
  * 
@@ -39,8 +40,8 @@
 /* BOTÕES COMPACTOS E MODERNOS                    */
 /* =============================================== */
 
-/* Reset básico para a div de botões */
-.ept-minuta-footer #divListaRecursosMinuta {
+/* Reset básico para a div de botões (curado e modo "manter botões originais"). */
+.ept-minuta-footer .ept-acoes-minuta {
     display: flex !important;
     gap: 4px !important;
     align-items: center !important;
@@ -49,7 +50,7 @@
 }
 
 /* Estilo base para todos os links de botão */
-.ept-minuta-footer #divListaRecursosMinuta a {
+.ept-minuta-footer .ept-acoes-minuta a {
     display: inline-flex !important;
     align-items: center !important;
     padding: 2px 6px !important;
@@ -68,93 +69,94 @@
 }
 
 /* Remove a imagem original e substitui por texto */
-.ept-minuta-footer #divListaRecursosMinuta a img {
+.ept-minuta-footer .ept-acoes-minuta a img {
     display: none !important;
 }
 
-/* Adiciona texto aos botões usando ::after */
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"]::after {
+/* Rótulo de cada botão via ::after (chave = data-ept-action, setado no ept.js,
+   funciona tanto para links normais quanto para botões AJAX). */
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"]::after {
     content: "Editar" !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"]::after {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]::after {
     content: "Assinar" !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"]::after {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"]::after {
     content: "Devolver" !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"]::after {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"]::after {
     content: "Lembrete" !important;
 }
 
 /* Botão Editar - Azul simples */
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"] {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
     background: #2196F3 !important;
     color: white !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_verificar_agendamento"]:hover {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"]:hover {
     background: #1976D2 !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3) !important;
 }
 
 /* Botão Assinar - Verde simples */
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"] {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"] {
     background: #4CAF50 !important;
     color: white !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_assinar"]:hover {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]:hover {
     background: #388E3C !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3) !important;
 }
 
 /* Botão Devolver - Vermelho simples */
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"] {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"] {
     background: #F44336 !important;
     color: white !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_devolver"]:hover {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"]:hover {
     background: #D32F2F !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3) !important;
 }
 
 /* Botão Lembrete - Amarelo */
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"] {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"] {
     background: #f8f880 !important;
     color: #333 !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a[href*="minuta_lembrete"]:hover {
+.ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"]:hover {
     background: #f5f548 !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(248, 248, 128, 0.4) !important;
 }
 
-/* Esconde todos os outros botões que não são os 4 principais */
-.ept-minuta-footer #divListaRecursosMinuta a:not([href*="minuta_verificar_agendamento"]):not([href*="minuta_assinar"]):not([href*="minuta_devolver"]):not([href*="minuta_lembrete"]):not(.ept-btn-edicao-rapida) {
+/* Esconde todos os outros botões que não são essenciais */
+.ept-minuta-footer .ept-acoes-minuta a:not([data-ept-action]):not(.ept-btn-edicao-rapida) {
     display: none !important;
 }
 
 /* Esconde labels vazias ou desnecessárias */
-.ept-minuta-footer #divListaRecursosMinuta label {
+.ept-minuta-footer .ept-acoes-minuta label {
     display: contents !important;
 }
 
 /* Estilo para responsividade */
 @media (max-width: 768px) {
-    .ept-minuta-footer #divListaRecursosMinuta {
+    .ept-minuta-footer .ept-acoes-minuta {
         flex-direction: column !important;
         align-items: stretch !important;
     }
     
-    .ept-minuta-footer #divListaRecursosMinuta a {
+    .ept-minuta-footer .ept-acoes-minuta a {
         justify-content: center !important;
         margin-bottom: 2px !important;
     }
@@ -163,14 +165,14 @@
 /* Adicione seus estilos personalizados abaixo */ 
 
 /* Botão Edição Rápida */
-.ept-minuta-footer #divListaRecursosMinuta a.ept-btn-edicao-rapida {
+.ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
     background: #4a3358 !important;
     color: white !important;
     margin-left: 12px !important;
     font-weight: 600 !important;
 }
 
-.ept-minuta-footer #divListaRecursosMinuta a.ept-btn-edicao-rapida:hover {
+.ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida:hover {
     background: #352245 !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 4px rgba(74, 51, 88, 0.35) !important;

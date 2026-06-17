@@ -10,7 +10,9 @@ function applyTableClasses() {
 }
 
 function enhanceMinutaContent(row) {
-  const contentCell = row.querySelector('td[colspan="12"]');
+  // Célula de conteúdo é a única com colspan (definido dinamicamente por
+  // EPT_collapseRow conforme o número de colunas). Não depender de um valor fixo.
+  const contentCell = row.querySelector('td[colspan]');
   if (!contentCell) return;
 
   debugLog('EPT: Aplicando classes à minuta...');

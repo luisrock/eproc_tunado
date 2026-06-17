@@ -352,7 +352,7 @@
                 <span class="logo-ep">EP</span><span class="logo-t">T</span>
             </div>
             <div class="tagline">Eproc Tunado - Novidades e Atualizações</div>
-            <div class="version-badge">Versão 0.0.11</div>
+            <div class="version-badge">Versão 0.0.12</div>
         </div>
 
         <!-- Content -->
@@ -363,6 +363,19 @@
                     <span class="section-icon">🎉</span>
                     Novidades desta Versão
                 </h2>
+
+                <div class="changelog-item">
+                    <div class="changelog-header">
+                        <span class="changelog-version">v0.0.12</span>
+                        <span class="changelog-date">Junho 2026</span>
+                    </div>
+                    <ul class="changelog-list">
+                        <li><strong>Nova opção "Manter botões originais":</strong> quando ligada, preserva a célula de "Recursos disponíveis" com todos os botões originais (inclusive "Conferir"/"Encaminhar para conferência"), mantendo a "edição rápida" no rodapé do texto. Desligada por padrão</li>
+                        <li><strong>Tabela independente das colunas:</strong> a listagem de minutas é reconstruída a partir do cabeçalho (não mais por posição fixa). Funciona com qualquer combinação de "critérios de exibição", sem dados trocados, células vazias ou <code>undefined</code></li>
+                        <li><strong>Fim do botão duplicado:</strong> corrigido o <code>divListaRecursosMinuta</code> duplicado que aparecia com muitas colunas marcadas</li>
+                        <li><strong>Botão "Editar" das sentenças:</strong> detecção de ações mais robusta (por <code>href</code>, atributo <code>acao</code> do ícone ou tooltip), fazendo o "Editar" via AJAX voltar a aparecer no rodapé</li>
+                    </ul>
+                </div>
 
                 <div class="changelog-item">
                     <div class="changelog-header">
@@ -445,6 +458,7 @@
                     <li><strong>Clique Automático:</strong> Na edição da minuta, confirma manutenção de agendamento automaticamente</li>
                     <li><strong>Edição rápida:</strong> Minuta editável em um modal que se abre por sobre a própria tabela de minutas</li>
                     <li><strong>Interface Aprimorada:</strong> Aplica estilização moderna à tabela de minutas</li>
+                    <li><strong>Manter botões originais:</strong> Preserva a célula de "Recursos disponíveis" com todos os botões originais (desligada por padrão)</li>
                 </ul>
             </div>
 

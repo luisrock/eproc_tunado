@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-0.0.11-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-0.0.12-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -138,10 +138,13 @@ O EPT aplica automaticamente classes CSS aos elementos da tabela de minutas, per
 ```
 
 #### Botões Específicos
+A chave estável `data-ept-action` é aplicada pelo `ept.js` (funciona para links normais e botões AJAX):
 ```css
-.ept-minuta-footer a[href*="minuta_assinar"]     /* Botão Assinar */
-.ept-minuta-footer a[href*="minuta_devolver"]    /* Botão Devolver */
-.ept-minuta-footer a[href*="minuta_conferir"]    /* Botão Conferir */
+.ept-minuta-footer a[data-ept-action="assinar"]   /* Botão Assinar */
+.ept-minuta-footer a[data-ept-action="devolver"]  /* Botão Devolver */
+.ept-minuta-footer a[data-ept-action="editar"]    /* Botão Editar */
+.ept-minuta-footer a[data-ept-action="lembrete"]  /* Botão Lembrete */
+/* "Conferir" fica oculto no rodapé curado; use a opção "Manter botões originais". */
 ```
 
 ### Exemplos Práticos
@@ -164,7 +167,7 @@ O EPT aplica automaticamente classes CSS aos elementos da tabela de minutas, per
 
 #### Botões Estilizados
 ```css
-.ept-minuta-footer a[href*="minuta_assinar"] {
+.ept-minuta-footer a[data-ept-action="assinar"] {
     background: #4CAF50 !important;
     color: white !important;
     padding: 8px 16px !important;
@@ -172,7 +175,7 @@ O EPT aplica automaticamente classes CSS aos elementos da tabela de minutas, per
     text-decoration: none !important;
 }
 
-.ept-minuta-footer a[href*="minuta_devolver"] {
+.ept-minuta-footer a[data-ept-action="devolver"] {
     background: #f44336 !important;
     color: white !important;
     padding: 8px 16px !important;
@@ -394,7 +397,14 @@ Este projeto é desenvolvido para uso pessoal e profissional de magistrados e se
 
 ## 🔄 Changelog
 
-### v0.0.11 (atual)
+### v0.0.12 (atual)
+- ✅ **Independência de colunas:** a linha da tabela de minutas passa a ser reconstruída a partir do cabeçalho (mapa de colunas), funcionando com qualquer combinação de "critérios de exibição" — sem dados trocados, células vazias ou `undefined`.
+- ✅ **Fim do `divListaRecursosMinuta` duplicado** que ocorria com muitas colunas marcadas.
+- ✅ **Detecção robusta de ações:** botões reconhecidos por `href`, atributo `acao` do `<img>` ou `alt`/tooltip; o "Editar" das sentenças (AJAX) volta a aparecer no rodapé curado.
+- ✅ **Nova opção "Manter botões originais"** (`ept_keep_actions`, padrão OFF): preserva a célula original de "Recursos disponíveis" com todos os botões (inclusive "Conferir"), mantendo a "edição rápida" no rodapé do texto.
+- ✅ **Estilização por `data-ept-action`** nos botões do rodapé (em vez de seletores por `href`), cobrindo links normais e botões AJAX.
+
+### v0.0.11
 - ✅ **Language Tools e similares:** remoção de `spellcheck="false"` no editor inline para permitir revisão gramatical no modal.
 - ✅ **Acessibilidade:** `role="textbox"` e `aria-labelledby` no campo de edição rápida.
 - ✅ **Tooltips Infra:** após reconstruir a linha ou atualizar o preview, chamada a `infraTooltipOcultar` quando existir, reduzindo balões presos na listagem condensada.
