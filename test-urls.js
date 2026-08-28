@@ -25,6 +25,8 @@ const urls = [
   'https://eproc2g.tjsp.jus.br',
   'https://eproc1g.tjmg.jus.br',
   'https://eproc2g.tjmg.jus.br',
+  'https://eproc1g.tjpr.jus.br',
+  'https://eproc2g.tjpr.jus.br',
 ];
 
 // Função para testar uma URL

@@ -168,6 +168,8 @@
             position: relative;
             color: var(--color-text-secondary);
             line-height: 1.6;
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
 
         .changelog-list li::before {
@@ -177,6 +179,14 @@
             color: var(--color-success);
             font-weight: 700;
             font-size: 1.125rem;
+        }
+
+        .tribunais-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(6, auto);
+            grid-auto-flow: column;
+            column-gap: 24px;
         }
 
         /* Call to Action */
@@ -333,6 +343,12 @@
                 padding: 24px;
             }
 
+            .tribunais-list {
+                grid-template-columns: 1fr;
+                grid-template-rows: none;
+                grid-auto-flow: row;
+            }
+
             .cta-buttons {
                 flex-direction: column;
             }
@@ -352,7 +368,7 @@
                 <span class="logo-ep">EP</span><span class="logo-t">T</span>
             </div>
             <div class="tagline">Eproc Tunado - Novidades e Atualizações</div>
-            <div class="version-badge">Versão 0.0.12</div>
+            <div class="version-badge">Versão 1.0.0</div>
         </div>
 
         <!-- Content -->
@@ -363,6 +379,24 @@
                     <span class="section-icon">🎉</span>
                     Novidades desta Versão
                 </h2>
+
+                <div class="changelog-item">
+                    <div class="changelog-header">
+                        <span class="changelog-version">v1.0.0</span>
+                        <span class="changelog-date">Agosto 2026</span>
+                    </div>
+                    <ul class="changelog-list">
+                        <li><strong>Nova aparência da lista de minutas:</strong> cartões mais limpos, leitura mais confortável, botões de ação agrupados e intervalo maior entre as minutas</li>
+                        <li><strong>Lista zebrada:</strong> minutas pares com um lavado discreto, para facilitar a leitura em telas grandes</li>
+                        <li><strong>Mais ações em cada minuta:</strong> um link ao lado dos botões revela ou esconde os ícones originais daquela minuta (Conferir e demais recursos), sem alterar as ações do rodapé</li>
+                        <li><strong>Texto na medida certa:</strong> em telas grandes o conteúdo ganha recuo nas laterais; em celular e tablet permanece na largura da tela</li>
+                        <li><strong>Manter botões originais:</strong> no popup, liga as minutas já com os ícones extras visíveis; cada uma continua podendo ocultá-los pelo link “Mais ações”</li>
+                        <li><strong>Retunar no cabeçalho:</strong> o botão para recarregar a lista fica no canto direito da primeira linha, junto do seletor de minutas</li>
+                        <li><strong>Menos opções, mesmo resultado:</strong> o visual novo passa a valer sempre que a visualização de texto estiver ligada, sem interruptor extra</li>
+                        <li><strong>TJPR:</strong> passa a funcionar no eproc do Tribunal de Justiça do Paraná, na 1ª e na 2ª instâncias</li>
+                        <li><strong>Minuta em edição:</strong> ao bloquear a linha (fundo laranja e cadeado), o cartão EPT é reaplicado com os dados básicos e o texto “em edição”, sem quebrar o layout e sem recarregar a lista</li>
+                    </ul>
+                </div>
 
                 <div class="changelog-item">
                     <div class="changelog-header">
@@ -457,8 +491,8 @@
                     <li><strong>Visualização de Texto:</strong> Apresenta conteúdo da minuta na listagem</li>
                     <li><strong>Clique Automático:</strong> Na edição da minuta, confirma manutenção de agendamento automaticamente</li>
                     <li><strong>Edição rápida:</strong> Minuta editável em um modal que se abre por sobre a própria tabela de minutas</li>
-                    <li><strong>Interface Aprimorada:</strong> Aplica estilização moderna à tabela de minutas</li>
-                    <li><strong>Manter botões originais:</strong> Preserva a célula de "Recursos disponíveis" com todos os botões originais (desligada por padrão)</li>
+                    <li><strong>Mais ações:</strong> Em cada minuta, um link ao lado dos botões revela ou esconde os ícones originais do eproc</li>
+                    <li><strong>Manter botões originais:</strong> Abre a lista já com os ícones extras visíveis; cada minuta pode ocultá-los pelo link “Mais ações”</li>
                 </ul>
             </div>
 
@@ -469,9 +503,9 @@
                     Tribunais Suportados
                 </h2>
                 <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
-                    A extensão funciona em 21 sistemas eproc de tribunais federais e estaduais, incluindo:
+                    A extensão funciona em 23 sistemas eproc de tribunais federais e estaduais, incluindo:
                 </p>
-                <ul class="changelog-list" style="columns: 2; column-gap: 24px;">
+                <ul class="changelog-list tribunais-list">
                     <li>JFRJ - Rio de Janeiro</li>
                     <li>JFES - Espírito Santo</li>
                     <li>TRF2, TRF4, TRF6</li>
@@ -482,6 +516,7 @@
                     <li>TJRJ - Rio de Janeiro</li>
                     <li>TJSP - São Paulo</li>
                     <li>TJMG - Minas Gerais</li>
+                    <li>TJPR - Paraná</li>
                 </ul>
             </div>
         </div>

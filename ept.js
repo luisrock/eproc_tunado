@@ -970,6 +970,14 @@ function EPT_buildColumnMap(table) {
   return result;
 }
 
+// Mapa/colunas da listagem nativa (antes do colapso EPT). Reusado quando o
+// eproc reconstrói uma <tr> via AJAX (bloqueio/desbloqueio de minuta).
+let EPT_minutasColumnMap = {};
+let EPT_minutasTotalCols = 0;
+let EPT_suppressTableObserver = 0;
+const EPT_pendingFixRows = new Set();
+let EPT_fixRowsTimer = null;
+
 /**
  * Texto (ou HTML, via options.html) da célula de `row` na coluna `key`.
  * Retorna "" se a coluna não existir — nunca undefined.
@@ -1002,7 +1010,14 @@ function EPT_collapseRow(row, options) {
   }
 
   const allTds = $row.children("td");
-  const totalCols = allTds.length;
+  const storedCols = parseInt($row.attr("data-ept-total-cols"), 10);
+  const totalCols =
+    options.totalCols > 0
+      ? options.totalCols
+      : !isNaN(storedCols) && storedCols > 0
+        ? storedCols
+        : allTds.length;
+  $row.attr("data-ept-total-cols", totalCols);
 
   const checkboxTd = $row.find(".infraCheckbox").closest("td");
   const keepCheckbox = checkboxTd.length ? checkboxTd.first() : allTds.first();
@@ -1030,6 +1045,388 @@ function EPT_collapseRow(row, options) {
   const keptOthers = $row.children("td").length - 1;
   const colspan = Math.max(1, totalCols - keptOthers);
   contentTd.attr("colspan", colspan);
+}
+
+function EPT_withSuppressedTableObserver(fn) {
+  EPT_suppressTableObserver++;
+  try {
+    fn();
+  } finally {
+    // O MutationObserver dispara depois da pilha atual; só então liberar.
+    setTimeout(function () {
+      EPT_suppressTableObserver = Math.max(0, EPT_suppressTableObserver - 1);
+    }, 0);
+  }
+}
+
+function EPT_hasCadeado(tr) {
+  return !!(tr && tr.querySelector && tr.querySelector('img[src*="cadeado.gif"]'));
+}
+
+/** Placeholder "em edição" só com cadeado nativo — o laranja sozinho sobra após o desbloqueio. */
+function EPT_isLinhaEmEdicao(tr) {
+  return EPT_hasCadeado(tr);
+}
+
+function EPT_clearEdicaoHighlight(tr) {
+  if (!tr || typeof tr.removeAttribute !== "function") {
+    return;
+  }
+  const bgcolor = (tr.getAttribute("bgcolor") || "").trim().toLowerCase();
+  if (bgcolor === "#ffaa00") {
+    tr.removeAttribute("bgcolor");
+  }
+  if (tr.style) {
+    const bg = (tr.style.backgroundColor || "").replace(/\s+/g, "");
+    if (bg === "rgb(255,170,0)" || bg.toLowerCase() === "#ffaa00") {
+      tr.style.backgroundColor = "";
+    }
+  }
+  tr.removeAttribute("data-ept-em-edicao");
+}
+
+function EPT_isEptCardRow(tr) {
+  if (!tr || typeof tr.querySelector !== "function") {
+    return false;
+  }
+  return !!(
+    tr.querySelector(".ept-minuta-header") ||
+    tr.querySelector(".ept-minuta-footer") ||
+    tr.querySelector("[data-ept-preview-container]")
+  );
+}
+
+function EPT_formatAssinaturaInfo(servidor, criacao) {
+  if (servidor && criacao) {
+    return `${servidor}, em ${criacao}`;
+  }
+  if (servidor) {
+    return servidor;
+  }
+  if (criacao) {
+    return `em ${criacao}`;
+  }
+  return "";
+}
+
+function EPT_collectRowMeta($row, columnMap) {
+  let processo = EPT_getCellText($row, columnMap, "processo", { html: true });
+  if (!processo) {
+    const text = $row.text() || "";
+    const m = text.match(/\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/);
+    processo = m ? m[0] : "";
+  }
+  let status = EPT_getCellText($row, columnMap, "status");
+  if (status) {
+    status = status.replace(/ *\([^)]*\) */g, "");
+  }
+  return {
+    processo: processo || "",
+    orgao: EPT_getCellText($row, columnMap, "orgao"),
+    servidor: EPT_getCellText($row, columnMap, "usuario"),
+    status: status || "",
+    criacao: EPT_getCellText($row, columnMap, "criacao"),
+    tipo: EPT_getCellText($row, columnMap, "tipo"),
+  };
+}
+
+function EPT_collectOriginalLinks($row) {
+  const originalLinks = [];
+  $row.find("a.linkMinuta").each(function () {
+    originalLinks.push({
+      href: $(this).attr("href"),
+      dataLink: $(this).data("link"),
+      hrefPreview: $(this).attr("hrefpreview"),
+    });
+  });
+  return originalLinks;
+}
+
+function EPT_restoreHiddenLinkMinuta($row, originalLinks) {
+  $row.children("a.linkMinuta").remove();
+  (originalLinks || []).forEach(function (linkData) {
+    if (linkData.href) {
+      $row.append(
+        $("<a>", {
+          href: linkData.href,
+          class: "linkMinuta",
+          "data-link": linkData.dataLink,
+          hrefpreview: linkData.hrefPreview,
+          style: "display: none; position: absolute; left: -9999px;",
+        })
+      );
+    }
+  });
+}
+
+function EPT_getRowContentTd($row, columnMap) {
+  let contentTd = $row.find("td a.linkMinuta").first().closest("td");
+  if (!contentTd.length && columnMap && typeof columnMap.codigo === "number") {
+    contentTd = $row.children("td").eq(columnMap.codigo);
+  }
+  if (!contentTd.length) {
+    contentTd = $row.children("td[colspan]").first();
+  }
+  return contentTd;
+}
+
+function EPT_getRowRecursosTd($row) {
+  let recursosTd = $row.find("#divListaRecursosMinuta").closest("td");
+  if (!recursosTd.length) {
+    recursosTd = $row.children("td.ept-recursos-originais");
+  }
+  if (!recursosTd.length) {
+    recursosTd = $row.children("td").last();
+  }
+  return recursosTd;
+}
+
+/**
+ * Reconstrói o cartão EPT de uma linha. Com options.emEdicao, usa os
+ * metadados nativos e o texto "em edição" (sem buscar o preview).
+ */
+function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
+  options = options || {};
+  const $row = $(row);
+  if ($row.children("th").length) {
+    return;
+  }
+
+  const emEdicao = !!options.emEdicao;
+  const meta = EPT_collectRowMeta($row, columnMap);
+  const contentTd = EPT_getRowContentTd($row, columnMap);
+  if (!contentTd.length) {
+    return;
+  }
+
+  let recursosTd = EPT_getRowRecursosTd($row);
+  if (recursosTd.length) {
+    recursosTd.addClass("ept-recursos-originais");
+  }
+
+  const divBotoes = $row.find("#divListaRecursosMinuta");
+  const curatedHtml = EPT_buildCuratedActionsHtml(divBotoes);
+  const moreBtnHtml = recursosTd.length
+    ? `<button type="button" class="ept-btn-mais-acoes" aria-pressed="${keepActions ? "true" : "false"}" aria-label="Mais ações" title="${keepActions ? "Ocultar outras ações" : "Mostrar outras ações"}">Mais ações</button>`
+    : "";
+
+  const originalLinks = EPT_collectOriginalLinks($row);
+  const urlPreview =
+    $row.find("a.linkMinuta").first().attr("hrefpreview") ||
+    (originalLinks[0] && originalLinks[0].hrefPreview) ||
+    "";
+
+  const applyCard = function (titulo, sectionContent) {
+    const statusLinha = meta.status ? `<br>${meta.status}` : "";
+    const assinaturaInfo = EPT_formatAssinaturaInfo(meta.servidor, meta.criacao);
+    const acoesHtml = `<div class="ept-acoes-minuta">${curatedHtml}</div>${moreBtnHtml}`;
+    const cabecalho = `<div style="display:flex; justify-content: space-between; margin-bottom: 30px; margin-top: 15px;">
+                                                      <span>${meta.processo}</span> 
+                                                      <span align="center">${titulo}${statusLinha}&nbsp;</span>
+                                                      <span>${meta.orgao}</span>
+                                                  </div>`;
+    const footer = `<div class="ept-minuta-footer" style="display:flex;justify-content:flex-start;align-items:center;width:100%;margin-bottom: 5px;margin-top: 30px;">
+                                                  ${acoesHtml}
+                                                  <span>${assinaturaInfo}</span>
+                                              </div>`;
+    EPT_withSuppressedTableObserver(function () {
+      if (emEdicao) {
+        $row.attr("data-ept-em-edicao", "true");
+      } else {
+        EPT_clearEdicaoHighlight($row[0]);
+      }
+      if (urlPreview) {
+        $row.attr("data-ept-hrefpreview", urlPreview);
+      }
+      contentTd
+        .attr("align", "left")
+        .css("padding", "20px")
+        .html(cabecalho + sectionContent + footer);
+      EPT_collapseRow($row, {
+        contentTd,
+        keepRecursosTd: recursosTd.length ? recursosTd : null,
+        totalCols: EPT_minutasTotalCols,
+      });
+      EPT_setRecursosVisible($row[0], keepActions);
+      EPT_restoreHiddenLinkMinuta($row, originalLinks);
+      if (window.EPT_TableStyler) {
+        window.EPT_TableStyler.enhanceContent($row[0]);
+      }
+      EPT_tryHideInfraTooltip();
+    });
+  };
+
+  if (emEdicao) {
+    const titulo = meta.tipo || "Minuta";
+    const sectionContent =
+      '<div class="ept-preview-container ept-minuta-em-edicao" data-ept-preview-container="true"><p>em edição</p></div>';
+    applyCard(titulo, sectionContent);
+    return;
+  }
+
+  if (urlPreview) {
+    const url = window.location.href;
+    const urlEproc = url.split("eproc/")[0] + "eproc";
+    $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
+      const htmlObject = document.createElement("div");
+      htmlObject.innerHTML = data;
+      const tituloRaw = htmlObject.querySelector("p.titulo");
+      const titulo = tituloRaw && tituloRaw.textContent ? tituloRaw.textContent : meta.tipo || "";
+      const section = htmlObject.querySelector('section[data-estilo_padrao="paragrafo"]');
+      const sectionContent = EPT_buildPreviewMarkup(section ? section.innerHTML : "", 1000);
+      applyCard(titulo, sectionContent);
+    });
+  } else {
+    EPT_withSuppressedTableObserver(function () {
+      EPT_collapseRow($row, {
+        contentTd,
+        keepRecursosTd: recursosTd.length ? recursosTd : null,
+        totalCols: EPT_minutasTotalCols,
+      });
+      EPT_setRecursosVisible($row[0], keepActions);
+      EPT_restoreHiddenLinkMinuta($row, originalLinks);
+      EPT_tryHideInfraTooltip();
+    });
+  }
+}
+
+function EPT_fixEprocMutatedRow(tr, columnMap, keepActions) {
+  if (!tr || !tr.parentNode) {
+    return;
+  }
+  const $row = $(tr);
+  const tdCount = $row.children("td").length;
+  const isCard = EPT_isEptCardRow(tr);
+  const temCadeado = EPT_hasCadeado(tr);
+  const map = columnMap || EPT_minutasColumnMap;
+
+  // Cartão intacto: o laranja pode sobrar depois do desbloqueio; o cadeado
+  // é o sinal de "ainda bloqueada". Sem cadeado + placeholder → restaurar.
+  if (isCard && tdCount <= 3) {
+    if (tr.querySelector(".ept-minuta-em-edicao") && !temCadeado) {
+      debugLog("EPT: Edição concluída no cartão, restaurando preview", tr.id);
+      EPT_restorePreviewAfterEdicao(tr);
+    }
+    return;
+  }
+  if (!isCard && !temCadeado && tdCount <= 3) {
+    return;
+  }
+
+  if (isCard && tdCount > 3) {
+    const contentTd = $row.children("td[colspan]").first();
+    let recursosTd = $row.children("td.ept-recursos-originais");
+    if (!recursosTd.length) {
+      recursosTd = $row.find("#divListaRecursosMinuta").closest("td");
+    }
+    if (contentTd.length) {
+      EPT_withSuppressedTableObserver(function () {
+        EPT_collapseRow($row, {
+          contentTd,
+          keepRecursosTd: recursosTd.length ? recursosTd : null,
+          totalCols: EPT_minutasTotalCols,
+        });
+        EPT_setRecursosVisible(tr, keepActions);
+      });
+    }
+    if (!temCadeado && tr.querySelector(".ept-minuta-em-edicao")) {
+      debugLog("EPT: Edição concluída (colunas nativas sem cadeado), restaurando preview", tr.id);
+      EPT_restorePreviewAfterEdicao(tr);
+    }
+    return;
+  }
+
+  debugLog("EPT: Reaplicando cartão após mutação do eproc", tr.id, {
+    emEdicao: temCadeado,
+    tdCount,
+  });
+  EPT_transformMinutaRow($row, map, keepActions, {
+    emEdicao: temCadeado,
+  });
+}
+
+function EPT_restorePreviewAfterEdicao(tr) {
+  const $row = $(tr);
+  const urlPreview =
+    $row.attr("data-ept-hrefpreview") ||
+    $row.children("a.linkMinuta").first().attr("hrefpreview") ||
+    $row.find("a.linkMinuta").first().attr("hrefpreview");
+  const box = tr.querySelector(".ept-minuta-em-edicao");
+  EPT_clearEdicaoHighlight(tr);
+  if (!urlPreview) {
+    if (box) {
+      box.classList.remove("ept-minuta-em-edicao");
+      box.innerHTML = "";
+    }
+    return;
+  }
+  const urlEproc = window.location.href.split("eproc/")[0] + "eproc";
+  $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
+    const htmlObject = document.createElement("div");
+    htmlObject.innerHTML = data;
+    const section = htmlObject.querySelector('section[data-estilo_padrao="paragrafo"]');
+    EPT_withSuppressedTableObserver(function () {
+      EPT_updatePreviewContainer(tr, section ? section.innerHTML : "", 1000);
+      const tituloRaw = htmlObject.querySelector("p.titulo");
+      if (tituloRaw && tituloRaw.textContent) {
+        const headerMid = tr.querySelector(".ept-minuta-header > span:nth-child(2)");
+        if (headerMid) {
+          const br = headerMid.querySelector("br");
+          const statusHtml = br
+            ? headerMid.innerHTML.substring(headerMid.innerHTML.indexOf("<br"))
+            : "&nbsp;";
+          headerMid.innerHTML = tituloRaw.textContent + statusHtml;
+        }
+      }
+    });
+  });
+}
+
+function EPT_scheduleEprocRowFix(tr, columnMap, keepActions) {
+  if (!tr || tr.tagName !== "TR" || tr.classList.contains("infraTrOrdenacao")) {
+    return;
+  }
+  if (tr.querySelector(":scope > th")) {
+    return;
+  }
+  EPT_pendingFixRows.add(tr);
+  clearTimeout(EPT_fixRowsTimer);
+  EPT_fixRowsTimer = setTimeout(function () {
+    const rows = Array.from(EPT_pendingFixRows);
+    EPT_pendingFixRows.clear();
+    rows.forEach(function (row) {
+      EPT_fixEprocMutatedRow(row, columnMap, keepActions);
+    });
+  }, 60);
+}
+
+function EPT_placeRetunarButton() {
+  if (document.getElementById("btnRetunarEPT")) {
+    return;
+  }
+  const table = document.getElementById("tabelaMinutas");
+  if (!table) {
+    return;
+  }
+  const headerRow = Array.from(table.querySelectorAll("tr")).find((tr) =>
+    tr.querySelector(":scope > th")
+  );
+  if (!headerRow) {
+    return;
+  }
+  const lastTh = headerRow.querySelector(":scope > th:last-child");
+  if (!lastTh) {
+    return;
+  }
+  lastTh.classList.add("ept-th-retunar");
+  const btn = document.createElement("button");
+  btn.id = "btnRetunarEPT";
+  btn.type = "button";
+  btn.className = "ept-btn-retunar";
+  btn.textContent = "Retunar";
+  btn.title = "Recarregar e reaplicar a formatação";
+  btn.addEventListener("click", () => location.reload());
+  lastTh.appendChild(btn);
 }
 
 // ---- Detecção robusta de ações dos botões de "Recursos disponíveis" ----
@@ -1124,6 +1521,93 @@ function EPT_createQuickEditLink() {
   });
 }
 
+/**
+ * Clona as ações essenciais para o rodapé, sem mutar a célula original
+ * (que permanece com todos os ícones, inclusive Conferir).
+ */
+function EPT_buildCuratedActionsHtml(divBotoes) {
+  const parts = [];
+  if (divBotoes && divBotoes.length) {
+    divBotoes.children().each(function () {
+      const $child = $(this);
+      if ($child.hasClass("ept-btn-edicao-rapida")) {
+        return;
+      }
+      const action = EPT_getButtonAction(this);
+      const category = EPT_getActionCategory(action, this);
+      if (!category) {
+        return;
+      }
+      const clone = this.cloneNode(true);
+      const anchor = clone.matches("a") ? clone : clone.querySelector("a");
+      (anchor || clone).setAttribute("data-ept-action", category);
+      parts.push(clone.outerHTML);
+    });
+  }
+  parts.push(EPT_createQuickEditLink()[0].outerHTML);
+  return parts.join("");
+}
+
+function EPT_isRecursosVisible(row) {
+  const td = $(row).children("td.ept-recursos-originais")[0];
+  if (!td) {
+    return false;
+  }
+  if (td.classList.contains("ept-recursos-collapsed") || td.hidden) {
+    return false;
+  }
+  if (td.style.display === "none") {
+    return false;
+  }
+  const cs = window.getComputedStyle(td);
+  return cs.display !== "none" && cs.visibility !== "hidden";
+}
+
+function EPT_setRecursosVisible(row, visible) {
+  const $row = $(row);
+  const $recursos = $row.children("td.ept-recursos-originais");
+  const $content = $row.children("td[colspan]");
+  if (!$recursos.length) {
+    return;
+  }
+
+  $row.toggleClass("ept-more-actions-open", !!visible);
+  $recursos.toggleClass("ept-recursos-collapsed", !visible);
+  $recursos.css("display", visible ? "table-cell" : "none");
+
+  const totalCols = parseInt($row.attr("data-ept-total-cols"), 10);
+  if ($content.length && !isNaN(totalCols) && totalCols > 0) {
+    const keptOthers = visible ? 2 : 1;
+    $content.attr("colspan", Math.max(1, totalCols - keptOthers));
+  }
+
+  const btn = $row.find(".ept-btn-mais-acoes")[0];
+  if (btn) {
+    btn.setAttribute("aria-pressed", visible ? "true" : "false");
+    btn.title = visible ? "Ocultar outras ações" : "Mostrar outras ações";
+  }
+}
+
+function EPT_bindMoreActionsToggle(table) {
+  if (!table || table.dataset.eptMoreActionsBound === "true") {
+    return;
+  }
+  table.dataset.eptMoreActionsBound = "true";
+  table.addEventListener("click", function (event) {
+    const btn = event.target.closest(".ept-btn-mais-acoes");
+    if (!btn || !table.contains(btn)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const tr = btn.closest("tr");
+    if (!tr) {
+      return;
+    }
+    EPT_setRecursosVisible(tr, !EPT_isRecursosVisible(tr));
+  });
+}
+
 // Utility function to get data from chrome storage
 async function getStorageData(key) {
     return new Promise((resolve, reject) => {
@@ -1147,7 +1631,6 @@ async function getStorageData(key) {
       "ept_actions",
       "ept_tabletext",
       "ept_edit",
-      "ept_tablestyle",
       "ept_keep_actions",
     ]);
   
@@ -1197,47 +1680,31 @@ async function getStorageData(key) {
           .hide();
       }
 
-      // Adicionar botão "Retunar" na barra de comandos (fallback para reload manual)
-      if (window.location.href.includes('acao=minuta_area_trabalho')) {
-        const divBarra = document.getElementById('divBarraComandosTabela');
-        const btnAssinar = document.getElementById('btnAssinar');
-        
-        if (divBarra && btnAssinar && !document.getElementById('btnRetunarEPT')) {
-          // Criar espaçador
-          const espaco = document.createTextNode('\u00A0'); // &nbsp;
-          
-          // Criar botão
-          const btnRetunar = document.createElement('button');
-          btnRetunar.id = 'btnRetunarEPT';
-          btnRetunar.type = 'button';
-          btnRetunar.className = 'infraButton';
-          btnRetunar.textContent = 'Retunar';
-          btnRetunar.onclick = () => location.reload();
-          btnRetunar.style.cssText = 'background: #352245; color: white; border: 1px solid #F66942; margin-left: 20px;';
-          btnRetunar.title = 'Recarregar e reaplicar formatação EPT';
-          
-          // Inserir após o botão Assinar
-          btnAssinar.parentNode.insertBefore(espaco, btnAssinar.nextSibling);
-          btnAssinar.parentNode.insertBefore(btnRetunar, btnAssinar.nextSibling.nextSibling);
-        }
-      }
-  
       // console.log(ept_actionsData);
   
       // Handle text setting
       const ept_tabletextData = await getStorageData("ept_tabletext");
-      const ept_tablestyleData = await getStorageData("ept_tablestyle");
       // Flag "Manter botões originais" (padrão OFF: undefined -> false).
       const ept_keepActionsData = await getStorageData("ept_keep_actions");
       const keepActions = !!ept_keepActionsData.ept_keep_actions;
+
+      if (window.location.href.includes("acao=minuta_area_trabalho")) {
+        if (ept_tabletextData.ept_tabletext) {
+          document.documentElement.setAttribute("data-ept-table-theme", "refined");
+          document.documentElement.setAttribute("data-ept-button-layout", "segmented-uniform-white");
+          document.documentElement.setAttribute("data-ept-border-style", "lateral");
+          if (keepActions) {
+            document.documentElement.setAttribute("data-ept-keep-actions", "true");
+          }
+        }
+      }
   
       // console.log(ept_tabletextData);
   
       if (ept_tabletextData.ept_tabletext && window.location.href.includes('acao=minuta_area_trabalho')) {
         // console.log('text to work');
         
-        // Aplica estilos modernos à tabela apenas se o toggle estiver habilitado
-        if (ept_tablestyleData.ept_tablestyle && window.EPT_TableStyler) {
+        if (window.EPT_TableStyler) {
           debugLog('EPT: Aplicando estilos modernos à tabela...');
           window.EPT_TableStyler.apply();
           window.EPT_TableStyler.observe();
@@ -1256,22 +1723,14 @@ async function getStorageData(key) {
         const { map: columnMap, totalCols } = EPT_buildColumnMap(
           document.getElementById("tabelaMinutas")
         );
+        EPT_minutasColumnMap = columnMap;
+        EPT_minutasTotalCols = totalCols;
 
         $("#tabelaMinutas tr:not(.infraTrOrdenacao)").each(function () {
           let row = $(this);
   
-          let lThContent = `<table class="infraTableOrdenacao">
-                                              <tbody>
-                                                  <tr class="infraTrOrdenacao">
-                                                      <td rowspan="2" valign="center" class="infraTdRotuloOrdenacao">
-                                                          Prévia
-                                                      </td>
-                                                  </tr>
-                                              </tbody>
-                                          </table>`;
-  
-          // Cabeçalho da tabela (linha que possui <th>): mantém apenas
-          // checkbox + "Prévia" (coluna Código) usando o mapa de colunas.
+          // Cabeçalho da tabela (linha que possui <th>): mantém o checkbox
+          // e as colunas estruturais, sem os rótulos "Prévia" / "Recursos".
           const headerThs = row.children("th");
           if (headerThs.length) {
             const codigoIdx =
@@ -1282,7 +1741,7 @@ async function getStorageData(key) {
             if (previewTh.length) {
               const keepHeaderIdx = [checkboxIdx, codigoIdx];
               // Modo "Manter botões originais": preserva também o <th>
-              // "Recursos disponíveis" (última coluna).
+              // da coluna de recursos (última coluna), só para alinhar.
               const recursosIdx =
                 typeof columnMap.recursos === "number" ? columnMap.recursos : -1;
               if (keepActions && recursosIdx !== -1) {
@@ -1293,248 +1752,91 @@ async function getStorageData(key) {
                   $(this).remove();
                 }
               });
-              previewTh.attr("width", "70%").html(lThContent);
-              // No modo ON, empurra "Recursos" para a última coluna alinhando
-              // com a célula preservada da linha de dados.
+              previewTh.attr("width", "70%");
+              // No modo ON, empurra a coluna de recursos para o final,
+              // alinhando com a célula preservada da linha de dados.
               if (keepActions && recursosIdx !== -1 && totalCols > 2) {
                 previewTh.attr("colspan", totalCols - 2);
               }
             }
+            EPT_placeRetunarButton();
             return;
           }
 
-          // ----- Linhas de dados -----
-          let processo = EPT_getCellText(row, columnMap, "processo", { html: true });
-          let orgao = EPT_getCellText(row, columnMap, "orgao");
-          let servidor = EPT_getCellText(row, columnMap, "usuario");
-
-          let status = EPT_getCellText(row, columnMap, "status");
-          if (status) {
-            status = status.replace(/ *\([^)]*\) */g, "");
-          }
-
-          let criacao = EPT_getCellText(row, columnMap, "criacao");
-
-          // Âncora estrutural do conteúdo (coluna Código, sempre presente).
-          let contentTd = row.find(".linkMinuta").first().closest("td");
-          if (!contentTd.length && typeof columnMap.codigo === "number") {
-            contentTd = row.children("td").eq(columnMap.codigo);
-          }
-
-          let divBotoes = row.find("#divListaRecursosMinuta");
-          // Âncora da célula original de recursos (modo "Manter botões
-          // originais"). Capturada antes de qualquer mutação.
-          let recursosTd = divBotoes.closest("td");
-          if (!recursosTd.length) {
-            recursosTd = row.children("td").last();
-          }
-
-          let botoes = "";
-          let quickEditHtml = "";
-
-          if (keepActions) {
-            // Modo ON: preserva a célula original intacta (todos os botões,
-            // inclusive Conferir). A "edição rápida" vai standalone no rodapé.
-            quickEditHtml = EPT_createQuickEditLink()[0].outerHTML;
-          } else {
-            // Modo curado: mantém só as ações essenciais (editar, assinar,
-            // devolver, lembrete), detectadas por href, atributo `acao` do
-            // <img> ou alt/tooltip. Marca cada essencial com data-ept-action
-            // para estilização independente do href (corrige Editar AJAX).
-            divBotoes.children().each(function () {
-              const $child = $(this);
-              if ($child.hasClass("ept-btn-edicao-rapida")) {
-                return;
-              }
-              const $anchor = $child.is("a") ? $child : $child.find("a").first();
-              const action = EPT_getButtonAction(this);
-              const category = EPT_getActionCategory(action, this);
-              if (category) {
-                ($anchor.length ? $anchor : $child).attr("data-ept-action", category);
-              } else {
-                $child.css("display", "none");
-              }
-            });
-
-            // Adiciona botão de edição rápida ao final da lista de recursos
-            if (!divBotoes.find(".ept-btn-edicao-rapida").length) {
-              divBotoes.append(EPT_createQuickEditLink());
-            }
-
-            //armazenando os botões...
-            botoes = divBotoes.html();
-          }
-  
-          let l = row.find(".linkMinuta");
-          let urlPreview = l.attr("hrefpreview");
-          
-          // PRESERVAR OS LINKS ORIGINAIS ANTES DE REMOVER COLUNAS
-          let originalLinks = [];
-          row.find(".linkMinuta").each(function() {
-            originalLinks.push({
-              href: $(this).attr("href"),
-              dataLink: $(this).data("link"),
-              hrefPreview: $(this).attr("hrefpreview")
-            });
+          EPT_transformMinutaRow(row, columnMap, keepActions, {
+            emEdicao: EPT_isLinhaEmEdicao(row[0]),
           });
-          
-          if (urlPreview) {
-            //get the page url until 'eproc/', but including 'eproc/'
-            let url = window.location.href;
-            let urlEproc = url.split("eproc/")[0] + "eproc";
+        });
   
-            $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
-              var htmlObject = document.createElement("div");
-              htmlObject.innerHTML = data;
-              let titulo_raw = htmlObject.querySelector("p.titulo");
-              let titulo = titulo_raw.textContent;
-              let section = htmlObject.querySelector(
-                'section[data-estilo_padrao="paragrafo"]'
-              );
-              
-              const sectionContent = EPT_buildPreviewMarkup(section.innerHTML, 1000);
-
-              // Omissão limpa: status só entra se existir (sem <br> solto).
-              const statusLinha = status ? `<br>${status}` : "";
-              let cabecalho = `<div style="display:flex; justify-content: space-between; margin-bottom: 30px; margin-top: 15px;">
-                                                      <span>${processo}</span> 
-                                                      <span align="center">${titulo}${statusLinha}&nbsp;</span>
-                                                      <span>${orgao}</span>
-                                                  </div>`;
-
-              // Omissão limpa de servidor/criação (sem ", em " órfão).
-              let assinaturaInfo = "";
-              if (servidor && criacao) {
-                assinaturaInfo = `${servidor}, em ${criacao}`;
-              } else if (servidor) {
-                assinaturaInfo = servidor;
-              } else if (criacao) {
-                assinaturaInfo = `em ${criacao}`;
-              }
-
-              // Modo ON: rodapé só com "edição rápida" standalone (sem clonar
-              // #divListaRecursosMinuta, que permanece único na célula original).
-              // Modo OFF: rodapé com os botões curados dentro do #divListaRecursosMinuta.
-              let acoesHtml = keepActions
-                ? `<div class="ept-acoes-minuta" style="margin:0">${quickEditHtml}</div>`
-                : `<div id="divListaRecursosMinuta" class="ept-acoes-minuta" style="margin:0">${botoes}</div>`;
-
-              let footer = `<div style="display:flex;justify-content:space-between;margin-bottom: 5px;margin-top: 30px;">
-                                                  ${acoesHtml}
-                                                  <span style="font-size: 0.8em;">${assinaturaInfo}</span> 
-                                              </div>`;
-              contentTd
-                .attr("align", "left")
-                .css("padding", "20px")
-                .html(cabecalho + sectionContent + footer);
-
-              // Colapsa mantendo checkbox + conteúdo (+ célula de recursos no
-              // modo ON), removendo as demais colunas. Independe dos critérios.
-              EPT_collapseRow(
-                row,
-                keepActions ? { contentTd, keepRecursosTd: recursosTd } : { contentTd }
-              );
-                
-                             // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
-               originalLinks.forEach(function(linkData) {
-                 if (linkData.href) {
-                   let newLink = $('<a>', {
-                     href: linkData.href,
-                     class: 'linkMinuta',
-                     'data-link': linkData.dataLink,
-                     'hrefpreview': linkData.hrefPreview,
-                     style: 'display: none; position: absolute; left: -9999px;' // ESCONDER O LINK MAS MANTÊ-LO FUNCIONAL
-                   });
-                   
-                   // ADICIONAR O LINK DIRETAMENTE NA LINHA, NÃO NA CÉLULA
-                   row.append(newLink);
-                 }
-               });
-
-              // Aplica estilos modernos ao conteúdo da minuta recém-carregada
-              if (ept_tablestyleData.ept_tablestyle && window.EPT_TableStyler) {
-                window.EPT_TableStyler.enhanceContent(row[0]);
-              }
-
-              EPT_tryHideInfraTooltip();
-            });
-          } else {
-            // SE NÃO HÁ URLPREVIEW, AINDA PRESERVAR OS LINKS ORIGINAIS
-            // Colapsa mantendo checkbox + conteúdo (+ recursos no modo ON).
-            EPT_collapseRow(
-              row,
-              keepActions ? { contentTd, keepRecursosTd: recursosTd } : { contentTd }
-            );
-            
-            // REINCORPORAR OS LINKS ORIGINAIS APÓS REMOVER COLUNAS
-            originalLinks.forEach(function(linkData) {
-              if (linkData.href) {
-                let newLink = $('<a>', {
-                  href: linkData.href,
-                  class: 'linkMinuta',
-                  'data-link': linkData.dataLink,
-                  'hrefpreview': linkData.hrefPreview,
-                  style: 'display: none; position: absolute; left: -9999px;' // ESCONDER O LINK MAS MANTÊ-LO FUNCIONAL
-                });
-                
-                // ADICIONAR O LINK DIRETAMENTE NA LINHA, NÃO NA CÉLULA
-                row.append(newLink);
-              }
-            });
-
-            EPT_tryHideInfraTooltip();
-          } //end if(urlPreview)
-        }); //end foreach
-        //End texto de cada minuta da lista
-  
-        // Observador para detectar mudanças na tabela feitas pelo eproc (via AJAX)
-        // e recarregar quando a edição for concluída (linha reconstruída sem cadeado)
+        // Observador: o eproc, ao bloquear/desbloquear, reinsere colunas
+        // nativas na mesma <tr>. Reaplica o cartão EPT sem location.reload().
         const tabelaMinutas = document.getElementById('tabelaMinutas');
         if (tabelaMinutas) {
-          // Flag para evitar disparar durante transformação inicial
+          EPT_bindMoreActionsToggle(tabelaMinutas);
           let eptTransformacaoCompleta = false;
-          // Armazena linhas que estão em edição (com bgcolor laranja)
-          let linhasEmEdicao = new Set();
           
-          // Aguardar um pequeno delay para garantir que a transformação EPT finalizou
           setTimeout(() => {
             eptTransformacaoCompleta = true;
             debugLog('EPT: Observador de mudanças na tabela ativado');
           }, 2000);
           
           const observadorTabela = new MutationObserver((mutations) => {
-            if (!eptTransformacaoCompleta) return;
-            
+            if (!eptTransformacaoCompleta || EPT_suppressTableObserver) {
+              return;
+            }
+
             for (let mutation of mutations) {
-              // Detecta quando uma linha ganha bgcolor laranja (entrou em edição)
-              if (mutation.type === 'attributes' && 
+              if (mutation.type === 'attributes' &&
                   (mutation.attributeName === 'bgcolor' || mutation.attributeName === 'style')) {
-                const tr = mutation.target;
-                if (tr.tagName === 'TR' && !tr.classList.contains('infraTrOrdenacao')) {
-                  const bgcolor = tr.getAttribute('bgcolor') || '';
-                  const style = tr.getAttribute('style') || '';
-                  const temLaranja = bgcolor === '#ffaa00' || style.includes('rgb(255, 170, 0)');
-                  
-                  if (temLaranja && !linhasEmEdicao.has(tr.id)) {
-                    debugLog('EPT: Linha em edição detectada:', tr.id);
-                    linhasEmEdicao.add(tr.id);
-                  }
+                let tr = mutation.target;
+                if (tr.tagName === 'TD' && tr.closest) {
+                  tr = tr.closest('tr');
+                }
+                if (tr && tr.tagName === 'TR') {
+                  EPT_scheduleEprocRowFix(tr, columnMap, keepActions);
                 }
               }
-              
-              // Detecta quando o Eproc reconstrói uma linha (adiciona múltiplos TDs)
-              if (mutation.type === 'childList' && mutation.addedNodes.length > 5) {
-                const tr = mutation.target;
-                if (tr.tagName === 'TR' && linhasEmEdicao.has(tr.id)) {
-                  // Verifica se a linha reconstruída NÃO contém mais o cadeado
-                  const temCadeado = tr.querySelector('img[src*="cadeado.gif"]');
-                  
-                  if (!temCadeado) {
-                    debugLog('EPT: Edição concluída, recarregando tabela...');
-                    setTimeout(() => {
-                      location.reload();
-                    }, 500);
-                    return;
+
+              if (mutation.type === 'childList') {
+                const added = Array.from(mutation.addedNodes).filter(function (n) {
+                  return n.nodeType === 1;
+                });
+                const removed = Array.from(mutation.removedNodes).filter(function (n) {
+                  return n.nodeType === 1;
+                });
+                added.forEach(function (node) {
+                  if (node.tagName === 'TR') {
+                    EPT_scheduleEprocRowFix(node, columnMap, keepActions);
+                  }
+                });
+
+                const isLockNode = function (n) {
+                  return (
+                    (n.matches && n.matches('img[src*="cadeado.gif"]')) ||
+                    (n.querySelector && n.querySelector('img[src*="cadeado.gif"]'))
+                  );
+                };
+                const addedTds = added.filter(function (n) {
+                  return n.tagName === 'TD';
+                });
+                const removedTds = removed.filter(function (n) {
+                  return n.tagName === 'TD';
+                });
+                const lockChanged =
+                  added.some(isLockNode) || removed.some(isLockNode);
+                if (
+                  addedTds.length ||
+                  removedTds.length ||
+                  lockChanged ||
+                  added.length > 5 ||
+                  removed.length > 5
+                ) {
+                  let tr = mutation.target;
+                  if (tr && tr.closest) {
+                    tr = tr.tagName === 'TR' ? tr : tr.closest('tr');
+                  }
+                  if (tr && tr.tagName === 'TR') {
+                    EPT_scheduleEprocRowFix(tr, columnMap, keepActions);
                   }
                 }
               }
@@ -1548,6 +1850,10 @@ async function getStorageData(key) {
             subtree: true
           });
         }
+      }
+
+      if (window.location.href.includes("acao=minuta_area_trabalho")) {
+        EPT_placeRetunarButton();
       }
   
       //Iframe para editar minuta

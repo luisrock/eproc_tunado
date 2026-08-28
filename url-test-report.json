@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-03-31T15:13:30.258Z",
-  "totalUrls": 21,
-  "successCount": 21,
+  "timestamp": "2026-08-28T18:13:54.111Z",
+  "totalUrls": 23,
+  "successCount": 23,
   "failureCount": 0,
   "successRate": "100.0%",
   "results": [
@@ -11,11 +11,10 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:17 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:39 GMT",
         "server": "Apache",
         "location": "https://eproc.jfrj.jus.br/eproc/",
-        "keep-alive": "timeout=5, max=100",
-        "connection": "Keep-Alive",
+        "connection": "close",
         "content-type": "text/html; charset=iso-8859-1"
       }
     },
@@ -25,11 +24,10 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:18 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:40 GMT",
         "server": "Apache",
         "location": "https://eproc.jfes.jus.br/eproc/",
-        "keep-alive": "timeout=5, max=100",
-        "connection": "Keep-Alive",
+        "connection": "close",
         "content-type": "text/html; charset=iso-8859-1"
       }
     },
@@ -39,11 +37,10 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:19 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:41 GMT",
         "server": "Apache",
         "location": "https://eproc.trf2.jus.br/eproc/",
-        "keep-alive": "timeout=5, max=100",
-        "connection": "Keep-Alive",
+        "connection": "close",
         "content-type": "text/html; charset=iso-8859-1"
       }
     },
@@ -53,7 +50,7 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:19 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:41 GMT",
         "server": "Apache",
         "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
         "x-content-type-options": "nosniff",
@@ -61,7 +58,7 @@
         "x-frame-options": "SAMEORIGIN",
         "location": "https://eproc.trf4.jus.br/eproc2trf4/",
         "cache-control": "max-age=0",
-        "expires": "Tue, 31 Mar 2026 15:13:19 GMT",
+        "expires": "Fri, 28 Aug 2026 18:13:41 GMT",
         "content-type": "text/html; charset=ISO-8859-1",
         "keep-alive": "timeout=15, max=100",
         "connection": "Keep-Alive"
@@ -73,9 +70,15 @@
       "success": true,
       "message": "Status: 301",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:20 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:42 GMT",
         "location": "http://eproc1g.trf6.jus.br/eproc/",
-        "keep-alive": "timeout=5, max=492",
+        "server-timing": "dtTrId;desc=\"9bdd1889653d11006dfe6d60b2ec691b\", dtSInfo;desc=\"0\", dtRpid;desc=\"-1885877786\"",
+        "set-cookie": [
+          "dtCookier6ny3qig=v_4_srv_2_sn_9FC88BA961F4C51B3E17A31910854492_perc_100000_ol_0_mul_1_app-3A25998ba45776d177_1; Path=/; Domain=.trf6.jus.br",
+          "TS01dbed3f=013f107ef35eea0829a4238fb6c9cd54a4fc72ac3c5ae5360016681dd5c1d131632dcdd6eb6882b319e5eda01eaec2a21daa8a99c3; Path=/",
+          "TS015fefd5=013f107ef38bf12d6386cd3b1a4123df9472dad79c5ae5360016681dd5c1d131632dcdd6eb2e987655cdeab852425f3accd661b11d84daee0a289baf1dca60305005d18531; path=/; domain=.trf6.jus.br"
+        ],
+        "keep-alive": "timeout=5, max=500",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "transfer-encoding": "chunked"
@@ -87,9 +90,15 @@
       "success": true,
       "message": "Status: 301",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:20 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:42 GMT",
         "location": "http://eproc2g.trf6.jus.br/eproc/",
-        "keep-alive": "timeout=5, max=76",
+        "server-timing": "dtTrId;desc=\"dfb00c898980b412ea1e9c5091d9193e\", dtSInfo;desc=\"0\", dtRpid;desc=\"-372885010\"",
+        "set-cookie": [
+          "dtCookier6ny3qig=v_4_srv_3_sn_D2D2992E362E16D291EDD4EAFCCF3E36_perc_100000_ol_0_mul_1_app-3A3b79f4fb8512b8ce_1; Path=/; Domain=.trf6.jus.br",
+          "TS0183fbc5=013f107ef33908ecaa61549c9151733fb2a99cfd613a3fd1188cf2ca80ea6ce224ae976c28a1d37dbdb7ebfa86bfcbafaed8e9beb0; Path=/",
+          "TS017f92fe=013f107ef30f0059c3766d43d5177b6c457e92b3383a3fd1188cf2ca80ea6ce224ae976c2819aa7d9a4a183cfb6d25f74a685f5f56bee194cc86f19648b18fc011f54d46f8; path=/; domain=.trf6.jus.br"
+        ],
+        "keep-alive": "timeout=15, max=37",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "transfer-encoding": "chunked"
@@ -101,7 +110,7 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:21 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:43 GMT",
         "server": "Apache",
         "location": "http://eproc.jfrs.jus.br/eprocV2/",
         "content-type": "text/html; charset=ISO-8859-1",
@@ -115,7 +124,7 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:22 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:44 GMT",
         "server": "Apache",
         "location": "https://eproc.jfsc.jus.br/eprocV2/",
         "content-type": "text/html; charset=ISO-8859-1",
@@ -129,7 +138,7 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:22 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:44 GMT",
         "server": "Apache",
         "location": "https://eproc.jfpr.jus.br/eprocV2/",
         "content-type": "text/html; charset=ISO-8859-1",
@@ -143,20 +152,14 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:23 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:45 GMT",
         "content-type": "text/html; charset=ISO-8859-1",
         "connection": "keep-alive",
         "server": "cloudflare",
-        "x-powered-by": "PHP/8.2.29",
+        "x-powered-by": "PHP/8.2.30",
         "location": "https://eproc1g.tjrs.jus.br/eproc/",
-        "x-oneagent-js-injection": "true",
-        "x-ruxit-js-agent": "true",
-        "server-timing": "dtTrId;desc=\"87a85e682ce8d3a76ff96170ef06f2b9\", dtSInfo;desc=\"1\"",
-        "set-cookie": [
-          "dtCookien2igk4pi=v_4_srv_1_sn_5E23C1CDA85B0ACA3212F8D7654285EC_perc_100000_ol_0_mul_1_app-3Aafec72f0bf14a042_1_rcs-3Acss_0; Path=/; Domain=.tjrs.jus.br; secure"
-        ],
         "cf-cache-status": "DYNAMIC",
-        "cf-ray": "9e504c385d353ea7-GIG"
+        "cf-ray": "a3254aaf2c66cb4c-GIG"
       }
     },
     {
@@ -165,20 +168,14 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:23 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:46 GMT",
         "content-type": "text/html; charset=ISO-8859-1",
         "connection": "keep-alive",
         "server": "cloudflare",
-        "x-powered-by": "PHP/8.2.29",
+        "x-powered-by": "PHP/8.2.30",
         "location": "https://eproc2g.tjrs.jus.br/eproc/",
-        "x-oneagent-js-injection": "true",
-        "x-ruxit-js-agent": "true",
-        "server-timing": "dtTrId;desc=\"880c0007b1ea6e47eee223b22886b59e\", dtSInfo;desc=\"1\"",
-        "set-cookie": [
-          "dtCookien2igk4pi=v_4_srv_10_sn_3702DF3FF09C375CBD3FE1F73E8A9E89_perc_100000_ol_0_mul_1_app-3Aafec72f0bf14a042_1_rcs-3Acss_1; Path=/; Domain=.tjrs.jus.br; secure"
-        ],
         "cf-cache-status": "DYNAMIC",
-        "cf-ray": "9e504c3bff986d5a-GIG"
+        "cf-ray": "a3254ab2ce23978d-GIG"
       }
     },
     {
@@ -187,18 +184,18 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:24 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:46 GMT",
         "vary": "Origin",
         "access-control-allow-methods": "GET, POST, OPTIONS",
         "access-control-allow-headers": "Content-Type, Authorization",
         "location": "https://eproc1g.tjsc.jus.br/eproc/index.php",
-        "keep-alive": "timeout=5, max=40",
+        "keep-alive": "timeout=5, max=67",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "set-cookie": [
-          "f5avraaaaaaaaaaaaaaaa_session_=LNKNLLKPNJONIPPCBKLJHGDMJFHCFKIKMNGGNBKABEMPGKJMECDCHBJODECEEFNFDJCDOMNLJECEKNEPAPIABICLEOCFJJBMFGMDHGDILAHBKAJJKBMCCGAFKDKPIIFM; HttpOnly; secure;",
-          "TS010a4adb=01b0598361605b1ce2da5ca979e25ee8f895646eac26278f615c28da736a8689b86e49b045b242377ed648ef9875a2e7c9ba770305fb7d02ca84762e91668cc1c2d96eec71; Path=/; Secure; HttpOnly",
-          "TSbc24d981027=081e94cb84ab20003a1137f6022f13ae90b725d37918530d28a5e78ddec62e22aad5575ec115c43a080d73b0e4113000d757d1c45cb9966b71912d6e2d187a923cef966537695bb7d69b02af98ca9f20f6f3375237331005f1def0d53e57326a; Secure; Path=/"
+          "f5avraaaaaaaaaaaaaaaa_session_=DLACNNFHJOGAOJGLCMDMAFHPGJBGHOICHCEMABOPGFMIDPKNAIELBMMGAEGHDGMMKFEDMNNFPPEDLNFPOLAALOOCIMBGONKJOIBPJPOPEKIHKCOPIHLJDHADMHLPOIEC; HttpOnly; secure;",
+          "TS010a4adb=01b05983611fa77e1e2daf3bdc000053325f64da1da12211e5299d38f69983bf79f2ce987b511d0a414938cb806021604b9e8f5a1dcfe0f45a6c52b3cecc29a7fdd0d63739; Path=/; Secure; HttpOnly",
+          "TSab3a5fb6027=081e94cb84ab200018bdf4a931f81b43bb5ea66e7ee7ac477c01a5bedc82764cd400813f86e11737085924b8ee1130008826a656a1c7b480d763d7c52a79fb429b79493b89a58f8ef11f64148794ca5fc796f808b42ae310e4c22ac7571298ad; Secure; Path=/"
         ],
         "transfer-encoding": "chunked"
       }
@@ -209,18 +206,18 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:25 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:47 GMT",
         "vary": "Origin",
         "access-control-allow-methods": "GET, POST, OPTIONS",
         "access-control-allow-headers": "Content-Type, Authorization",
         "location": "https://eproc2g.tjsc.jus.br/eproc/index.php",
-        "keep-alive": "timeout=5, max=62",
+        "keep-alive": "timeout=5, max=6",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "set-cookie": [
-          "f5avraaaaaaaaaaaaaaaa_session_=HOCMBMBEMMJBANOONFLAEOGFKIGJOACKJNIPGNBEBJPJKPMLCNOKAPBJJBHAFGFGKNMDAAGMKEFENJAMGGPABDMLEOIPPJIAKEFABGECADMKDIHIFDBGDCPMEHMJOCJC; HttpOnly; secure;",
-          "TS01d10e5c=01b05983618f9321d8eb81669b596b189264d91f21385159315364fc69a4e9adf3bede41d4373e22fc28a19ae5aa308307879436aca36878db8bb3ca89c8fbdc595c6def91; Path=/; Secure; HttpOnly",
-          "TS005ab733027=081e94cb84ab200011c68afe1991777492f4bab2be470eb58db733c4cd01c24abeedf8bd4ab7212108ff7c5ff5113000e7749dd34be54d7ea4065a824cc90cc28a1fda3971d80fa3d6c5c18bdef3b93abab61d222b87123fb8cf7216e2645cde; Secure; Path=/"
+          "f5avraaaaaaaaaaaaaaaa_session_=AFPBIBFCKBDBIIKCJACOCLMEOHIJEKNOJGMBPOIDFCMKKENACHMAEGIDALDACLKMMIMDENEOAPONILICNHDAGAGEJMEKIGDNAFJADBDIDADNEAMKDHLIOELOPPPBKKHK; HttpOnly; secure;",
+          "TS01d10e5c=01b05983618469d33a3ec31489b7d2ffadea5189fe3e853f5b467c4b3b6aae6059ad43b41440c6dee1d3386049363d3ee0d7de168acb87f2c8c61a886985da418a0a30054e; Path=/; Secure; HttpOnly",
+          "TS17443104027=081e94cb84ab2000729318bb945cc51e8627317c6d4be2fdfacd07e856b3e740518521175bd01c720899a04bb6113000ab915751c0c2a2150f0386ae14198bc2636a0dcb92b64da99aeb9ca83771bcd2a12fa91ce754418b4fda990bf4cc8876; Secure; Path=/"
         ],
         "transfer-encoding": "chunked"
       }
@@ -232,13 +229,14 @@
       "message": "Status: 302",
       "headers": {
         "server": "nginx",
-        "date": "Tue, 31 Mar 2026 15:13:25 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:47 GMT",
         "content-type": "text/html",
         "content-length": "138",
         "location": "https://eproc1.tjto.jus.br/eprocV2_prod_1grau/",
         "connection": "keep-alive",
         "expires": "Thu, 01 Jan 1970 00:00:01 GMT",
         "cache-control": "no-cache",
+        "x-request-id": "ab6c4285d21eeb7f80c2666041c1bf47",
         "strict-transport-security": "max-age=31536000",
         "referrer-policy": "same-origin",
         "feature-policy": "fullscreen 'self';"
@@ -251,13 +249,14 @@
       "message": "Status: 302",
       "headers": {
         "server": "nginx",
-        "date": "Tue, 31 Mar 2026 15:13:26 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:48 GMT",
         "content-type": "text/html",
         "content-length": "138",
         "location": "https://eproc2.tjto.jus.br/eprocV2_prod_2grau/",
         "connection": "keep-alive",
         "expires": "Thu, 01 Jan 1970 00:00:01 GMT",
         "cache-control": "no-cache",
+        "x-request-id": "d8f858b8c28fea19f06e5fdc0dfd4796",
         "strict-transport-security": "max-age=31536000",
         "referrer-policy": "same-origin",
         "feature-policy": "fullscreen 'self';"
@@ -265,27 +264,23 @@
     },
     {
       "url": "https://eproc1g.tjrj.jus.br/eproc/",
-      "status": 200,
+      "status": 302,
       "success": true,
-      "message": "Status: 200",
+      "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:27 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:49 GMT",
         "server": "Apache",
-        "content-type": "text/html; charset=iso-8859-1",
-        "cache-control": "private, no-cache, no-store, must-revalidate, max-age=0",
+        "content-type": "text/html; charset=ISO-8859-1",
+        "expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+        "cache-control": "no-store, no-cache, must-revalidate",
         "pragma": "no-cache",
-        "expires": "0",
-        "x-robots-tag": "noindex",
-        "x-xss-protection": "1; mode=block",
-        "x-content-type-options": "nosniff",
-        "x-frame-options": "SAMEORIGIN",
-        "referrer-policy": "strict-origin-when-cross-origin",
+        "location": "externo_controlador.php?acao=SSO%2Flogin&num_processo_bi=&lista_processos=",
         "x-oneagent-js-injection": "true",
         "x-ruxit-js-agent": "true",
-        "server-timing": "dtTrId;desc=\"c8ca2b9a9384602b517dad8f77dd3ae3\", dtSInfo;desc=\"1\"",
+        "server-timing": "dtTrId;desc=\"15153ccbe7cd9b4b20fb63965c58518b\", dtSInfo;desc=\"0\", dtRpid;desc=\"574888170\"",
         "set-cookie": [
-          "PHPSESSID=pnhbsjmr767gfh5nrdt8dnkq8o; path=/; secure; HttpOnly; SameSite=None",
-          "dtCookie=v_4_srv_6_sn_721251F7B10C2AA90E6F272C0334482C_perc_41247_ol_0_mul_2_app-3Aed27095b132f8f60_1_rcs-3Acss_1; Path=/; Domain=.tjrj.jus.br"
+          "PHPSESSID=bt1dsmi9bvjcqvklfkm03dg8ke; path=/; secure; HttpOnly; SameSite=Lax",
+          "dtCookie=v_4_srv_2_sn_72C279D916D31EA4951095AF3E5D64AA_perc_100000_ol_0_mul_1_app-3Aed27095b132f8f60_0_rcs-3Acss_0; Path=/; Domain=.tjrj.jus.br"
         ],
         "keep-alive": "timeout=5, max=100",
         "connection": "Keep-Alive"
@@ -293,27 +288,23 @@
     },
     {
       "url": "https://eproc2g.tjrj.jus.br/eproc/",
-      "status": 200,
+      "status": 302,
       "success": true,
-      "message": "Status: 200",
+      "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:27 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:50 GMT",
         "server": "Apache",
-        "content-type": "text/html; charset=iso-8859-1",
-        "cache-control": "private, no-cache, no-store, must-revalidate, max-age=0",
+        "content-type": "text/html; charset=ISO-8859-1",
+        "expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+        "cache-control": "no-store, no-cache, must-revalidate",
         "pragma": "no-cache",
-        "expires": "0",
-        "x-robots-tag": "noindex",
-        "x-xss-protection": "1; mode=block",
-        "x-content-type-options": "nosniff",
-        "x-frame-options": "SAMEORIGIN",
-        "referrer-policy": "strict-origin-when-cross-origin",
+        "location": "externo_controlador.php?acao=SSO%2Flogin&num_processo_bi=&lista_processos=",
         "x-oneagent-js-injection": "true",
         "x-ruxit-js-agent": "true",
-        "server-timing": "dtTrId;desc=\"b931f327fe4660cdf8db62afe191eb21\", dtSInfo;desc=\"0\", dtRpid;desc=\"1015211200\"",
+        "server-timing": "dtTrId;desc=\"d020eb6652eec7a808f0a925b48ead91\", dtSInfo;desc=\"0\", dtRpid;desc=\"-167938608\"",
         "set-cookie": [
-          "PHPSESSID=aoe2d75p6hed35jkk0l6spgs0o; path=/; secure; HttpOnly; SameSite=None",
-          "dtCookie=v_4_srv_9_sn_FBA545F29668D229D1875901A02A59AA_perc_100000_ol_0_mul_1_app-3Ac8b9965f4d578ad5_1_rcs-3Acss_0; Path=/; Domain=.tjrj.jus.br"
+          "PHPSESSID=bomcdgrrt57kok4c53boulka9q; path=/; secure; HttpOnly; SameSite=Lax",
+          "dtCookie=v_4_srv_5_sn_BE9856F439B289784E0176FB67FEBD1C_perc_100000_ol_0_mul_1_app-3Ac8b9965f4d578ad5_1_rcs-3Acss_0; Path=/; Domain=.tjrj.jus.br"
         ],
         "keep-alive": "timeout=5, max=100",
         "connection": "Keep-Alive"
@@ -325,12 +316,12 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:28 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:50 GMT",
         "server": "Apache/2.4.62 (Red Hat Enterprise Linux) OpenSSL/3.2.2 mod_fcgid/2.3.9",
         "x-powered-by": "PHP/8.2.28",
         "location": "http://eproc1g.tjsp.jus.br/eproc/",
         "content-type": "text/html; charset=ISO-8859-1",
-        "keep-alive": "timeout=15, max=100",
+        "keep-alive": "timeout=2, max=100",
         "connection": "Keep-Alive"
       }
     },
@@ -340,12 +331,15 @@
       "success": true,
       "message": "Status: 302",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:28 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:51 GMT",
         "server": "Apache/2.4.62 (Red Hat Enterprise Linux) OpenSSL/3.2.2 mod_fcgid/2.3.9",
         "x-powered-by": "PHP/8.2.28",
+        "x-frame-options": "SAMEORIGIN",
+        "x-content-type-options": "nosniff",
+        "x-xss-protection": "1; mode=block",
         "location": "http://eproc2g.tjsp.jus.br/eproc/",
         "content-type": "text/html; charset=ISO-8859-1",
-        "keep-alive": "timeout=15, max=100",
+        "keep-alive": "timeout=1, max=50",
         "connection": "Keep-Alive"
       }
     },
@@ -355,15 +349,15 @@
       "success": true,
       "message": "Status: 301",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:29 GMT",
-        "server": "Apache/2.4.57 (Red Hat Enterprise Linux)",
+        "date": "Fri, 28 Aug 2026 18:13:51 GMT",
         "location": "http://eproc1g.tjmg.jus.br/eproc/",
-        "keep-alive": "timeout=15, max=98",
+        "keep-alive": "timeout=15, max=100",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "strict-transport-security": "max-age=16070400; includeSubDomains",
         "set-cookie": [
-          "TS2d257e34027=0896e3f84dab2000707fbcddffeda6529502711532763d31bfaf170255f7ad04fe7efd300075da330801f23220113000df892dc5c5ee6314af52abdfff2541732da804a95b20cfa1b67a3167a65e20a1c4d723f84b4ccaa320abdcfb987432c5; Path=/"
+          "TS019adea6=0150481ac66d7aab6f941511521bb1ac08a5034bf0b89807b7e375021b29d1b09a3258bd5be6b2116adbaad04f42d06ad8b7a72840; Path=/; Domain=.eproc1g.tjmg.jus.br",
+          "TS2d257e34027=0896e3f84dab2000e1a8abb86f13c730a09a5bfb515e10502049db10a58d66ce5dc141da8c42d0ea085384c4d41130002f40ae508df6c1dbb630243d4c6d2d42cf5cd8faac127714458c9e25613330889e7f55c420726b82ae43d7697a60f5f8; Path=/"
         ]
       }
     },
@@ -373,15 +367,49 @@
       "success": true,
       "message": "Status: 301",
       "headers": {
-        "date": "Tue, 31 Mar 2026 15:13:29 GMT",
+        "date": "Fri, 28 Aug 2026 18:13:52 GMT",
         "location": "http://eproc2g.tjmg.jus.br/eproc/",
-        "keep-alive": "timeout=15, max=94",
+        "keep-alive": "timeout=15, max=83",
         "connection": "Keep-Alive",
         "content-type": "text/html; charset=iso-8859-1",
         "strict-transport-security": "max-age=16070400; includeSubDomains",
         "set-cookie": [
-          "TScd36f172027=0896e3f84dab2000b77aa09fd7d2be3779ddeffbf6a1702a52c9bbef33e98ec5f55026195b00e5060807bc74bf1130003c83054beb91c288af52abdfff254173b75fd6e29994124b9970609ffd479693905ec762f109def71581e9b11ea524fa; Path=/"
+          "TScd36f172027=0896e3f84dab20004d1b26c54462a6e5677d0d6f320a53731d358126f2b969b00e5252c1df9645490836027cb01130004eff60d387eff0669e70326a3ccd81cc9a421eff2840fb7aa2eeada26018273ede8cdf70bc1f94c83a3a6467279a1911; Path=/"
         ]
+      }
+    },
+    {
+      "url": "https://eproc1g.tjpr.jus.br",
+      "status": 302,
+      "success": true,
+      "message": "Status: 302",
+      "headers": {
+        "content-type": "text/html; charset=iso-8859-1",
+        "connection": "keep-alive",
+        "date": "Fri, 28 Aug 2026 18:13:52 GMT",
+        "location": "https://eproc1g.tjpr.jus.br/eproc",
+        "server": "Apache/2.4.67 (Debian)",
+        "x-cache": "Miss from cloudfront",
+        "via": "1.1 60891439bbe9ae8714ee402baa8cb1c0.cloudfront.net (CloudFront)",
+        "x-amz-cf-pop": "GIG52-P3",
+        "x-amz-cf-id": "NR8BDJWEtEiUjV-C_zPG89EB7jUXqDq-WG77tJn_4dWbuyJ5Mr0jWw=="
+      }
+    },
+    {
+      "url": "https://eproc2g.tjpr.jus.br",
+      "status": 302,
+      "success": true,
+      "message": "Status: 302",
+      "headers": {
+        "content-type": "text/html; charset=iso-8859-1",
+        "connection": "keep-alive",
+        "date": "Fri, 28 Aug 2026 18:13:53 GMT",
+        "location": "https://eproc2g.tjpr.jus.br/eproc",
+        "server": "Apache/2.4.67 (Debian)",
+        "x-cache": "Miss from cloudfront",
+        "via": "1.1 81aa5b946f2f955d94231eedc507d3d4.cloudfront.net (CloudFront)",
+        "x-amz-cf-pop": "GIG52-P3",
+        "x-amz-cf-id": "ZC5ysF3jRNqLQTYI9PnYnh_-nJaBk0Hhsa8pio9GmmmJIYaYtfQICA=="
       }
     }
   ]

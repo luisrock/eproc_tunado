@@ -2,55 +2,41 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-0.0.12-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
 
-O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora significativamente a experiência de trabalho com minutas no sistema eproc, oferecendo:
+O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora a experiência de trabalho com minutas no eproc:
 
-- 🎨 **Interface moderna** para a tabela de minutas
-- 📱 **Design responsivo** e otimizado 
-- ⚡ **Funcionalidades aprimoradas** para produtividade
-- 🎛️ **Personalização completa** de estilos visuais
-- 🌐 **Suporte a múltiplos tribunais**
-- ✅ **Compatibilidade total** com eproc versão 9.15
+- 🎨 **Cartões** na lista de minutas (tema refined: branco, filete lateral, zebrado discreto)
+- 📄 **Texto da minuta** na própria listagem, com ações no rodapé
+- ⚡ **Edição rápida** inline e atalhos de produtividade
+- 🌐 **23 hosts** em tribunais federais e estaduais (inclui TJPR)
+- ✅ **Compatibilidade** com eproc 9.15
+
+Identidade visual: roxo `#352245` e laranja `#F66942`.
 
 ### 🔄 Atualização para eproc 9.15
 
-**Versão 0.0.6** - Adaptação para compatibilidade com eproc 9.15:
+**Versão 0.0.6** — adaptação para o eproc 9.15:
 
-- **Problema resolvido**: Links de visualização de minutas não funcionavam quando a funcionalidade "Mostrar texto na tabela" estava ativada
-- **Solução implementada**: Preservação dos links essenciais (`a.linkMinuta`) durante a modificação da estrutura da tabela
-- **Técnica utilizada**: Reincorporação dos links com posicionamento absoluto para garantir funcionalidade da função `visualizar()` do eproc
-- **Resultado**: Mantém todas as funcionalidades visuais aprimoradas sem interferir na navegação nativa do sistema
+- **Problema**: links de visualização não funcionavam com o texto na tabela
+- **Solução**: os `a.linkMinuta` são preservados (ocultos, posicionados fora da tela) para a função nativa `visualizar()` continuar funcionando
 
 ### ✏️ Editor Inline de Minutas (0.0.9)
 
-- Botão `edição rápida` disponível na lista de minutas quando o EPT está ativo.
-- Modal próprio com editor `contenteditable`, sanitização para XHTML e salvamento/desbloqueio automáticos (`controlador_ajax.php`).
-- Atualização imediata da linha da tabela após salvar (sem `window.location.reload()`).
-- Sistema de logs em overlay removido para reduzir atrito de uso e evitar interferência com o editor nativo.
-
-#### Correção: alerta “Houve uma mudança no perfil do usuário”
-
-- Corrigido: após salvar inline e recarregar a lista, o alerta não aparece mais.
-- Como foi resolvido: após o `minuta_salvar` e o `sbmDesbloquear`, o EPT agora emula a chamada nativa de pós-salvar:
-   - `controlador_ajax.php?acao_ajax=atualizar_info_minuta&acao_origem=minuta_area_trabalho&hash=...`
-- Mantido alinhamento com o nativo:
-   - `alterarstatus=1` e `cod_tipo_salvamento_versao_conteudo=6` no salvar.
-   - Preservação do rodapé da minuta (criador/editor/versão) para evitar impactos em métricas/auditoria.
-- Logs de diagnóstico (opcional):
-   - Ative no console: `window.EPT_DEBUG_ENABLED = true`
-   - Inspecione o histórico: `window.EPT_LOGS`
+- Botão `edição rápida` na lista quando a visualização de texto está ativa
+- Modal com editor `contenteditable`, sanitização para XHTML e salvamento/desbloqueio (`controlador_ajax.php`)
+- Atualização da linha após salvar, sem `window.location.reload()`
+- Após `minuta_salvar` e `sbmDesbloquear`, emula `atualizar_info_minuta` para não disparar o alerta “Houve uma mudança no perfil do usuário”
+- Debug opcional: `window.EPT_DEBUG_ENABLED = true` e `window.EPT_LOGS`
 
 ## 🏛️ Tribunais Suportados
 
-A extensão funciona nos seguintes sistemas eproc:
-
 ### Justiça Federal
 - **JFRJ** - Justiça Federal do Rio de Janeiro
-- **JFES** - Justiça Federal do Espírito Santo  
+- **JFES** - Justiça Federal do Espírito Santo
 - **TRF2** - Tribunal Regional Federal da 2ª Região
 - **TRF4** - Tribunal Regional Federal da 4ª Região
 - **TRF6** - Tribunal Regional Federal da 6ª Região (1º e 2º graus)
@@ -65,6 +51,7 @@ A extensão funciona nos seguintes sistemas eproc:
 - **TJRJ** - Tribunal de Justiça do Rio de Janeiro (1º e 2º graus)
 - **TJSP** - Tribunal de Justiça de São Paulo (1º e 2º graus)
 - **TJMG** - Tribunal de Justiça de Minas Gerais (1º e 2º graus)
+- **TJPR** - Tribunal de Justiça do Paraná (1º e 2º graus)
 
 ## ⚙️ Instalação
 
@@ -73,372 +60,212 @@ A extensão funciona nos seguintes sistemas eproc:
 git clone https://github.com/maurolopes/eproc_tunado.git
 ```
 
-2. **Abra o Chrome e vá para Extensions**
-   - Digite `chrome://extensions/` na barra de endereços
-   - Ative o "Modo do desenvolvedor" no canto superior direito
+2. **Abra o Chrome** em `chrome://extensions/` e ative o modo do desenvolvedor
 
-3. **Carregue a extensão**
-   - Clique em "Carregar sem compactação"
-   - Selecione a pasta do projeto `eproc_tunado`
+3. **Carregue a extensão** — “Carregar sem compactação” e selecione a pasta `eproc_tunado`
 
-4. **Configure as preferências**
-   - Clique no ícone da extensão na barra do Chrome
-   - Ative as funcionalidades desejadas
+4. **Configure** pelo ícone da extensão na barra do Chrome
+
+Para gerar o zip de upload na Chrome Web Store (ainda não publicado nesta versão):
+
+```bash
+./ziptunado.sh
+```
+
+O pacote sai em `../eproc-tunado-1.0.0.zip`.
 
 ## 🎯 Funcionalidades
 
-### 📊 Interface Aprimorada de Minutas
-- **Visualização expandida** do texto das minutas diretamente na tabela
-- **Botões de ação** organizados e destacados
-- **Informações contextuais** do processo, título e órgão
-- **Design moderno** com cartões e espaçamento adequado
+### Lista de minutas
+- **Visualização de texto**: conteúdo da minuta no cartão (processo, tipo/status, órgão, texto, ações)
+- **Visual refined** sempre que a visualização de texto está ligada (não há interruptor extra de “interface aprimorada”)
+- **Ações no rodapé**: Editar, Assinar, Devolver, Lembrete e edição rápida (barra segmentada)
+- **Mais ações**: revela ou esconde os ícones originais daquela minuta (Conferir e demais)
+- **Retunar**: no cabeçalho da tabela, recarrega e reaplica a formatação
+- **Minuta em edição**: se o eproc bloquear a linha (laranja + cadeado), o cartão permanece com os dados básicos e o texto “em edição”; ao desbloquear, o preview volta sem recarregar a página
 
-### 🎨 Personalização Visual Completa
-- **Sistema de classes CSS** para personalização total
-- **Temas prontos** (Material Design, Minimalista, etc.)
-- **Suporte a CSS customizado** através do arquivo `table-styles.css`
-- **Elementos estilizáveis**: cabeçalhos, textos, botões, hover effects
+### Produtividade
+- **Modo foco** e **focar ações principais** (popup)
+- **Clique automático** para manter agendamento na edição
+- **Armazenar senha** (campo de senha no tipo correto, para o navegador salvar)
 
-### ⚡ Produtividade
-- **Navegação otimizada** entre minutas
-- **Acesso rápido** às ações mais comuns
-- **Interface responsiva** para diferentes tamanhos de tela
+## 🛠️ Configuração (popup)
 
-## 🛠️ Configuração
+| Opção | Efeito |
+|--------|--------|
+| **Ativado** | Liga ou desliga a extensão |
+| **Armazenar senha** | Campo de senha como `password` |
+| **Modo foco** | Oculta elementos secundários na área de minutas |
+| **Focar ações principais** | Só Visualizar e Assinar acima da tabela |
+| **Visualização de texto** | Texto na listagem **e** o visual de cartões |
+| **Clique automático** | Confirma “manter agendamento” na edição |
+| **Manter botões originais** | Já abre cada minuta com os ícones extras visíveis; “Mais ações” continua podendo ocultá-los |
 
-### Ativação Básica
-Na popup da extensão, ative (entre outras):
-- ✅ **Visualização de texto** — mostra o conteúdo da minuta na listagem
-- ✅ **Interface aprimorada** — aplica o design moderno à tabela (`table-styles.css`)
+As preferências ficam no `chrome.storage.sync`.
 
-### Configurações Avançadas
-- **Toggle individual** para cada funcionalidade
-- **Persistência de configurações** entre sessões
-- **Aplicação automática** conforme preferências salvas
+## 🎨 Visual da lista
 
-## 🎨 Personalização Visual
+Com a visualização de texto ligada, o `<html>` recebe:
 
-### Como Funciona
-O EPT aplica automaticamente classes CSS aos elementos da tabela de minutas, permitindo personalização completa através do arquivo `table-styles.css`.
+- `data-ept-table-theme="refined"`
+- `data-ept-button-layout="segmented-uniform-white"`
+- `data-ept-border-style="lateral"`
+- `data-ept-keep-actions="true"` se “Manter botões originais” estiver ligado
 
-### Classes CSS Disponíveis
+Arquivos:
 
-#### Tabela Principal
+- [`table-styles.css`](table-styles.css) — cartões, cabeçalho, texto, rodapé, Retunar, destaque de edição (`#ffaa00` → fundo `#fff8e6`)
+- [`table-themes.css`](table-themes.css) — tema refined, zebrado (`#f6f4f8` nas pares, excluindo a linha laranja), filete lateral, recuo do texto em tela larga
+
+Classes úteis:
+
 ```css
-#tabelaMinutas.ept-enhanced              /* Tabela principal */
-#tabelaMinutas.ept-enhanced th           /* Cabeçalhos */
-#tabelaMinutas.ept-enhanced tr:hover     /* Hover nas linhas */
+#tabelaMinutas.ept-enhanced
+.ept-minuta-header
+.ept-minuta-text
+.ept-minuta-footer
+.ept-preview-container.ept-minuta-em-edicao
 ```
 
-#### Elementos da Minuta
+Botões do rodapé (chave estável, inclusive AJAX):
+
 ```css
-.ept-minuta-header                       /* Cabeçalho (processo/título/órgão) */
-.ept-minuta-text                         /* Conteúdo do texto */
-.ept-minuta-footer                       /* Rodapé com botões */
+.ept-minuta-footer a[data-ept-action="editar"]
+.ept-minuta-footer a[data-ept-action="assinar"]
+.ept-minuta-footer a[data-ept-action="devolver"]
+.ept-minuta-footer a[data-ept-action="lembrete"]
 ```
 
-#### Botões Específicos
-A chave estável `data-ept-action` é aplicada pelo `ept.js` (funciona para links normais e botões AJAX):
-```css
-.ept-minuta-footer a[data-ept-action="assinar"]   /* Botão Assinar */
-.ept-minuta-footer a[data-ept-action="devolver"]  /* Botão Devolver */
-.ept-minuta-footer a[data-ept-action="editar"]    /* Botão Editar */
-.ept-minuta-footer a[data-ept-action="lembrete"]  /* Botão Lembrete */
-/* "Conferir" fica oculto no rodapé curado; use a opção "Manter botões originais". */
-```
+“Conferir” não entra no rodapé curado; use **Manter botões originais** ou **Mais ações**.
 
-### Exemplos Práticos
+Para ajustar o visual, edite os CSS, recarregue a extensão em `chrome://extensions/` e use `!important` (o restante do CSS injetado já usa).
 
-#### Tema Material Design
-```css
-#tabelaMinutas.ept-enhanced .infraTrOrdenacao th {
-    background: #1976D2 !important;
-    color: white !important;
-    border: none !important;
-}
+## 🧪 Testes
 
-.ept-minuta-header {
-    background: #E3F2FD !important;
-    border-left: 4px solid #1976D2 !important;
-    padding: 16px !important;
-    border-radius: 4px !important;
-}
-```
+### URLs (Node.js)
 
-#### Botões Estilizados
-```css
-.ept-minuta-footer a[data-ept-action="assinar"] {
-    background: #4CAF50 !important;
-    color: white !important;
-    padding: 8px 16px !important;
-    border-radius: 4px !important;
-    text-decoration: none !important;
-}
-
-.ept-minuta-footer a[data-ept-action="devolver"] {
-    background: #f44336 !important;
-    color: white !important;
-    padding: 8px 16px !important;
-    border-radius: 4px !important;
-}
-```
-
-### Workflow de Personalização
-
-1. **Edite o arquivo `table-styles.css`**
-2. **Adicione seus estilos CSS customizados**
-3. **Recarregue a extensão** em `chrome://extensions/`
-4. **Teste na página do eproc**
-5. **Refine conforme necessário**
-
-### Dicas Importantes
-- **Use `!important`** para sobrescrever estilos do eproc
-- **Teste responsividade** com `@media queries`
-- **Use DevTools** para inspecionar elementos e debug
-- **Verifique se as classes estão sendo aplicadas** via console
-
-## 🧪 Testes e Verificação
-
-O projeto inclui dois sistemas de teste complementares para garantir qualidade e funcionalidade da extensão.
-
-### 🌐 Teste Automatizado de URLs (Node.js)
-
-#### Como Executar
 ```bash
-# Testar conectividade de todas as URLs do manifest.json
 node test-urls.js
 ```
 
-#### O que o teste faz
-- ✅ **Verifica 21 URLs** de diferentes tribunais (no script Node, só **TJRJ** usa `…/eproc/` no fim; os demais hosts são testados na raiz, como antes)
-- ✅ **Gera relatório detalhado** com status de cada servidor
-- ✅ **Identifica URLs problemáticas** e possíveis causas
-- ✅ **Salva resultados** em `url-test-report.json`
+Verifica os **23 hosts** do `manifest.json` (no script, só o TJRJ usa sufixo `/eproc/`; os demais são testados na raiz). Gera `url-test-report.json`.
 
-#### Exemplo de Saída
-```
-🔍 Iniciando teste de URLs do Eproc Tunado...
-📋 Total de URLs para testar: 21
+### Chrome (zsh)
 
-[1/21] Testando: https://eproc.jfrj.jus.br
-✅ Status: 302
-...
-
-============================================================
-📊 RELATÓRIO FINAL
-============================================================
-✅ URLs funcionando: 21
-❌ URLs com problemas: 0  
-📈 Taxa de sucesso: 100.0%
-```
-
-### 🚀 Teste Manual no Chrome (Zsh)
-
-#### Como Executar
 ```bash
-# Abrir Chrome com todas as URLs e extensão carregada
 ./test-chrome-simple.zsh
 ```
 
-#### O que o teste faz
-- ✅ **Detecta e inicia Chrome** automaticamente
-- ✅ **Carrega a extensão EPT** com flags de desenvolvimento
-- ✅ **Abre 21 abas** com todas as URLs dos tribunais
-- ✅ **Configura DevTools** para debug
-- ✅ **Permite teste manual** da extensão real
-
-#### Vantagens do Teste Chrome
-| Aspecto | Teste Node.js | Teste Chrome |
-|---------|---------------|--------------|
-| **Conectividade** | ✅ Verifica HTTP | ✅ Verifica HTTP |
-| **Extensão Real** | ❌ Não testa | ✅ **Testa extensão** |
-| **JavaScript** | ❌ Não executa | ✅ **Executa JS real** |
-| **Console Errors** | ❌ Não vê | ✅ **Mostra erros** |
-| **Interface** | ❌ Não testa | ✅ **Testa UI real** |
-| **Performance** | ❌ Não mede | ✅ **Vê performance** |
-
-#### Verificações no Chrome
-1. **Console do Desenvolvedor** (F12)
-   - Procure por erros em vermelho
-   - Verifique logs do EPT
-   - Monitore performance
-
-2. **Funcionalidade da Extensão**
-   - Clique no ícone EPT na barra
-   - Teste toggles de configuração
-   - Verifique se salva preferências
-
-3. **Teste por Tribunal**
-   - Navegue até a área de minutas
-   - Teste **Visualização de texto** e **Interface aprimorada** na popup
-   - Verifique a aplicação do CSS customizado em `table-styles.css`
-
-### 📊 Monitoramento e Manutenção
-- **Execute testes periodicamente** para verificar disponibilidade
-- **Identifique URLs desatualizadas** antes que afetem usuários
-- **Use dados dos relatórios** para manutenção proativa
-- **Documente problemas** encontrados para correção
+Abre o Chrome com a extensão carregada e uma aba por host, para teste manual na área de minutas.
 
 ## 📁 Estrutura do Projeto
 
 ```
 eproc_tunado/
-├── manifest.json           # Configurações da extensão
-├── popup.html             # Interface da popup
-├── background.js          # Service worker
-├── ept.js                 # Script principal de funcionalidades
-├── toggle.js              # Controle de configurações
-├── table-injector.js      # Sistema de injeção de classes CSS
-├── table-styles.css       # Estilos customizáveis
-├── ept.css               # Estilos base da extensão
-├── test-urls.js          # Script de teste Node.js (conectividade)
-├── test-chrome-simple.zsh # Script de teste Chrome (funcionalidade)
-├── url-test-report.json  # Relatório de testes automatizados
-├── icons/                # Ícones da extensão
-└── README.md            # Este arquivo
+├── manifest.json            # MV3, hosts e permissões
+├── popup.html               # Popup de opções
+├── changelog.html           # Novidades (aberto pela popup)
+├── background.js            # Service worker (injeção no frame principal)
+├── ept.js                   # Reconstrução da tabela, edição rápida, observadores
+├── toggle.js                # Persistência dos toggles
+├── table-injector.js        # Classes .ept-enhanced / header / text / footer
+├── table-styles.css         # Cartões e componentes
+├── table-themes.css         # Tema refined
+├── ept.css                  # Estilos da popup
+├── ziptunado.sh             # Pacote para a Chrome Web Store
+├── test-urls.js
+├── test-chrome-simple.zsh
+├── icons/
+└── README.md
 ```
+
+A injeção (`webNavigation.onCompleted`) vale só no **frame principal** (`frameId === 0`), para não redeclarar o `ept.js` em iframes (por exemplo `minuta_editar`).
 
 ## 🔧 Desenvolvimento
 
-### Pré-requisitos
-- Chrome/Chromium Browser
-- Node.js (para testes de URL)
-- Editor de código com suporte a JavaScript/CSS
+1. Clone e carregue em modo desenvolvedor
+2. Altere JS/CSS e recarregue a extensão
+3. Teste na área de minutas (`acao=minuta_area_trabalho`)
+4. Opcional: `node test-urls.js` e `./test-chrome-simple.zsh`
 
-### Setup de Desenvolvimento
-1. **Clone o repositório**
-2. **Carregue no Chrome** em modo desenvolvedor
-3. **Faça suas modificações**
-4. **Execute testes** para validar mudanças:
-   ```bash
-   # Teste de conectividade
-   node test-urls.js
-   
-   # Teste funcional no Chrome
-   ./test-chrome-simple.zsh
-   ```
-5. **Verifique logs** no console do Chrome (F12)
-
-### Debug
 ```javascript
-// Console do navegador — verificar classes aplicadas
 document.querySelectorAll('.ept-minuta-header').length
-
-// Logs opcionais do EPT (ativar antes de reproduzir o fluxo)
 window.EPT_DEBUG_ENABLED = true
 ```
 
 ## 🐛 Troubleshooting
 
 ### Extensão não funciona?
-1. ✅ Verifique se está em um site eproc suportado
-2. ✅ Confirme se as opções estão ativadas na popup
-3. ✅ Recarregue a extensão em `chrome://extensions/`
-4. ✅ Verifique o console para erros JavaScript
+1. Confirme o host (lista de tribunais / `manifest.json`)
+2. Confirme que a extensão está **Ativado** na popup
+3. Recarregue em `chrome://extensions/`
+4. Veja o console da página
 
-### Estilos não aplicados?
-1. ✅ Confirme que **Interface aprimorada** está ativa (e, para o texto expandido, **Visualização de texto**)
-2. ✅ Use `!important` nos estilos customizados
-3. ✅ Verifique se as classes CSS estão corretas
-4. ✅ Inspecione elementos com DevTools
+### Estilos ou texto não aparecem?
+1. **Visualização de texto** precisa estar ligada
+2. Recarregue a lista (Retunar) se a tabela já estava aberta
+3. Inspecione `html[data-ept-table-theme="refined"]` e `#tabelaMinutas.ept-enhanced`
+
+### Cartão “em edição” preso?
+Ao terminar a edição na outra aba, o cadeado nativo some e o texto deve voltar sozinho. Se não voltar, Recarregar páginas do eproc (popup) ou Retunar. Se a minuta bloqueada sumir após Retunar, é a listagem do eproc (ela some do HTML enquanto está bloqueada).
 
 ### URLs com problema?
-1. ✅ Execute `node test-urls.js` para diagnóstico de conectividade
-2. ✅ Execute `./test-chrome-simple.zsh` para teste funcional
-3. ✅ Verifique se houve mudanças nos domínios dos tribunais
-4. ✅ Teste em horários diferentes (manutenções programadas)
-5. ✅ Atualize URLs no manifest.json se necessário
-
-### Problemas com testes Chrome?
-1. ✅ Verifique se Chrome está instalado em `/Applications/`
-2. ✅ Confirme permissões: `chmod +x test-chrome-simple.zsh`
-3. ✅ Verifique se está no diretório correto da extensão
-4. ✅ Recarregue a extensão em `chrome://extensions/` se necessário
-
-## 📈 Performance
-
-### Otimizações Implementadas
-- **Injeção sob demanda** de scripts e estilos
-- **Classes CSS eficientes** com seletores específicos
-- **Throttling de eventos** para melhor responsividade
-- **Lazy loading** de funcionalidades não essenciais
-
-### Boas Práticas
-- **Minimize uso de `!important`** quando possível
-- **Use transforms** ao invés de alterar posição
-- **Prefira opacity** para fade effects
-- **Teste performance** em dispositivos menos potentes
+`node test-urls.js` e, se o domínio do tribunal mudou, atualize `manifest.json`.
 
 ## 🤝 Contribuição
 
-### Como Contribuir
-1. **Fork o repositório**
-2. **Crie uma branch** para sua feature
-3. **Faça suas modificações**
-4. **Teste de ponta a ponta** em diferentes tribunais
-5. **Execute testes de URL** antes do commit
-6. **Abra um Pull Request**
-
-### Diretrizes
-- **Mantenha compatibilidade** com todos os tribunais suportados
-- **Teste em diferentes resoluções** de tela
-- **Documente mudanças significativas**
-- **Use código limpo** e comentado
+1. Fork e branch
+2. Teste na área de minutas de pelo menos um tribunal
+3. Não quebre a independência de colunas (mapa a partir do cabeçalho)
+4. Abra um Pull Request
 
 ## 📜 Licença
 
-Este projeto é desenvolvido para uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
+Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 ## 👨‍💻 Autor
 
-**Mauro Lopes**
-- Website: [maurolopes.com.br](https://maurolopes.com.br)
-- Extensão desenvolvida para melhorar a produtividade no trabalho jurisdicional
+**Mauro Lopes** — [maurolopes.com.br](https://maurolopes.com.br)
 
 ## 🔄 Changelog
 
-### v0.0.12 (atual)
-- ✅ **Independência de colunas:** a linha da tabela de minutas passa a ser reconstruída a partir do cabeçalho (mapa de colunas), funcionando com qualquer combinação de "critérios de exibição" — sem dados trocados, células vazias ou `undefined`.
-- ✅ **Fim do `divListaRecursosMinuta` duplicado** que ocorria com muitas colunas marcadas.
-- ✅ **Detecção robusta de ações:** botões reconhecidos por `href`, atributo `acao` do `<img>` ou `alt`/tooltip; o "Editar" das sentenças (AJAX) volta a aparecer no rodapé curado.
-- ✅ **Nova opção "Manter botões originais"** (`ept_keep_actions`, padrão OFF): preserva a célula original de "Recursos disponíveis" com todos os botões (inclusive "Conferir"), mantendo a "edição rápida" no rodapé do texto.
-- ✅ **Estilização por `data-ept-action`** nos botões do rodapé (em vez de seletores por `href`), cobrindo links normais e botões AJAX.
+### v1.0.0 (atual)
+- ✅ Cartões refined na lista (cabeçalho branco com borda roxa, zebrado discreto, filete lateral, intervalo maior entre minutas)
+- ✅ Visual novo sempre que **Visualização de texto** está ligada (removido o interruptor “Interface aprimorada”)
+- ✅ Botões do rodapé em barra segmentada; **Mais ações** por minuta
+- ✅ **Manter botões originais** no popup (ícones extras já visíveis)
+- ✅ Recuo do texto em tela grande (`margin-right: 100px`)
+- ✅ **Retunar** no último `th` do cabeçalho
+- ✅ **TJPR** (1º e 2º graus)
+- ✅ Injeção só no frame principal (`frameId === 0`)
+- ✅ **Minuta em edição:** o eproc marca a linha (laranja + cadeado); o cartão EPT é reaplicado com “em edição” e, ao desbloquear, o preview volta sem `location.reload()`
+
+### v0.0.12
+- ✅ **Independência de colunas:** reconstrução a partir do cabeçalho (mapa de colunas), qualquer combinação de critérios de exibição
+- ✅ **Fim do `divListaRecursosMinuta` duplicado** com muitas colunas marcadas
+- ✅ **Detecção robusta de ações** (`href`, `acao` do `<img>` ou tooltip); “Editar” AJAX no rodapé
+- ✅ **Manter botões originais** (`ept_keep_actions`, padrão OFF)
+- ✅ Estilização por `data-ept-action` no rodapé
 
 ### v0.0.11
-- ✅ **Language Tools e similares:** remoção de `spellcheck="false"` no editor inline para permitir revisão gramatical no modal.
-- ✅ **Acessibilidade:** `role="textbox"` e `aria-labelledby` no campo de edição rápida.
-- ✅ **Tooltips Infra:** após reconstruir a linha ou atualizar o preview, chamada a `infraTooltipOcultar` quando existir, reduzindo balões presos na listagem condensada.
-- ✅ **Service worker:** título do ícone da extensão (“tunado” / “não tunado”) passa a refletir corretamente `ept_enabled` (valores assíncronos aguardados; atualização ao mudar o storage).
+- ✅ Language Tools: sem `spellcheck="false"` no editor inline
+- ✅ Acessibilidade: `role="textbox"` e `aria-labelledby` na edição rápida
+- ✅ Tooltips Infra: `infraTooltipOcultar` após reconstruir a linha
+- ✅ Título do ícone (“tunado” / “não tunado”) alinhado a `ept_enabled`
 
 ### v0.0.10
-- ✅ **Modal de edição rápida:** fechamento apenas pelos botões próprios (X ou Cancelar), evitando perda ao clicar fora.
+- ✅ Modal de edição rápida: fecha só pelos botões próprios (X ou Cancelar)
 
 ### v0.0.9
-- ✅ **Editor inline de minutas** com modal dedicado, sanitização XHTML e desbloqueio automático.
-- ✅ **Atualização imediata da tabela** após salvar, sem recarregar a página.
-- ✅ **Remoção do painel de logs experimental** para evitar conflitos com o editor nativo.
-- ✅ **Correção do alerta** “Houve uma mudança no perfil do usuário” em recarga após salvar inline (emulação do `atualizar_info_minuta`).
-- ✅ Logs leves internos (`window.EPT_LOGS`) e debug opcional (`window.EPT_DEBUG_ENABLED = true`).
+- ✅ Editor inline, sanitização XHTML, desbloqueio automático
+- ✅ Atualização da tabela após salvar, sem recarregar a página
+- ✅ Correção do alerta “Houve uma mudança no perfil do usuário” (`atualizar_info_minuta`)
+- ✅ `window.EPT_LOGS` e `window.EPT_DEBUG_ENABLED`
 
 ### v0.0.6
-- ✅ **Correção crítica** para compatibilidade com eproc 9.15
-- ✅ **Preservação dos links** de visualização de minutas
-- ✅ **Manutenção da funcionalidade nativa** do sistema eproc
-- ✅ Suporte a 21 URLs de tribunais
-- ✅ Sistema completo de personalização CSS
-- ✅ Testes automatizados de URLs
-- ✅ Interface responsiva otimizada
-- ✅ Documentação unificada
-
-### v0.0.4
-- ✅ Suporte a 21 URLs de tribunais
-- ✅ Sistema completo de personalização CSS
-- ✅ Testes automatizados de URLs
-- ✅ Interface responsiva otimizada
-- ✅ Documentação unificada
+- ✅ Compatibilidade com eproc 9.15 (preservação dos `linkMinuta`)
+- ✅ Personalização CSS e testes de URL
 
 ---
 
-**⚖️ Desenvolvido por magistrado, para magistrados.** 
-
-*Simplifique seu trabalho com minutas e foque no que realmente importa: a prestação jurisdicional.* 
+**⚖️ Desenvolvido por magistrado, para magistrados.**

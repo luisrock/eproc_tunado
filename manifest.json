@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Eproc Tunado - EPT",
-  "version": "0.0.12",
+  "version": "1.0.0",
   "description": "Eproc com interface de minutas aperfeiçoada para juízes",
   "homepage_url": "https://maurolopes.com.br",
   "permissions": ["storage", "webNavigation", "tabs", "scripting"],
@@ -23,7 +23,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["table-styles.css"],
+      "resources": ["table-styles.css", "table-themes.css"],
       "matches": [
         "*://eproc.jfrj.jus.br/*",
         "*://eproc.jfes.jus.br/*",
@@ -45,7 +45,9 @@
         "*://eproc1g.tjsp.jus.br/*",
         "*://eproc2g.tjsp.jus.br/*",
         "*://eproc1g.tjmg.jus.br/*",
-        "*://eproc2g.tjmg.jus.br/*"
+        "*://eproc2g.tjmg.jus.br/*",
+        "*://eproc1g.tjpr.jus.br/*",
+        "*://eproc2g.tjpr.jus.br/*"
       ]
     }
   ],
@@ -70,6 +72,8 @@
     "*://eproc1g.tjsp.jus.br/*",
     "*://eproc2g.tjsp.jus.br/*",
     "*://eproc1g.tjmg.jus.br/*",
-    "*://eproc2g.tjmg.jus.br/*"
+    "*://eproc2g.tjmg.jus.br/*",
+    "*://eproc1g.tjpr.jus.br/*",
+    "*://eproc2g.tjpr.jus.br/*"
   ]
 }

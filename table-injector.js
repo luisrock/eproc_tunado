@@ -29,10 +29,13 @@ function enhanceMinutaContent(row) {
     sectionContent.classList.add('ept-minuta-text');
   }
 
-  // Footer = div com margin-top: 30px
-  const footerDiv = contentCell.querySelector('div[style*="margin-top: 30px"]');
+  // Footer = rodapé da minuta (classe no markup ou estilo legado).
+  const footerDiv =
+    contentCell.querySelector(".ept-minuta-footer") ||
+    contentCell.querySelector("div[style*='margin-top: 30px']") ||
+    contentCell.querySelector("div[style*='margin-top:30px']");
   if (footerDiv) {
-    footerDiv.classList.add('ept-minuta-footer');
+    footerDiv.classList.add("ept-minuta-footer");
   }
 }
 

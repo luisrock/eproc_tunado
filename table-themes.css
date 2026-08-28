@@ -1,0 +1,520 @@
+/* EPT — tema visual fechado da tabela de minutas */
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced {
+    border-spacing: 0 26px !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr > th {
+    overflow: visible !important;
+    border: 0 !important;
+    border-bottom: 4px solid var(--ept-purple-800) !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    color: var(--ept-purple-800) !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr > th .infraTableOrdenacao {
+    min-height: 34px !important;
+    background: transparent !important;
+    color: inherit !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr > th .infraTdRotuloOrdenacao {
+    padding: 8px 12px !important;
+    color: var(--ept-purple-800) !important;
+    font-size: 10.5px !important;
+    letter-spacing: 0.045em !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr > th input[type="checkbox"] {
+    width: 15px !important;
+    height: 15px !important;
+    accent-color: var(--ept-purple-800) !important;
+    outline: 1px solid #b9aabf !important;
+    outline-offset: 1px !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th.ept-th-retunar {
+    padding: 0 12px 0 0 !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    color: inherit !important;
+    text-align: right !important;
+    vertical-align: middle !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th:not(:has(#lnkInfraCheck)):not(:has(.infraCheckbox)):not(:has(input[type="checkbox"])):not(.ept-th-retunar) {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: transparent !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th:not(:has(#lnkInfraCheck)):not(:has(.infraCheckbox)):not(:has(input[type="checkbox"])) .infraTableOrdenacao,
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th:not(:has(#lnkInfraCheck)):not(:has(.infraCheckbox)):not(:has(input[type="checkbox"])) .infraTdRotuloOrdenacao,
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th:not(:has(#lnkInfraCheck)):not(:has(.infraCheckbox)):not(:has(input[type="checkbox"])) a {
+    display: none !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td:first-child {
+    width: 36px !important;
+    padding: 12px 8px !important;
+    border-radius: 5px 0 0 5px !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td:last-of-type {
+    border-radius: 0 5px 5px 0 !important;
+}
+
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td[colspan] {
+    padding: 14px 16px !important;
+    text-align: left !important;
+}
+
+/* Zebrado discreto: lavado roxo nas minutas pares; edição laranja fica de fora. */
+html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:not(:has(> th)):nth-child(even):not([bgcolor="#ffaa00"]):not([style*="255, 170, 0"]) > td {
+    background-color: #f6f4f8 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-header {
+    position: relative !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 9px !important;
+    border-bottom: 0 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-header::after {
+    content: "" !important;
+    position: absolute !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    width: 30% !important;
+    height: 1px !important;
+    background: var(--ept-slate-200) !important;
+    pointer-events: none !important;
+    transform: translateX(-50%) !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-header > span,
+html[data-ept-table-theme="refined"] .ept-minuta-header > span:first-child,
+html[data-ept-table-theme="refined"] .ept-minuta-header > span:nth-child(2) {
+    font-size: 11.5px !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-preview-container,
+html[data-ept-table-theme="refined"] .ept-minuta-text {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+    font-size: 12.75px !important;
+    line-height: 1.52 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-preview-container.ept-minuta-em-edicao,
+html[data-ept-table-theme="refined"] .ept-minuta-em-edicao {
+    font-size: 14px !important;
+    font-style: italic !important;
+    font-weight: 600 !important;
+    color: #352245 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer {
+    position: relative !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 13px !important;
+    padding: 10px 0 0 !important;
+    border-top: 1px solid var(--ept-slate-200, #e7ebf0) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer::before {
+    content: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer > span {
+    color: #9a93a0 !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.15 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta {
+    gap: 5px !important;
+    margin-left: 0 !important;
+    flex: 0 0 auto !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a {
+    min-width: 46px !important;
+    min-height: 23px !important;
+    padding: 3px 8px !important;
+    border-radius: 4px !important;
+    font-size: 9.75px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.005em !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
+    border-color: #d8cfdd !important;
+    background: #f5f2f7 !important;
+    color: #493652 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"]:hover {
+    border-color: #bdaec5 !important;
+    background: #ebe5ee !important;
+    color: #352245 !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"] {
+    border-color: #352245 !important;
+    background: #352245 !important;
+    color: #ffffff !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]:hover {
+    border-color: #4a3358 !important;
+    background: #4a3358 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"] {
+    border-color: #ddc8cb !important;
+    background: #fffafa !important;
+    color: #7a454b !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"]:hover {
+    border-color: #c8aeb2 !important;
+    background: #f8eeee !important;
+    color: #66383e !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"] {
+    border-color: #ddd1ae !important;
+    background: #fffdf7 !important;
+    color: #675936 !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"]:hover {
+    border-color: #c8b985 !important;
+    background: #f8f3e5 !important;
+    color: #544724 !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
+    min-width: 70px !important;
+    margin-left: 2px !important;
+    border-color: #edb9a8 !important;
+    background: #fff4ef !important;
+    color: #9a4932 !important;
+    text-transform: capitalize !important;
+    box-shadow: none !important;
+}
+
+html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida:hover {
+    border-color: #d99b86 !important;
+    background: #fbe8e0 !important;
+    color: #7f3a28 !important;
+    box-shadow: none !important;
+}
+
+/* Botões D1 — barra segmentada, hover laranja com texto branco */
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta {
+    display: inline-flex !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+    width: fit-content !important;
+    margin-left: 0 !important;
+    border: 1px solid #d8d1dc !important;
+    border-radius: 5px !important;
+    background: transparent !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a {
+    min-width: 0 !important;
+    min-height: 20px !important;
+    padding: 2px 7px !important;
+    border: 0 !important;
+    border-right: 1px solid #e4dfe7 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    color: #574d5d !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a:hover {
+    background: #f4f1f5 !important;
+    color: #352245 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
+    border-color: #e4dfe7 !important;
+    background: #ffffff !important;
+    color: #574d5d !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"] {
+    background: #352245 !important;
+    color: #ffffff !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]:hover {
+    background: #4a3358 !important;
+    color: #ffffff !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="devolver"] {
+    color: #765058 !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="lembrete"] {
+    color: #665d47 !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
+    min-width: 0 !important;
+    margin: 0 !important;
+    border-right: 0 !important;
+    background: #fff8f5 !important;
+    color: #8d4b38 !important;
+    text-transform: capitalize !important;
+}
+
+html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida:hover {
+    background: #f9ebe5 !important;
+    color: #713b2c !important;
+}
+
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta {
+    border-color: #cfc7d3 !important;
+    background: transparent !important;
+}
+
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action],
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
+    border-color: #ded8e1 !important;
+    background: transparent !important;
+    color: #3f3445 !important;
+    font-weight: 600 !important;
+}
+
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
+    border-right: 0 !important;
+}
+
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action]:hover,
+html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida:hover {
+    border-color: #f66942 !important;
+    background: #f66942 !important;
+}
+
+html[data-ept-button-layout="segmented-uniform-white"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action]:hover,
+html[data-ept-button-layout="segmented-uniform-white"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida:hover {
+    color: #ffffff !important;
+}
+
+.ept-minuta-footer .ept-btn-mais-acoes {
+    display: inline !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    color: #9a93a0 !important;
+    cursor: pointer !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+    font-size: 9px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.005em !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.ept-minuta-footer .ept-btn-mais-acoes:hover {
+    border: 0 !important;
+    background: none !important;
+    color: #e85f38 !important;
+    font-weight: 400 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+}
+
+.ept-minuta-footer .ept-btn-mais-acoes[aria-pressed="true"] {
+    border: 0 !important;
+    background: none !important;
+    color: #352245 !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+}
+
+.ept-minuta-footer .ept-btn-mais-acoes[aria-pressed="true"]:hover {
+    border: 0 !important;
+    background: none !important;
+    color: #e85f38 !important;
+    font-weight: 700 !important;
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+}
+
+.ept-minuta-footer .ept-btn-mais-acoes:focus-visible {
+    outline: 3px solid rgba(246, 105, 66, 0.3) !important;
+    outline-offset: 2px !important;
+}
+
+/* Borda B — marcador lateral */
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td {
+    box-shadow: none !important;
+}
+
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td:first-child {
+    box-shadow: inset 4px 0 0 #c5b8cc !important;
+}
+
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td {
+    background-color: #fcfbfd !important;
+    border-color: #cfc5d5 !important;
+    box-shadow: 0 8px 20px rgba(53, 34, 69, 0.1) !important;
+}
+
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td:first-child {
+    box-shadow: inset 4px 0 0 #352245, 0 8px 20px rgba(53, 34, 69, 0.1) !important;
+}
+
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr[bgcolor="#ffaa00"] > td:first-child,
+html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr[style*="255, 170, 0"] > td:first-child {
+    box-shadow: inset 4px 0 0 #e8b84f !important;
+}
+
+/* Recuo do texto em tela grande: alinhado à esquerda, 100px à direita */
+@media (min-width: 1025px) {
+    html[data-ept-table-theme="refined"] .ept-preview-container,
+    html[data-ept-table-theme="refined"] .ept-minuta-text:not(:has(.ept-preview-container)) {
+        box-sizing: border-box !important;
+        margin-right: 100px !important;
+        margin-left: 0 !important;
+        padding: 16px 16px 16px 0 !important;
+    }
+}
+
+/* Botões originais — célula revelada por "Mais ações" (layout B) */
+#tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td.ept-recursos-originais.ept-recursos-collapsed {
+    display: none !important;
+}
+
+#tabelaMinutas.ept-enhanced > tbody > tr.ept-more-actions-open:not(.infraTrOrdenacao):has(> td) {
+    height: 1px;
+}
+
+#tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td.ept-recursos-originais {
+    width: 1% !important;
+    min-width: 148px !important;
+    max-width: 220px !important;
+    height: 100% !important;
+    padding: 12px 10px !important;
+    vertical-align: stretch !important;
+    border-left: 1px solid #ddd6e3 !important;
+    white-space: normal !important;
+}
+
+#tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td.ept-recursos-originais {
+    border-left-color: #cfc5d5 !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-content: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 6px 8px !important;
+    white-space: normal !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta br {
+    display: none !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta > * {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta a {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    padding: 2px !important;
+    border-radius: 4px !important;
+    line-height: 0 !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta a:hover {
+    background: #eee9f1 !important;
+}
+
+#tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta img {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px !important;
+}
+
+@media (max-width: 1024px) {
+    html[data-ept-table-theme="refined"] .ept-minuta-header::after {
+        width: 100% !important;
+        left: 0 !important;
+        transform: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta {
+        display: inline-flex !important;
+        width: fit-content !important;
+        flex: 1 1 100% !important;
+    }
+
+    html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a {
+        width: auto !important;
+    }
+
+    .ept-minuta-footer {
+        flex-wrap: wrap !important;
+    }
+
+    .ept-minuta-footer .ept-btn-mais-acoes {
+        margin-top: 12px !important;
+        margin-left: 0 !important;
+    }
+}

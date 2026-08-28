@@ -37,7 +37,6 @@ async function setTabData() {
     "ept_actions",
     "ept_tabletext",
     "ept_edit",
-    "ept_tablestyle",
   ]);
   const [
     ept_enabled,
@@ -46,7 +45,6 @@ async function setTabData() {
     ept_actions,
     ept_tableText,
     ept_edit,
-    ept_tablestyle,
   ] = await Promise.all([
     checkAndSetDefault(data, "ept_enabled"),
     checkAndSetDefault(data, "ept_focus"),
@@ -54,7 +52,6 @@ async function setTabData() {
     checkAndSetDefault(data, "ept_actions"),
     checkAndSetDefault(data, "ept_tabletext"),
     checkAndSetDefault(data, "ept_edit"),
-    checkAndSetDefault(data, "ept_tablestyle"),
   ]);
 
   let titleToBe = ept_enabled ? "está tunado!" : "não está tunado.";
@@ -96,20 +93,16 @@ async function injectScripts(tabId) {
     "ept_actions",
     "ept_tabletext",
     "ept_edit",
-    "ept_tablestyle",
   ]);
   if (data.ept_enabled) {
-    // Injeta o CSS da tabela se as funcionalidades de texto e estilo estiverem habilitadas
-    if (data.ept_tabletext && data.ept_tablestyle) {
-      try {
-        await chrome.scripting.insertCSS({
-          target: { tabId: tabId },
-          files: ["table-styles.css"]
-        });
-        console.log('EPT: CSS da tabela injetado via background');
-      } catch (error) {
-        console.log('EPT: Erro ao injetar CSS:', error);
-      }
+    try {
+      await chrome.scripting.insertCSS({
+        target: { tabId: tabId },
+        files: ["table-styles.css", "table-themes.css"]
+      });
+      console.log('EPT: CSS da tabela injetado via background');
+    } catch (error) {
+      console.log('EPT: Erro ao injetar CSS:', error);
     }
     
     // Injeta os scripts
@@ -123,7 +116,13 @@ async function injectScripts(tabId) {
 // Intercept the web navigation
 chrome.webNavigation.onCompleted.addListener(
   (details) => {
+    // Só o frame principal. Iframes do eproc (editar minuta, etc.) também
+    // disparam onCompleted; reinjetar o ept.js no tab gera
+    // "Identifier has already been declared".
+    if (details.frameId !== 0) {
+      return;
+    }
     injectScripts(details.tabId);
   },
   { url: [{ hostContains: "eproc" }] }
-); //updated the match pattern
+);

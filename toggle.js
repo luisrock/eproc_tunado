@@ -19,7 +19,9 @@ const manifestHosts = [
   "*://eproc1g.tjsp.jus.br/*",
   "*://eproc2g.tjsp.jus.br/*",
   "*://eproc1g.tjmg.jus.br/*",
-  "*://eproc2g.tjmg.jus.br/*"
+  "*://eproc2g.tjmg.jus.br/*",
+  "*://eproc1g.tjpr.jus.br/*",
+  "*://eproc2g.tjpr.jus.br/*"
 ];
 
 function toggleOnOff(flag, element, geral = false) {
@@ -99,8 +101,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
   let btnText = document.getElementById("toggle-ept_tabletext");
   let ept_edit;
   let btnEdit = document.getElementById("toggle-ept_edit");
-  let ept_tablestyle;
-  let btnTableStyle = document.getElementById("toggle-ept_tablestyle");
   let ept_keep_actions;
   let btnKeepActions = document.getElementById("toggle-ept_keep_actions");
   let btnReload = document.getElementById("btn-reload");
@@ -116,7 +116,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
       "ept_actions",
       "ept_tabletext",
       "ept_edit",
-      "ept_tablestyle",
       "ept_keep_actions",
     ];
     variables.forEach((item) => {
@@ -165,7 +164,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     });
   };
 
-  [btnPassword, btnFocus, btnActions, btnText, btnEdit, btnTableStyle, btnKeepActions].forEach((btn) => {
+  [btnPassword, btnFocus, btnActions, btnText, btnEdit, btnKeepActions].forEach((btn) => {
     if (btn) { // Verificação de segurança caso o elemento não exista
       btn.onclick = () => {
         let item = btn.id.split("-")[1];
