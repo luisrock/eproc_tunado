@@ -1400,25 +1400,130 @@ function EPT_scheduleEprocRowFix(tr, columnMap, keepActions) {
   }, 60);
 }
 
+function EPT_getMinutaHeaderRow(table) {
+  table = table || document.getElementById("tabelaMinutas");
+  if (!table) {
+    return null;
+  }
+  return (
+    Array.from(table.querySelectorAll("tr")).find((tr) =>
+      tr.querySelector(":scope > th")
+    ) || null
+  );
+}
+
+function EPT_anyMinutaRecursosVisible(table) {
+  table = table || document.getElementById("tabelaMinutas");
+  if (!table) {
+    return false;
+  }
+  const rows = table.querySelectorAll("tr:not(.infraTrOrdenacao)");
+  for (let i = 0; i < rows.length; i++) {
+    const tr = rows[i];
+    if (tr.querySelector(":scope > th")) {
+      continue;
+    }
+    if (EPT_isRecursosVisible(tr)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Alinha o cabeçalho à coluna extra de "Mais ações" (e desfaz ao fechar). */
+function EPT_syncMinutaHeader(showRecursos) {
+  const headerRow = EPT_getMinutaHeaderRow();
+  if (!headerRow) {
+    return;
+  }
+  const previewTh = headerRow.querySelector("th.ept-th-preview");
+  const recursosTh = headerRow.querySelector("th.ept-th-recursos");
+  const totalCols = EPT_minutasTotalCols;
+  const show = !!(showRecursos && recursosTh);
+  if (previewTh && totalCols > 0) {
+    const keptOthers = show ? 2 : 1;
+    previewTh.setAttribute("colspan", String(Math.max(1, totalCols - keptOthers)));
+  }
+
+  const btn = document.getElementById("btnRetunarEPT");
+  const host = show && recursosTh ? recursosTh : previewTh;
+  const relocateRetunar = function () {
+    if (!btn || !host) {
+      return;
+    }
+    headerRow.querySelectorAll("th.ept-th-retunar").forEach(function (th) {
+      if (th !== host) {
+        th.classList.remove("ept-th-retunar");
+      }
+    });
+    host.classList.add("ept-th-retunar");
+    if (btn.parentNode !== host) {
+      host.appendChild(btn);
+    }
+  };
+
+  if (show) {
+    recursosTh.classList.remove("ept-th-recursos-collapsed");
+    recursosTh.style.display = "table-cell";
+    relocateRetunar();
+  } else {
+    relocateRetunar();
+    if (recursosTh) {
+      recursosTh.classList.add("ept-th-recursos-collapsed");
+      recursosTh.style.display = "none";
+    }
+  }
+}
+
+function EPT_collapseMinutaHeader(row, columnMap, keepActions) {
+  const headerThs = $(row).children("th");
+  if (!headerThs.length) {
+    return false;
+  }
+  const codigoIdx =
+    columnMap && typeof columnMap.codigo === "number" ? columnMap.codigo : 2;
+  const checkboxIdx =
+    columnMap && typeof columnMap.checkbox === "number" ? columnMap.checkbox : 0;
+  const recursosIdx =
+    columnMap && typeof columnMap.recursos === "number" ? columnMap.recursos : -1;
+  const previewTh = headerThs.eq(codigoIdx);
+  if (previewTh.length) {
+    previewTh.addClass("ept-th-preview");
+    const keepHeaderIdx = [checkboxIdx, codigoIdx];
+    if (recursosIdx !== -1) {
+      keepHeaderIdx.push(recursosIdx);
+      headerThs.eq(recursosIdx).addClass("ept-th-recursos");
+    }
+    headerThs.each(function (i) {
+      if (keepHeaderIdx.indexOf(i) === -1) {
+        $(this).remove();
+      }
+    });
+    previewTh.attr("width", "70%");
+  }
+  $(row).addClass("ept-tr-cabecalho");
+  EPT_placeRetunarButton();
+  EPT_syncMinutaHeader(!!keepActions);
+  return true;
+}
+
 function EPT_placeRetunarButton() {
   if (document.getElementById("btnRetunarEPT")) {
     return;
   }
-  const table = document.getElementById("tabelaMinutas");
-  if (!table) {
-    return;
-  }
-  const headerRow = Array.from(table.querySelectorAll("tr")).find((tr) =>
-    tr.querySelector(":scope > th")
-  );
+  const headerRow = EPT_getMinutaHeaderRow();
   if (!headerRow) {
     return;
   }
-  const lastTh = headerRow.querySelector(":scope > th:last-child");
-  if (!lastTh) {
+  const previewTh =
+    headerRow.querySelector("th.ept-th-preview") ||
+    headerRow.querySelector(
+      ":scope > th:not(:has(#lnkInfraCheck)):not(:has(.infraCheckbox)):not(.ept-th-recursos)"
+    );
+  if (!previewTh) {
     return;
   }
-  lastTh.classList.add("ept-th-retunar");
+  previewTh.classList.add("ept-th-retunar");
   const btn = document.createElement("button");
   btn.id = "btnRetunarEPT";
   btn.type = "button";
@@ -1426,7 +1531,7 @@ function EPT_placeRetunarButton() {
   btn.textContent = "Retunar";
   btn.title = "Recarregar e reaplicar a formatação";
   btn.addEventListener("click", () => location.reload());
-  lastTh.appendChild(btn);
+  previewTh.appendChild(btn);
 }
 
 // ---- Detecção robusta de ações dos botões de "Recursos disponíveis" ----
@@ -1524,9 +1629,11 @@ function EPT_createQuickEditLink() {
 /**
  * Clona as ações essenciais para o rodapé, sem mutar a célula original
  * (que permanece com todos os ícones, inclusive Conferir).
+ * "Edição rápida" só entra se o eproc ofereceu Editar nesta minuta.
  */
 function EPT_buildCuratedActionsHtml(divBotoes) {
   const parts = [];
+  let hasEditar = false;
   if (divBotoes && divBotoes.length) {
     divBotoes.children().each(function () {
       const $child = $(this);
@@ -1538,13 +1645,18 @@ function EPT_buildCuratedActionsHtml(divBotoes) {
       if (!category) {
         return;
       }
+      if (category === "editar") {
+        hasEditar = true;
+      }
       const clone = this.cloneNode(true);
       const anchor = clone.matches("a") ? clone : clone.querySelector("a");
       (anchor || clone).setAttribute("data-ept-action", category);
       parts.push(clone.outerHTML);
     });
   }
-  parts.push(EPT_createQuickEditLink()[0].outerHTML);
+  if (hasEditar) {
+    parts.push(EPT_createQuickEditLink()[0].outerHTML);
+  }
   return parts.join("");
 }
 
@@ -1586,6 +1698,9 @@ function EPT_setRecursosVisible(row, visible) {
     btn.setAttribute("aria-pressed", visible ? "true" : "false");
     btn.title = visible ? "Ocultar outras ações" : "Mostrar outras ações";
   }
+
+  const table = $row.closest("table")[0];
+  EPT_syncMinutaHeader(EPT_anyMinutaRecursosVisible(table));
 }
 
 function EPT_bindMoreActionsToggle(table) {
@@ -1733,33 +1848,7 @@ async function getStorageData(key) {
           // e as colunas estruturais, sem os rótulos "Prévia" / "Recursos".
           const headerThs = row.children("th");
           if (headerThs.length) {
-            const codigoIdx =
-              typeof columnMap.codigo === "number" ? columnMap.codigo : 2;
-            const checkboxIdx =
-              typeof columnMap.checkbox === "number" ? columnMap.checkbox : 0;
-            const previewTh = headerThs.eq(codigoIdx);
-            if (previewTh.length) {
-              const keepHeaderIdx = [checkboxIdx, codigoIdx];
-              // Modo "Manter botões originais": preserva também o <th>
-              // da coluna de recursos (última coluna), só para alinhar.
-              const recursosIdx =
-                typeof columnMap.recursos === "number" ? columnMap.recursos : -1;
-              if (keepActions && recursosIdx !== -1) {
-                keepHeaderIdx.push(recursosIdx);
-              }
-              headerThs.each(function (i) {
-                if (keepHeaderIdx.indexOf(i) === -1) {
-                  $(this).remove();
-                }
-              });
-              previewTh.attr("width", "70%");
-              // No modo ON, empurra a coluna de recursos para o final,
-              // alinhando com a célula preservada da linha de dados.
-              if (keepActions && recursosIdx !== -1 && totalCols > 2) {
-                previewTh.attr("colspan", totalCols - 2);
-              }
-            }
-            EPT_placeRetunarButton();
+            EPT_collapseMinutaHeader(row, columnMap, keepActions);
             return;
           }
 

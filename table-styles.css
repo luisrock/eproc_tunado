@@ -465,6 +465,20 @@
     vertical-align: middle !important;
 }
 
+#tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th.ept-th-recursos {
+    width: 1% !important;
+    min-width: 148px !important;
+    max-width: 220px !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#tabelaMinutas.ept-enhanced > tbody > tr:has(> th) > th.ept-th-recursos.ept-th-recursos-collapsed {
+    display: none !important;
+}
+
 #btnRetunarEPT.ept-btn-retunar {
     display: inline-flex !important;
     align-items: center !important;
