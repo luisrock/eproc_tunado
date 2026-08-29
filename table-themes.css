@@ -31,7 +31,7 @@ html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr > 
     width: 15px !important;
     height: 15px !important;
     accent-color: var(--ept-purple-800) !important;
-    outline: 1px solid #b9aabf !important;
+    outline: 1px solid var(--ept-brand-cb-outline) !important;
     outline-offset: 1px !important;
 }
 
@@ -80,7 +80,7 @@ html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:no
 
 /* Zebrado discreto: lavado roxo nas minutas pares; edição laranja fica de fora. */
 html[data-ept-table-theme="refined"] #tabelaMinutas.ept-enhanced > tbody > tr:not(:has(> th)):nth-child(even):not([bgcolor="#ffaa00"]):not([style*="255, 170, 0"]) > td {
-    background-color: #f6f4f8 !important;
+    background-color: var(--ept-brand-025) !important;
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-header {
@@ -121,7 +121,7 @@ html[data-ept-table-theme="refined"] .ept-minuta-em-edicao {
     font-size: 14px !important;
     font-style: italic !important;
     font-weight: 600 !important;
-    color: #352245 !important;
+    color: var(--ept-brand-800) !important;
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer {
@@ -142,7 +142,7 @@ html[data-ept-table-theme="refined"] .ept-minuta-footer::before {
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer > span {
-    color: #9a93a0 !important;
+    color: var(--ept-brand-muted) !important;
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
     font-size: 9px !important;
     font-weight: 600 !important;
@@ -168,27 +168,27 @@ html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a {
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
-    border-color: #d8cfdd !important;
-    background: #f5f2f7 !important;
-    color: #493652 !important;
+    border-color: var(--ept-brand-border-soft) !important;
+    background: var(--ept-brand-bg-soft) !important;
+    color: var(--ept-brand-text-soft) !important;
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"]:hover {
-    border-color: #bdaec5 !important;
-    background: #ebe5ee !important;
-    color: #352245 !important;
+    border-color: var(--ept-brand-border) !important;
+    background: var(--ept-brand-bg-strong) !important;
+    color: var(--ept-brand-800) !important;
     box-shadow: none !important;
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"] {
-    border-color: #352245 !important;
-    background: #352245 !important;
+    border-color: var(--ept-brand-800) !important;
+    background: var(--ept-brand-800) !important;
     color: #ffffff !important;
 }
 
 html[data-ept-table-theme="refined"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]:hover {
-    border-color: #4a3358 !important;
-    background: #4a3358 !important;
+    border-color: var(--ept-brand-700) !important;
+    background: var(--ept-brand-700) !important;
     color: #ffffff !important;
     box-shadow: none !important;
 }
@@ -243,7 +243,7 @@ html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta {
     overflow: hidden !important;
     width: fit-content !important;
     margin-left: 0 !important;
-    border: 1px solid #d8d1dc !important;
+    border: 1px solid var(--ept-brand-cont-border) !important;
     border-radius: 5px !important;
     background: transparent !important;
 }
@@ -253,10 +253,10 @@ html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a
     min-height: 20px !important;
     padding: 2px 7px !important;
     border: 0 !important;
-    border-right: 1px solid #e4dfe7 !important;
+    border-right: 1px solid var(--ept-brand-divider) !important;
     border-radius: 0 !important;
     background: #ffffff !important;
-    color: #574d5d !important;
+    color: var(--ept-brand-text-mid) !important;
     font-size: 9px !important;
     font-weight: 600 !important;
     box-shadow: none !important;
@@ -264,25 +264,25 @@ html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a
 }
 
 html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a:hover {
-    background: #f4f1f5 !important;
-    color: #352245 !important;
+    background: var(--ept-brand-050) !important;
+    color: var(--ept-brand-800) !important;
     box-shadow: none !important;
     transform: none !important;
 }
 
 html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
-    border-color: #e4dfe7 !important;
+    border-color: var(--ept-brand-divider) !important;
     background: #ffffff !important;
-    color: #574d5d !important;
+    color: var(--ept-brand-text-mid) !important;
 }
 
 html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"] {
-    background: #352245 !important;
+    background: var(--ept-brand-800) !important;
     color: #ffffff !important;
 }
 
 html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="assinar"]:hover {
-    background: #4a3358 !important;
+    background: var(--ept-brand-700) !important;
     color: #ffffff !important;
 }
 
@@ -309,15 +309,15 @@ html[data-ept-button-layout^="segmented"] .ept-minuta-footer .ept-acoes-minuta a
 }
 
 html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta {
-    border-color: #cfc7d3 !important;
+    border-color: var(--ept-brand-cont-border-u) !important;
     background: transparent !important;
 }
 
 html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a[data-ept-action],
 html[data-ept-button-layout^="segmented-uniform-"] .ept-minuta-footer .ept-acoes-minuta a.ept-btn-edicao-rapida {
-    border-color: #ded8e1 !important;
+    border-color: var(--ept-brand-btn-border-u) !important;
     background: transparent !important;
-    color: #3f3445 !important;
+    color: var(--ept-brand-text-strong) !important;
     font-weight: 600 !important;
 }
 
@@ -344,7 +344,7 @@ html[data-ept-button-layout="segmented-uniform-white"] .ept-minuta-footer .ept-a
     border: 0 !important;
     border-radius: 0 !important;
     background: none !important;
-    color: #9a93a0 !important;
+    color: var(--ept-brand-muted) !important;
     cursor: pointer !important;
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
     font-size: 9px !important;
@@ -370,7 +370,7 @@ html[data-ept-button-layout="segmented-uniform-white"] .ept-minuta-footer .ept-a
 .ept-minuta-footer .ept-btn-mais-acoes[aria-pressed="true"] {
     border: 0 !important;
     background: none !important;
-    color: #352245 !important;
+    color: var(--ept-brand-800) !important;
     font-weight: 700 !important;
     text-decoration: underline !important;
     text-underline-offset: 3px !important;
@@ -396,17 +396,17 @@ html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:n
 }
 
 html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao) > td:first-child {
-    box-shadow: inset 4px 0 0 #c5b8cc !important;
+    box-shadow: inset 4px 0 0 var(--ept-brand-marker) !important;
 }
 
 html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td {
-    background-color: #fcfbfd !important;
-    border-color: #cfc5d5 !important;
-    box-shadow: 0 8px 20px rgba(53, 34, 69, 0.1) !important;
+    background-color: var(--ept-brand-row-hover) !important;
+    border-color: var(--ept-brand-row-hover-bd) !important;
+    box-shadow: 0 8px 20px var(--ept-brand-shadow) !important;
 }
 
 html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td:first-child {
-    box-shadow: inset 4px 0 0 #352245, 0 8px 20px rgba(53, 34, 69, 0.1) !important;
+    box-shadow: inset 4px 0 0 var(--ept-brand-800), 0 8px 20px var(--ept-brand-shadow) !important;
 }
 
 html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr[bgcolor="#ffaa00"] > td:first-child,
@@ -441,12 +441,12 @@ html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr[s
     height: 100% !important;
     padding: 12px 10px !important;
     vertical-align: stretch !important;
-    border-left: 1px solid #ddd6e3 !important;
+    border-left: 1px solid var(--ept-brand-rec-border) !important;
     white-space: normal !important;
 }
 
 #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td.ept-recursos-originais {
-    border-left-color: #cfc5d5 !important;
+    border-left-color: var(--ept-brand-row-hover-bd) !important;
 }
 
 #tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta {
@@ -487,7 +487,7 @@ html[data-ept-border-style="lateral"] #tabelaMinutas.ept-enhanced > tbody > tr[s
 }
 
 #tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta a:hover {
-    background: #eee9f1 !important;
+    background: var(--ept-brand-100) !important;
 }
 
 #tabelaMinutas.ept-enhanced .ept-recursos-originais #divListaRecursosMinuta img {

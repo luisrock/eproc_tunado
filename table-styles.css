@@ -40,11 +40,182 @@
 /* TABELA E CARTÕES DE MINUTA                      */
 /* =============================================== */
 
+/* =============================================== */
+/* PALETAS DE MARCA
+/*
+/* Aplicadas em html[data-ept-palette], escolhido pela
+/* instância do eproc (ept.js: EPT_applyInstanciaPalette):
+/*   instancia-1g -> indigo     instancia-2g -> esmeralda
+/*   demais casos -> ametista (identidade própria da EPT)
+/*
+/* Índigo e esmeralda foram gerados preservando exatamente
+/* a luminância e a saturação da rampa ametista original e
+/* rotacionando apenas o matiz até o hue do eproc. Isso
+/* mantém intactas as relações de contraste já calibradas
+/* (todos os pares de texto passam WCAG AA).
+/*
+/* Cores semânticas (vermelho de devolver, âmbar de
+/* lembrete, laranja de ação EPT) NÃO entram aqui:
+/* são codificação de significado, não de marca.
+/* =============================================== */
+
+
+/* Ametista — identidade EPT (padrão) */
+:root,
+html[data-ept-palette="ametista"] {
+    --ept-brand-900: #2f1d3d;
+    --ept-brand-800: #352245;
+    --ept-brand-700: #4a3358;
+    --ept-brand-100: #eee9f1;
+    --ept-brand-025: #f6f4f8;
+    --ept-brand-050: #f4f1f5;
+    --ept-brand-row-hover: #fcfbfd;
+    --ept-brand-bg-soft: #f5f2f7;
+    --ept-brand-bg-strong: #ebe5ee;
+    --ept-brand-text-soft: #493652;
+    --ept-brand-text-mid: #574d5d;
+    --ept-brand-text-strong: #3f3445;
+    --ept-brand-muted: #9a93a0;
+    --ept-brand-border-soft: #d8cfdd;
+    --ept-brand-border: #bdaec5;
+    --ept-brand-divider: #e4dfe7;
+    --ept-brand-cont-border: #d8d1dc;
+    --ept-brand-cont-border-u: #cfc7d3;
+    --ept-brand-btn-border-u: #ded8e1;
+    --ept-brand-marker: #c5b8cc;
+    --ept-brand-row-hover-bd: #cfc5d5;
+    --ept-brand-rec-border: #ddd6e3;
+    --ept-brand-cb-outline: #b9aabf;
+    --ept-brand-shadow: rgba(53, 34, 69, 0.1);
+    --ept-brand-row-hover-2: #fdfcfe;
+    --ept-brand-bg-tint: #f8f5fa;
+    --ept-brand-bg-mid: #e3dbe8;
+    --ept-brand-border-soft-2: #d7cedd;
+    --ept-brand-border-2: #b8a8c2;
+    --ept-brand-border-3: #bcaec5;
+    --ept-brand-shadow-sm: rgba(53, 34, 69, 0.07);
+    --ept-brand-shadow-md: rgba(53, 34, 69, 0.14);
+    --ept-brand-shadow-900: rgba(47, 29, 61, 0.16);
+    --ept-modal-header: #352245;
+    --ept-modal-overlay: rgba(53, 34, 69, 0.65);
+    --ept-modal-shadow: rgba(53, 34, 69, 0.35);
+    --ept-modal-chip: rgba(53, 34, 69, 0.08);
+    --ept-modal-footer: rgba(53, 34, 69, 0.04);
+    --ept-modal-btn-bd: rgba(53, 34, 69, 0.15);
+    --ept-modal-btn-bd-hover: rgba(53, 34, 69, 0.35);
+    --ept-modal-btn-hover-fg: #1f142c;
+    --ept-modal-field-bg: #f9f7fb;
+    --ept-modal-field-bd: rgba(74, 51, 88, 0.12);
+    --ept-modal-focus: rgba(74, 51, 88, 0.15);
+    --ept-modal-close-bg: rgba(255, 255, 255, 0.1);
+    --ept-modal-close-bg-hover: rgba(255, 255, 255, 0.2);
+}
+
+/* Índigo — harmoniza com o eproc de 1º grau (#12b1d1 → #006599) */
+html[data-ept-palette="indigo"] {
+    --ept-brand-900: #1d313d;
+    --ept-brand-800: #223845;
+    --ept-brand-700: #334a58;
+    --ept-brand-100: #e9eef1;
+    --ept-brand-025: #f4f7f8;
+    --ept-brand-050: #f1f4f5;
+    --ept-brand-row-hover: #fbfcfd;
+    --ept-brand-bg-soft: #f2f5f7;
+    --ept-brand-bg-strong: #e5ebee;
+    --ept-brand-text-soft: #364852;
+    --ept-brand-text-mid: #4d575d;
+    --ept-brand-text-strong: #343f45;
+    --ept-brand-muted: #939ba0;
+    --ept-brand-border-soft: #cfd8dd;
+    --ept-brand-border: #aebdc5;
+    --ept-brand-divider: #dfe4e7;
+    --ept-brand-cont-border: #d1d8dc;
+    --ept-brand-cont-border-u: #c7cfd3;
+    --ept-brand-btn-border-u: #d8dee1;
+    --ept-brand-marker: #b8c5cc;
+    --ept-brand-row-hover-bd: #c5cfd5;
+    --ept-brand-rec-border: #d6dee3;
+    --ept-brand-cb-outline: #aab7bf;
+    --ept-brand-shadow: rgba(34, 56, 69, 0.1);
+    --ept-brand-row-hover-2: #fcfdfe;
+    --ept-brand-bg-tint: #f5f8fa;
+    --ept-brand-bg-mid: #dbe3e8;
+    --ept-brand-border-soft-2: #ced8dd;
+    --ept-brand-border-2: #a8b8c2;
+    --ept-brand-border-3: #aebdc5;
+    --ept-brand-shadow-sm: rgba(34, 56, 69, 0.07);
+    --ept-brand-shadow-md: rgba(34, 56, 69, 0.14);
+    --ept-brand-shadow-900: rgba(29, 49, 61, 0.16);
+    --ept-modal-header: linear-gradient(to left, #12b1d1, #006599);
+    --ept-modal-overlay: rgba(34, 56, 69, 0.65);
+    --ept-modal-shadow: rgba(34, 56, 69, 0.35);
+    --ept-modal-chip: rgba(34, 56, 69, 0.08);
+    --ept-modal-footer: rgba(34, 56, 69, 0.04);
+    --ept-modal-btn-bd: rgba(34, 56, 69, 0.15);
+    --ept-modal-btn-bd-hover: rgba(34, 56, 69, 0.35);
+    --ept-modal-btn-hover-fg: #14232c;
+    --ept-modal-field-bg: #f7fafb;
+    --ept-modal-field-bd: rgba(51, 74, 88, 0.12);
+    --ept-modal-focus: rgba(51, 74, 88, 0.15);
+    --ept-modal-close-bg: rgba(0, 0, 0, 0.28);
+    --ept-modal-close-bg-hover: rgba(0, 0, 0, 0.4);
+}
+
+/* Esmeralda — harmoniza com o eproc de 2º grau (#16a185 → #0f6e5b) */
+html[data-ept-palette="esmeralda"] {
+    --ept-brand-900: #1b3f38;
+    --ept-brand-800: #20473f;
+    --ept-brand-700: #315a52;
+    --ept-brand-100: #e9f1f0;
+    --ept-brand-025: #f4f8f7;
+    --ept-brand-050: #f1f5f4;
+    --ept-brand-row-hover: #fbfdfd;
+    --ept-brand-bg-soft: #f2f7f6;
+    --ept-brand-bg-strong: #e4efed;
+    --ept-brand-text-soft: #34544d;
+    --ept-brand-text-mid: #4c5e5a;
+    --ept-brand-text-strong: #334642;
+    --ept-brand-muted: #92a19e;
+    --ept-brand-border-soft: #cededb;
+    --ept-brand-border: #adc6c1;
+    --ept-brand-divider: #dfe7e6;
+    --ept-brand-cont-border: #d0ddda;
+    --ept-brand-cont-border-u: #c6d4d1;
+    --ept-brand-btn-border-u: #d7e2e0;
+    --ept-brand-marker: #b7cdc9;
+    --ept-brand-row-hover-bd: #c4d6d2;
+    --ept-brand-rec-border: #d5e4e1;
+    --ept-brand-cb-outline: #a9c0bc;
+    --ept-brand-shadow: rgba(32, 71, 63, 0.1);
+    --ept-brand-row-hover-2: #fcfefe;
+    --ept-brand-bg-tint: #f5faf9;
+    --ept-brand-bg-mid: #dae9e6;
+    --ept-brand-border-soft-2: #cddedb;
+    --ept-brand-border-2: #a6c4be;
+    --ept-brand-border-3: #adc6c1;
+    --ept-brand-shadow-sm: rgba(32, 71, 63, 0.07);
+    --ept-brand-shadow-md: rgba(32, 71, 63, 0.14);
+    --ept-brand-shadow-900: rgba(27, 63, 56, 0.16);
+    --ept-modal-header: linear-gradient(to left, #16a185, #0f6e5b);
+    --ept-modal-overlay: rgba(32, 71, 63, 0.65);
+    --ept-modal-shadow: rgba(32, 71, 63, 0.35);
+    --ept-modal-chip: rgba(32, 71, 63, 0.08);
+    --ept-modal-footer: rgba(32, 71, 63, 0.04);
+    --ept-modal-btn-bd: rgba(32, 71, 63, 0.15);
+    --ept-modal-btn-bd-hover: rgba(32, 71, 63, 0.35);
+    --ept-modal-btn-hover-fg: #132d28;
+    --ept-modal-field-bg: #f7fbfa;
+    --ept-modal-field-bd: rgba(49, 90, 82, 0.12);
+    --ept-modal-focus: rgba(49, 90, 82, 0.15);
+    --ept-modal-close-bg: rgba(0, 0, 0, 0.28);
+    --ept-modal-close-bg-hover: rgba(0, 0, 0, 0.4);
+}
+
 #tabelaMinutas.ept-enhanced {
-    --ept-purple-900: #2f1d3d;
-    --ept-purple-800: #352245;
-    --ept-purple-700: #4a3358;
-    --ept-purple-100: #eee9f1;
+    --ept-purple-900: var(--ept-brand-900, #2f1d3d);
+    --ept-purple-800: var(--ept-brand-800, #352245);
+    --ept-purple-700: var(--ept-brand-700, #4a3358);
+    --ept-purple-100: var(--ept-brand-100, #eee9f1);
     --ept-orange-600: #e85f38;
     --ept-orange-500: #f66942;
     --ept-slate-900: #1f2937;
@@ -75,7 +246,7 @@
     background: var(--ept-purple-800) !important;
     border: 0 !important;
     color: #ffffff !important;
-    box-shadow: 0 3px 10px rgba(47, 29, 61, 0.16) !important;
+    box-shadow: 0 3px 10px var(--ept-brand-shadow-900) !important;
 }
 
 #tabelaMinutas.ept-enhanced > tbody > tr > th:first-child {
@@ -125,9 +296,9 @@
 }
 
 #tabelaMinutas.ept-enhanced > tbody > tr:not(.infraTrOrdenacao):hover > td {
-    background-color: #fdfcfe !important;
-    border-color: #cfc5d5 !important;
-    box-shadow: 0 7px 18px rgba(53, 34, 69, 0.07) !important;
+    background-color: var(--ept-brand-row-hover-2) !important;
+    border-color: var(--ept-brand-row-hover-bd) !important;
+    box-shadow: 0 7px 18px var(--ept-brand-shadow-sm) !important;
 }
 
 /* Preserva o destaque nativo da linha durante uma edição. */
@@ -143,7 +314,7 @@
     font-size: 15px !important;
     font-style: italic !important;
     font-weight: 600 !important;
-    color: #352245 !important;
+    color: var(--ept-brand-800) !important;
 }
 
 #tabelaMinutas.ept-enhanced input[type="checkbox"] {
@@ -261,9 +432,9 @@
     width: fit-content !important;
     margin: 12px 0 0 !important;
     padding: 6px 10px !important;
-    border: 1px solid #d7cedd !important;
+    border: 1px solid var(--ept-brand-border-soft-2) !important;
     border-radius: 6px !important;
-    background: #f8f5fa !important;
+    background: var(--ept-brand-bg-tint) !important;
     color: var(--ept-purple-700, #4a3358) !important;
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
     font-size: 11px !important;
@@ -276,7 +447,7 @@
 .ept-preview-container span[id$="-expand-btn"]:hover,
 .ept-preview-container span[id$="-collapse-btn"]:hover {
     background: var(--ept-purple-100, #eee9f1) !important;
-    border-color: #b8a8c2 !important;
+    border-color: var(--ept-brand-border-2) !important;
     color: var(--ept-purple-900, #2f1d3d) !important;
 }
 
@@ -378,14 +549,14 @@
 /* Editar: ação secundária da identidade visual. */
 .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"] {
     background: var(--ept-purple-100, #eee9f1) !important;
-    border-color: #d7cedd !important;
+    border-color: var(--ept-brand-border-soft-2) !important;
     color: var(--ept-purple-800, #352245) !important;
 }
 
 .ept-minuta-footer .ept-acoes-minuta a[data-ept-action="editar"]:hover {
-    background: #e3dbe8 !important;
-    border-color: #bcaec5 !important;
-    box-shadow: 0 4px 10px rgba(53, 34, 69, 0.14) !important;
+    background: var(--ept-brand-bg-mid) !important;
+    border-color: var(--ept-brand-border-3) !important;
+    box-shadow: 0 4px 10px var(--ept-brand-shadow-md) !important;
 }
 
 /* Assinar: ação positiva principal. */
@@ -489,9 +660,9 @@
     max-height: 15px !important;
     margin: 0 0 0 20px !important;
     padding: 0 8px !important;
-    border: 1px solid #352245 !important;
+    border: 1px solid var(--ept-brand-800) !important;
     border-radius: 3px !important;
-    background: #352245 !important;
+    background: var(--ept-brand-800) !important;
     color: #ffffff !important;
     cursor: pointer !important;
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
@@ -506,7 +677,7 @@
 }
 
 #btnRetunarEPT.ept-btn-retunar:hover {
-    background: #4a3358 !important;
+    background: var(--ept-brand-700) !important;
     border-color: #f66942 !important;
 }
 

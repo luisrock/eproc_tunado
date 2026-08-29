@@ -15,7 +15,9 @@ O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora a experiência de t
 - 🌐 **23 hosts** em tribunais federais e estaduais (inclui TJPR)
 - ✅ **Compatibilidade** com eproc 9.15
 
-Identidade visual: roxo `#352245` e laranja `#F66942`.
+Identidade visual: laranja `#F66942`, com a cor de apoio seguindo o eproc do
+usuário — azul na 1ª instância, verde na 2ª, e o roxo `#352245` da extensão
+como padrão fora desses casos.
 
 ### 🔄 Atualização para eproc 9.15
 

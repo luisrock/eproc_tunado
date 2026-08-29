@@ -13,7 +13,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       .ept-inline-editor-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(53, 34, 69, 0.65);
+        background: var(--ept-modal-overlay, rgba(53, 34, 69, 0.65));
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -25,7 +25,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       .ept-inline-editor-modal {
         background: #ffffff;
         border-radius: 12px;
-        box-shadow: 0 20px 45px rgba(53, 34, 69, 0.35);
+        box-shadow: 0 20px 45px var(--ept-modal-shadow, rgba(53, 34, 69, 0.35));
         width: min(960px, 100%);
         display: flex;
         flex-direction: column;
@@ -35,7 +35,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       }
 
       .ept-inline-editor-header {
-        background: #352245;
+        background: var(--ept-modal-header, #352245);
         padding: 20px 28px;
         color: #fff;
         display: flex;
@@ -56,7 +56,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       }
 
       .ept-inline-editor-close {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--ept-modal-close-bg, rgba(255, 255, 255, 0.1));
         border: none;
         color: #fff;
         font-size: 1.25rem;
@@ -68,7 +68,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       }
 
       .ept-inline-editor-close:hover {
-        background: rgba(255, 255, 255, 0.2);
+        background: var(--ept-modal-close-bg-hover, rgba(255, 255, 255, 0.2));
       }
 
       .ept-inline-editor-body {
@@ -82,12 +82,12 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
         display: flex;
         flex-wrap: wrap;
         gap: 12px 24px;
-        color: #4a3358;
+        color: var(--ept-brand-700, #4a3358);
         font-size: 0.875rem;
       }
 
       .ept-inline-editor-info span {
-        background: rgba(53, 34, 69, 0.08);
+        background: var(--ept-modal-chip, rgba(53, 34, 69, 0.08));
         padding: 6px 12px;
         border-radius: 6px;
         font-weight: 500;
@@ -97,19 +97,19 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
         min-height: 320px;
         max-height: 520px;
         overflow-y: auto;
-        border: 2px solid rgba(74, 51, 88, 0.12);
+        border: 2px solid var(--ept-modal-field-bd, rgba(74, 51, 88, 0.12));
         border-radius: 8px;
         padding: 20px;
         font-size: 0.95rem;
         line-height: 1.6;
         color: #1a202c;
-        background: #f9f7fb;
+        background: var(--ept-modal-field-bg, #f9f7fb);
       }
 
       .ept-inline-editor-content[contenteditable="true"]:focus {
         outline: none;
-        border-color: #4a3358;
-        box-shadow: 0 0 0 3px rgba(74, 51, 88, 0.15);
+        border-color: var(--ept-brand-700, #4a3358);
+        box-shadow: 0 0 0 3px var(--ept-modal-focus, rgba(74, 51, 88, 0.15));
         background: #ffffff;
       }
 
@@ -118,7 +118,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
         display: flex;
         justify-content: flex-end;
         gap: 12px;
-        background: rgba(53, 34, 69, 0.04);
+        background: var(--ept-modal-footer, rgba(53, 34, 69, 0.04));
       }
 
       .ept-inline-editor-btn {
@@ -133,13 +133,13 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
       .ept-inline-editor-btn-cancel {
         background: #ffffff;
-        color: #352245;
-        border: 2px solid rgba(53, 34, 69, 0.15);
+        color: var(--ept-brand-800, #352245);
+        border: 2px solid var(--ept-modal-btn-bd, rgba(53, 34, 69, 0.15));
       }
 
       .ept-inline-editor-btn-cancel:hover {
-        border-color: rgba(53, 34, 69, 0.35);
-        color: #1f142c;
+        border-color: var(--ept-modal-btn-bd-hover, rgba(53, 34, 69, 0.35));
+        color: var(--ept-modal-btn-hover-fg, #1f142c);
       }
 
       .ept-inline-editor-btn-save {
@@ -154,7 +154,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       }
 
       .ept-inline-editor-btn-save[disabled] {
-        background: #4a3358;
+        background: var(--ept-brand-700, #4a3358);
         box-shadow: none;
         opacity: 0.6;
         cursor: not-allowed;
@@ -1507,6 +1507,63 @@ function EPT_collapseMinutaHeader(row, columnMap, keepActions) {
   return true;
 }
 
+// ---- Paleta de cores conforme a instância do eproc --------------------
+
+/**
+ * Instância do eproc, lida da classe do <body> ("instancia-1g",
+ * "instancia-2g", "instancia_cr", "instancia_ef"). É o mesmo seletor que o
+ * CSS base do eproc usa para escolher o gradiente da navbar.
+ */
+function EPT_detectInstancia() {
+  const cls = (document.body && document.body.className) || "";
+  const m = /\binstancia[-_]([0-9a-z]+)\b/i.exec(cls);
+  return m ? m[1].toLowerCase() : null;
+}
+
+/**
+ * Paleta correspondente à instância. Fora de 1g/2g fica o ametista, a
+ * identidade própria da extensão.
+ */
+function EPT_paletteForInstancia(inst) {
+  if (inst === "1g") return "indigo";
+  if (inst === "2g") return "esmeralda";
+  return "ametista";
+}
+
+/**
+ * Gradiente real da navbar do eproc. É a fonte mais fiel para o header do
+ * modal: pega inclusive tribunal que tenha customizado o CSS base.
+ */
+function EPT_readNavGradient() {
+  const nav = document.querySelector("#navbar.bg-instancia, .bg-instancia");
+  if (!nav) {
+    return null;
+  }
+  const bg = window.getComputedStyle(nav).backgroundImage;
+  return bg && bg.indexOf("gradient") !== -1 ? bg : null;
+}
+
+/**
+ * Header do modal de edição rápida: nas paletas do eproc usa o gradiente
+ * nativo da navbar; no ametista mantém o chapado da identidade EPT.
+ */
+function EPT_syncModalHeader(paleta) {
+  const raiz = document.documentElement;
+  const grad = paleta === "ametista" ? null : EPT_readNavGradient();
+  if (grad) {
+    raiz.style.setProperty("--ept-modal-header", grad);
+  } else {
+    raiz.style.removeProperty("--ept-modal-header");
+  }
+}
+
+/** Aplica a paleta da instância ao documento e ao modal. */
+function EPT_applyInstanciaPalette() {
+  const paleta = EPT_paletteForInstancia(EPT_detectInstancia());
+  document.documentElement.setAttribute("data-ept-palette", paleta);
+  EPT_syncModalHeader(paleta);
+}
+
 function EPT_placeRetunarButton() {
   if (document.getElementById("btnRetunarEPT")) {
     return;
@@ -1808,6 +1865,7 @@ async function getStorageData(key) {
           document.documentElement.setAttribute("data-ept-table-theme", "refined");
           document.documentElement.setAttribute("data-ept-button-layout", "segmented-uniform-white");
           document.documentElement.setAttribute("data-ept-border-style", "lateral");
+          EPT_applyInstanciaPalette();
           if (keepActions) {
             document.documentElement.setAttribute("data-ept-keep-actions", "true");
           }
