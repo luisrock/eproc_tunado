@@ -1,0 +1,41 @@
+{
+  "_comentario": [
+    "Permissoes da versao mais antiga ainda instalada na base de usuarios.",
+    "NAO e necessariamente a ultima publicada: o que trava um update e a",
+    "permissao concedida na versao que o usuario TEM, e usuario parado numa",
+    "versao velha e o caso que manda.",
+    "Acrescentar aqui host ou permission so depois que a base inteira ja",
+    "migrou. Atualize com: ./prerelease.sh --aprovar"
+  ],
+  "version": "0.0.12",
+  "permissions": [
+    "scripting",
+    "storage",
+    "tabs",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "*://eproc.jfes.jus.br/*",
+    "*://eproc.jfpr.jus.br/*",
+    "*://eproc.jfrj.jus.br/*",
+    "*://eproc.jfrs.jus.br/*",
+    "*://eproc.jfsc.jus.br/*",
+    "*://eproc.trf2.jus.br/*",
+    "*://eproc.trf4.jus.br/*",
+    "*://eproc1.tjto.jus.br/*",
+    "*://eproc1g.tjmg.jus.br/*",
+    "*://eproc1g.tjrj.jus.br/*",
+    "*://eproc1g.tjrs.jus.br/*",
+    "*://eproc1g.tjsc.jus.br/*",
+    "*://eproc1g.tjsp.jus.br/*",
+    "*://eproc1g.trf6.jus.br/*",
+    "*://eproc2.tjto.jus.br/*",
+    "*://eproc2g.tjmg.jus.br/*",
+    "*://eproc2g.tjrj.jus.br/*",
+    "*://eproc2g.tjrs.jus.br/*",
+    "*://eproc2g.tjsc.jus.br/*",
+    "*://eproc2g.tjsp.jus.br/*",
+    "*://eproc2g.trf6.jus.br/*"
+  ],
+  "optional_host_permissions": []
+}

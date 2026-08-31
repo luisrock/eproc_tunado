@@ -53,7 +53,24 @@ como padrão fora desses casos.
 - **TJRJ** - Tribunal de Justiça do Rio de Janeiro (1º e 2º graus)
 - **TJSP** - Tribunal de Justiça de São Paulo (1º e 2º graus)
 - **TJMG** - Tribunal de Justiça de Minas Gerais (1º e 2º graus)
-- **TJPR** - Tribunal de Justiça do Paraná (1º e 2º graus)
+- **TJPR** - Tribunal de Justiça do Paraná (1º e 2º graus) — permissão **opcional**, concedida no popup (veja [Permissões](#-permissões))
+
+## 🔐 Permissões
+
+Os **21 hosts** de `host_permissions` são exigidos na instalação. Os dois do
+TJPR ficam em `optional_host_permissions`: quem for daquele tribunal concede
+uma vez, por um botão que só aparece no popup quando a aba ativa é um host do
+TJPR ([`toggle.js`](toggle.js)).
+
+A distinção não é cosmética. O Chrome **não aplica em silêncio** uma
+atualização que peça permissão nova: ele retém o update e, ao aplicá-lo,
+desativa a extensão até o usuário reautorizar. Foi o que aconteceu na 1.0.0,
+que acrescentou os hosts do TJPR ao obrigatório — usuários ficaram parados na
+0.0.12 sem saber, e quem recebeu teve a extensão desligada.
+
+Por isso: **tribunal novo entra como `optional_host_permissions`.** O
+[`prerelease.sh`](prerelease.sh) reprova o pacote se essa regra for quebrada.
+
 
 ## ⚙️ Instalação
 
@@ -113,11 +130,42 @@ Com a visualização de texto ligada, o `<html>` recebe:
 - `data-ept-button-layout="segmented-uniform-white"`
 - `data-ept-border-style="lateral"`
 - `data-ept-keep-actions="true"` se “Manter botões originais” estiver ligado
+- `data-ept-palette="ametista|indigo|esmeralda"`, escolhido pela instância do eproc
 
 Arquivos:
 
-- [`table-styles.css`](table-styles.css) — cartões, cabeçalho, texto, rodapé, Retunar, destaque de edição (`#ffaa00` → fundo `#fff8e6`)
-- [`table-themes.css`](table-themes.css) — tema refined, zebrado (`#f6f4f8` nas pares, excluindo a linha laranja), filete lateral, recuo do texto em tela larga
+- [`table-styles.css`](table-styles.css) — cartões, cabeçalho, texto, rodapé, Retunar, destaque de edição (`#ffaa00` → fundo `#fff8e6`) e os blocos de token das três paletas
+- [`table-themes.css`](table-themes.css) — tema refined, zebrado (excluindo a linha laranja), filete lateral, recuo do texto em tela larga
+
+### Paletas
+
+A cor de apoio acompanha o eproc do usuário, lida da classe `instancia-*` do
+`<body>` — o mesmo seletor que o CSS do eproc usa para o gradiente da navbar:
+
+| instância | paleta | origem |
+|---|---|---|
+| `instancia-1g` | `indigo` | hue do eproc de 1º grau (`#12b1d1` → `#006599`) |
+| `instancia-2g` | `esmeralda` | hue do eproc de 2º grau (`#16a185` → `#0f6e5b`) |
+| demais | `ametista` | identidade própria da extensão (`#352245`) |
+
+Não é cor por tribunal, é por grau: TRF2, TJRS e TJSP servem os mesmos hexes,
+porque vêm do CSS base do eproc.
+
+Índigo e esmeralda foram gerados preservando a luminância e a saturação da
+rampa ametista e rotacionando apenas o matiz, de modo que as relações de
+contraste já calibradas seguem valendo (todos os pares de texto passam WCAG
+AA). Cores semânticas — vermelho de devolver, âmbar de lembrete, laranja de
+ação — **não** entram nos tokens: são codificação de significado, e são iguais
+nas três paletas.
+
+O header do modal de edição rápida usa o gradiente nativo da navbar, lido em
+runtime de `.bg-instancia` via `getComputedStyle`, o que cobre tribunal que
+tenha customizado o CSS base. Como o gradiente é `to left`, o tom claro cai à
+direita, sob o botão de fechar — que por isso recebe um scrim escuro, sem o
+qual o contraste ficaria em 2.55.
+
+Os 46 tokens (`--ept-brand-*`, `--ept-modal-*`) são definidos em
+`:root` e sobrescritos em `html[data-ept-palette="..."]`.
 
 Classes úteis:
 
@@ -160,6 +208,34 @@ Verifica os **23 hosts** do `manifest.json` (no script, só o TJRJ usa sufixo `/
 
 Abre o Chrome com a extensão carregada e uma aba por host, para teste manual na área de minutas.
 
+### Pré-release (bash)
+
+```bash
+./prerelease.sh              # tudo, incluindo o teste de URLs
+./prerelease.sh --pular-urls # sem o teste de rede
+```
+
+Checagens obrigatórias antes de empacotar. O [`ziptunado.sh`](ziptunado.sh) o
+chama sozinho e **aborta se qualquer uma reprovar** (`EPT_PULAR_URLS=1` pula o
+teste de rede):
+
+1. **URLs** — roda o `test-urls.js`; host fora do ar é aviso, não bloqueio
+2. **Manifest e permissões** — reprova se `permissions` ou `host_permissions`
+   ganharem item que a base ainda não concedeu; confere versão maior que a do
+   baseline e existência dos arquivos citados no manifest
+3. **Sintaxe** — `node --check` nos JS empacotados
+4. **Resíduo** — procura `TESTE —`, `TODO: remover`, `debugger;`
+
+O baseline fica em `release-baseline.json` e guarda as permissões da **versão
+mais antiga ainda instalada na base**, não da última publicada: quem trava um
+update é a versão que o usuário tem. Depois que a base migrar, avance com:
+
+```bash
+./prerelease.sh --aprovar
+```
+
+Avançar antes disso derruba a proteção justamente para quem ficou para trás.
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -174,7 +250,9 @@ eproc_tunado/
 ├── table-styles.css         # Cartões e componentes
 ├── table-themes.css         # Tema refined
 ├── ept.css                  # Estilos da popup
-├── ziptunado.sh             # Pacote para a Chrome Web Store
+├── ziptunado.sh             # Pacote para a Chrome Web Store (chama o prerelease)
+├── prerelease.sh            # Checagens obrigatórias antes de publicar
+├── release-baseline.json    # Permissões da versão mais antiga ainda em uso
 ├── test-urls.js
 ├── test-chrome-simple.zsh
 ├── icons/
@@ -202,6 +280,16 @@ window.EPT_DEBUG_ENABLED = true
 2. Confirme que a extensão está **Ativado** na popup
 3. Recarregue em `chrome://extensions/`
 4. Veja o console da página
+
+### No TJPR não faz nada?
+O acesso é permissão opcional. Abra a área de minutas, clique no ícone da
+extensão e use **“Ativar o EPT neste tribunal”** — o botão só aparece ali, com
+a aba num host do TJPR e o acesso ainda não concedido. Para reverter e testar
+de novo, no console do service worker:
+
+```javascript
+chrome.permissions.remove({origins:["*://eproc1g.tjpr.jus.br/*","*://eproc2g.tjpr.jus.br/*"]}, console.log)
+```
 
 ### Estilos ou texto não aparecem?
 1. **Visualização de texto** precisa estar ligada
@@ -231,7 +319,16 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 ## 🔄 Changelog
 
-### v1.0.0 (atual)
+### v1.0.1 (atual)
+
+- **TJPR como permissão opcional** — sai de `host_permissions` para
+  `optional_host_permissions`, com botão de concessão no popup. O conjunto
+  obrigatório volta a ser o mesmo da 0.0.12, então o update chega em silêncio,
+  sem prompt e sem desativar a extensão
+- **`prerelease.sh`** — checagens antes de empacotar, com guarda contra
+  aumento de permissão; `ziptunado.sh` aborta se reprovarem
+
+### v1.0.0
 - ✅ Cartões refined na lista (cabeçalho branco com borda roxa, zebrado discreto, filete lateral, intervalo maior entre minutas)
 - ✅ Visual novo sempre que **Visualização de texto** está ligada (removido o interruptor “Interface aprimorada”)
 - ✅ Botões do rodapé em barra segmentada; **Mais ações** por minuta
