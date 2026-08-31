@@ -152,6 +152,52 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }, 1000);
   };
 
+  // O TJPR entra como permissão opcional: quem for daquele tribunal concede
+  // uma vez, por este botão. Assim, acrescentar tribunal não obriga toda a
+  // base de usuários a reautorizar a extensão num update.
+  const TJPR_ORIGINS = [
+    "*://eproc1g.tjpr.jus.br/*",
+    "*://eproc2g.tjpr.jus.br/*",
+  ];
+  const TJPR_HOST = /^eproc[12]g\.tjpr\.jus\.br$/i;
+  const btnTjpr = document.getElementById("btn-tjpr");
+  if (btnTjpr) {
+    // Aparece só para quem está numa página do eproc do TJPR ainda sem
+    // acesso concedido. Para todo o resto da base, o popup segue sem ele.
+    chrome.permissions.contains({ origins: TJPR_ORIGINS }, (concedido) => {
+      if (concedido) {
+        return;
+      }
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const url = tabs && tabs[0] && tabs[0].url;
+        if (!url) {
+          return;
+        }
+        let host;
+        try {
+          host = new URL(url).hostname;
+        } catch (e) {
+          return;
+        }
+        if (TJPR_HOST.test(host)) {
+          btnTjpr.hidden = false;
+        }
+      });
+    });
+    btnTjpr.onclick = () => {
+      chrome.permissions.request({ origins: TJPR_ORIGINS }, (concedido) => {
+        if (!concedido) {
+          return;
+        }
+        btnTjpr.hidden = true;
+        // Recarrega as abas do TJPR já abertas, para a extensão passar a agir.
+        chrome.tabs.query({ url: TJPR_ORIGINS }, (results) => {
+          (results || []).forEach((item) => updateTab(item.id));
+        });
+      });
+    };
+  }
+
   btnReload.onclick = () => {
     window.close();
     // Recarregando todas as abas do eproc
