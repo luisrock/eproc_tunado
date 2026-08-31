@@ -85,7 +85,7 @@ else
   SAIDA="$(python3 - "$BASELINE" << 'PY'
 import json, sys, re
 
-falhas, oks = [], []
+falhas, oks, notas = [], [], []
 try:
     m = json.load(open('manifest.json', encoding='utf-8'))
 except Exception as e:
@@ -100,11 +100,19 @@ for chave in ("permissions", "host_permissions"):
     novas = sorted(set(m.get(chave, [])) - set(b.get(chave, [])))
     if novas:
         falhas.append(
-            "%s acrescenta %d item(ns) que a base não concedeu: %s "
-            "— o Chrome vai reter a atualização e desativar a extensão até o "
-            "usuário reautorizar. Declare como optional_host_permissions."
-            % (chave, len(novas), ", ".join(novas))
+            "%s acrescenta %d item(ns) que a base (%s) não concedeu: %s"
+            % (chave, len(novas), b.get("version"), ", ".join(novas))
         )
+        notas.extend([
+            "O Chrome vai reter a atualização e desativar a extensão até cada",
+            "usuário reautorizar. Duas saídas:",
+            "  1. (recomendado) declarar em optional_host_permissions e pedir",
+            "     no popup, como foi feito com o TJPR na 1.0.1;",
+            "  2. se o aumento for mesmo necessário, publicar assim, ciente do",
+            "     custo, e SÓ DEPOIS que a base reautorizar rodar",
+            "     ./prerelease.sh --aprovar, para o baseline passar a ser esta",
+            "     versão e o alerta parar de se repetir a cada release.",
+        ])
     else:
         oks.append("%s: nada novo em relação à %s" % (chave, b.get("version")))
 
@@ -138,11 +146,17 @@ for o in oks:
     print("OK\t%s" % o)
 for f in falhas:
     print("FALHA\t%s" % f)
+for n in notas:
+    print("NOTA\t%s" % n)
 PY
 )"
   while IFS=$'\t' read -r tipo msg; do
     [ -z "${tipo:-}" ] && continue
-    if [ "$tipo" = "OK" ]; then ok "$msg"; else falha "$msg"; fi
+    case "$tipo" in
+      OK)   ok "$msg" ;;
+      NOTA) printf '      %s\n' "$msg" ;;
+      *)    falha "$msg" ;;
+    esac
   done <<< "$SAIDA"
 fi
 
