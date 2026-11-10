@@ -21,7 +21,22 @@ const manifestHosts = [
   "*://eproc1g.tjmg.jus.br/*",
   "*://eproc2g.tjmg.jus.br/*",
   "*://eproc1g.tjpr.jus.br/*",
-  "*://eproc2g.tjpr.jus.br/*"
+  "*://eproc2g.tjpr.jus.br/*",
+  "*://eproc-homologacao.trf2.jus.br/*",
+  "*://eproc1g.tjal.jus.br/*",
+  "*://eproc1g.tjba.jus.br/*",
+  "*://eproc2g.tjba.jus.br/*",
+  "*://eproc1g.tjms.jus.br/*",
+  "*://eproc2g.tjms.jus.br/*",
+  "*://eproc1g.tjse.jus.br/*",
+  "*://eproc2g.tjse.jus.br/*",
+  "*://eproc1g.tjac.jus.br/*",
+  "*://eproc2g.tjac.jus.br/*",
+  "*://eproc1g.stm.jus.br/*",
+  "*://eproc2g.stm.jus.br/*",
+  "*://eproc1g.tjmrs.jus.br/*",
+  "*://eproc2g.tjmrs.jus.br/*",
+  "*://eproc.tjmmg.jus.br/*"
 ];
 
 function toggleOnOff(flag, element, geral = false) {
@@ -152,46 +167,51 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }, 1000);
   };
 
-  // O TJPR entra como permissão opcional: quem for daquele tribunal concede
-  // uma vez, por este botão. Assim, acrescentar tribunal não obriga toda a
-  // base de usuários a reautorizar a extensão num update.
-  const TJPR_ORIGINS = [
-    "*://eproc1g.tjpr.jus.br/*",
-    "*://eproc2g.tjpr.jus.br/*",
-  ];
-  const TJPR_HOST = /^eproc[12]g\.tjpr\.jus\.br$/i;
+  // Tribunais novos (TJPR) e a homologação do TRF2 entram como permissão
+  // opcional: quem precisa concede uma vez, por este botão. Assim,
+  // acrescentar host não obriga toda a base a reautorizar num update.
+  // A lista vem do próprio manifest, para não divergir.
+  const OPTIONAL_ORIGINS =
+    chrome.runtime.getManifest().optional_host_permissions || [];
+  const hostDoPadrao = (padrao) => padrao.replace(/^\*:\/\//, "").replace(/\/\*$/, "");
   const btnTjpr = document.getElementById("btn-tjpr");
+  let origemPendente = null;
   if (btnTjpr) {
-    // Aparece só para quem está numa página do eproc do TJPR ainda sem
-    // acesso concedido. Para todo o resto da base, o popup segue sem ele.
-    chrome.permissions.contains({ origins: TJPR_ORIGINS }, (concedido) => {
-      if (concedido) {
+    // Aparece só quando a aba ativa é um host opcional ainda sem acesso.
+    // Para todo o resto da base, o popup segue sem ele.
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const url = tabs && tabs[0] && tabs[0].url;
+      if (!url) {
         return;
       }
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const url = tabs && tabs[0] && tabs[0].url;
-        if (!url) {
-          return;
-        }
-        let host;
-        try {
-          host = new URL(url).hostname;
-        } catch (e) {
-          return;
-        }
-        if (TJPR_HOST.test(host)) {
+      let host;
+      try {
+        host = new URL(url).hostname.toLowerCase();
+      } catch (e) {
+        return;
+      }
+      const origem = OPTIONAL_ORIGINS.find((p) => hostDoPadrao(p) === host);
+      if (!origem) {
+        return;
+      }
+      chrome.permissions.contains({ origins: [origem] }, (concedido) => {
+        if (!concedido) {
+          origemPendente = origem;
           btnTjpr.hidden = false;
         }
       });
     });
     btnTjpr.onclick = () => {
-      chrome.permissions.request({ origins: TJPR_ORIGINS }, (concedido) => {
+      if (!origemPendente) {
+        return;
+      }
+      chrome.permissions.request({ origins: [origemPendente] }, (concedido) => {
         if (!concedido) {
           return;
         }
         btnTjpr.hidden = true;
-        // Recarrega as abas do TJPR já abertas, para a extensão passar a agir.
-        chrome.tabs.query({ url: TJPR_ORIGINS }, (results) => {
+        // Recarrega as abas desse host já abertas, para a extensão agir.
+        chrome.tabs.query({ url: [origemPendente] }, (results) => {
           (results || []).forEach((item) => updateTab(item.id));
         });
       });

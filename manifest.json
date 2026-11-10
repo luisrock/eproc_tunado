@@ -1,13 +1,28 @@
 {
   "manifest_version": 3,
   "name": "Eproc Tunado - EPT",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Eproc com interface de minutas aperfeiçoada para juízes",
   "homepage_url": "https://maurolopes.com.br",
   "permissions": ["storage", "webNavigation", "tabs", "scripting"],
   "optional_host_permissions": [
     "*://eproc1g.tjpr.jus.br/*",
-    "*://eproc2g.tjpr.jus.br/*"
+    "*://eproc2g.tjpr.jus.br/*",
+    "*://eproc-homologacao.trf2.jus.br/*",
+    "*://eproc1g.tjal.jus.br/*",
+    "*://eproc1g.tjba.jus.br/*",
+    "*://eproc2g.tjba.jus.br/*",
+    "*://eproc1g.tjms.jus.br/*",
+    "*://eproc2g.tjms.jus.br/*",
+    "*://eproc1g.tjse.jus.br/*",
+    "*://eproc2g.tjse.jus.br/*",
+    "*://eproc1g.tjac.jus.br/*",
+    "*://eproc2g.tjac.jus.br/*",
+    "*://eproc1g.stm.jus.br/*",
+    "*://eproc2g.stm.jus.br/*",
+    "*://eproc1g.tjmrs.jus.br/*",
+    "*://eproc2g.tjmrs.jus.br/*",
+    "*://eproc.tjmmg.jus.br/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
@@ -51,7 +66,22 @@
         "*://eproc1g.tjmg.jus.br/*",
         "*://eproc2g.tjmg.jus.br/*",
         "*://eproc1g.tjpr.jus.br/*",
-        "*://eproc2g.tjpr.jus.br/*"
+        "*://eproc2g.tjpr.jus.br/*",
+        "*://eproc-homologacao.trf2.jus.br/*",
+        "*://eproc1g.tjal.jus.br/*",
+        "*://eproc1g.tjba.jus.br/*",
+        "*://eproc2g.tjba.jus.br/*",
+        "*://eproc1g.tjms.jus.br/*",
+        "*://eproc2g.tjms.jus.br/*",
+        "*://eproc1g.tjse.jus.br/*",
+        "*://eproc2g.tjse.jus.br/*",
+        "*://eproc1g.tjac.jus.br/*",
+        "*://eproc2g.tjac.jus.br/*",
+        "*://eproc1g.stm.jus.br/*",
+        "*://eproc2g.stm.jus.br/*",
+        "*://eproc1g.tjmrs.jus.br/*",
+        "*://eproc2g.tjmrs.jus.br/*",
+        "*://eproc.tjmmg.jus.br/*"
       ]
     }
   ],

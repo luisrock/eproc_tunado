@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -12,7 +12,7 @@ O **Eproc Tunado (EPT)** é uma extensão Chrome que melhora a experiência de t
 - 🎨 **Cartões** na lista de minutas (tema refined: branco, filete lateral, zebrado discreto)
 - 📄 **Texto da minuta** na própria listagem, com ações no rodapé
 - ⚡ **Edição rápida** inline e atalhos de produtividade
-- 🌐 **23 hosts** em tribunais federais e estaduais (inclui TJPR)
+- 🌐 **38 hosts** em tribunais federais, estaduais e militares (TJPR e os novos da 1.1.0 como permissão opcional)
 - ✅ **Compatibilidade** com eproc 9.15
 
 Identidade visual: laranja `#F66942`, com a cor de apoio seguindo o eproc do
@@ -54,13 +54,23 @@ como padrão fora desses casos.
 - **TJSP** - Tribunal de Justiça de São Paulo (1º e 2º graus)
 - **TJMG** - Tribunal de Justiça de Minas Gerais (1º e 2º graus)
 - **TJPR** - Tribunal de Justiça do Paraná (1º e 2º graus) — permissão **opcional**, concedida no popup (veja [Permissões](#-permissões))
+- **TJAL** - Alagoas (1º grau; 2º em construção) · **TJBA** - Bahia (1º grau; o host do 2º já está previsto) · **TJMS** - Mato Grosso do Sul · **TJSE** - Sergipe · **TJAC** - Acre — opcionais, desde a 1.1.0
+
+### Justiça Militar (opcionais, desde a 1.1.0)
+- **STM** - Superior Tribunal Militar (`eproc1g`/`eproc2g.stm.jus.br`, caminhos `/eproc_1g_prod/` e `/eproc_2g_prod/`)
+- **TJMRS** - Tribunal de Justiça Militar do Rio Grande do Sul
+- **TJMMG** - Tribunal de Justiça Militar de Minas Gerais (host único `eproc.tjmmg.jus.br`, caminhos `/eproc1g/` e `/eproc2g/`)
+
+### Homologação (opcional)
+- **eproc-homologacao.trf2.jus.br** — ambiente de testes do TRF2, usado para validar a extensão a cada nova versão do eproc
 
 ## 🔐 Permissões
 
-Os **21 hosts** de `host_permissions` são exigidos na instalação. Os dois do
-TJPR ficam em `optional_host_permissions`: quem for daquele tribunal concede
-uma vez, por um botão que só aparece no popup quando a aba ativa é um host do
-TJPR ([`toggle.js`](toggle.js)).
+Os **21 hosts** de `host_permissions` são exigidos na instalação. Os demais
+(TJPR, os tribunais novos da 1.1.0 e a homologação do TRF2) ficam em
+`optional_host_permissions`: quem for daquele tribunal concede uma vez, por um
+botão que só aparece no popup quando a aba ativa é um desses hosts ainda sem
+acesso ([`toggle.js`](toggle.js), que lê a lista do próprio manifest).
 
 A distinção não é cosmética. O Chrome **não aplica em silêncio** uma
 atualização que peça permissão nova: ele retém o update e, ao aplicá-lo,
@@ -91,7 +101,7 @@ Para gerar o zip de upload na Chrome Web Store (ainda não publicado nesta vers�
 ./ziptunado.sh
 ```
 
-O pacote sai em `../eproc-tunado-1.0.0.zip`.
+O pacote sai em `../eproc-tunado-1.1.0.zip`.
 
 ## 🎯 Funcionalidades
 
@@ -198,7 +208,7 @@ Para ajustar o visual, edite os CSS, recarregue a extensão em `chrome://extensi
 node test-urls.js
 ```
 
-Verifica os **23 hosts** do `manifest.json` (no script, só o TJRJ usa sufixo `/eproc/`; os demais são testados na raiz). Gera `url-test-report.json`.
+Verifica os hosts de produção do `manifest.json` (TJRJ testado com `/eproc/`, TJMMG com `/eproc1g/` e `/eproc2g/`; os demais na raiz). Gera `url-test-report.json`. O TJAL pode responder 403 fora da rede do tribunal; isso não indica host errado.
 
 ### Chrome (zsh)
 
@@ -281,10 +291,10 @@ window.EPT_DEBUG_ENABLED = true
 3. Recarregue em `chrome://extensions/`
 4. Veja o console da página
 
-### No TJPR não faz nada?
+### No TJPR (ou num tribunal novo) não faz nada?
 O acesso é permissão opcional. Abra a área de minutas, clique no ícone da
 extensão e use **“Ativar o EPT neste tribunal”** — o botão só aparece ali, com
-a aba num host do TJPR e o acesso ainda não concedido. Para reverter e testar
+a aba num host opcional e o acesso ainda não concedido. Para reverter e testar
 de novo, no console do service worker:
 
 ```javascript
@@ -319,7 +329,29 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 ## 🔄 Changelog
 
-### v1.0.1 (atual)
+### v1.1.0 (atual)
+
+- **Minutas duplas** (ementa + acórdão, relatório + voto): o preview mostra
+  todos os corpos (`section[data-sin_permite_texto_padrao]`), títulos juntos
+  no cabeçalho e filete entre eles; limite de caracteres por corpo
+- **Edição rápida em abas** para minutas duplas, salvar por aba; salvar só
+  habilita com alteração; "Fechar" no lugar de "Cancelar" após salvar;
+  ×, Cancelar e Esc pedem confirmação se houver alteração não salva
+  (`pedirFechar`)
+- **Colagem só como texto**, cada linha um parágrafo; normalização antes de
+  salvar (`<p class>`, sem `<span style>`/`<font>`/ids repetidos) **apenas nos
+  parágrafos novos ou alterados**; widget `anonimizar` protegido no modal
+- **Aviso "mudança no perfil do usuário"** eliminado: `minuta_salvar` usa o
+  hash da página do editor nativo (não o do preview) e `atualizar_info_minuta`
+  usa o hash da própria página, com o corpo nativo e sem seguir redirect
+- **Tooltips presas**: `EPT_tryHideInfraTooltip` passa a funcionar no mundo
+  isolado; tooltips do Infra removidas do cartão (mantidas em "Mais ações")
+- **Base URL independente de `/eproc/`** (`EPT_baseEproc`), necessária para
+  STM e TJMMG
+- **Novos tribunais opcionais:** TJAL, TJBA, TJMS, TJSE, TJAC, STM, TJMRS,
+  TJMMG; e a homologação do TRF2
+
+### v1.0.1
 
 - **TJPR como permissão opcional** — sai de `host_permissions` para
   `optional_host_permissions`, com botão de concessão no popup. O conjunto

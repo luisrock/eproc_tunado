@@ -106,6 +106,47 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
         background: var(--ept-modal-field-bg, #f9f7fb);
       }
 
+      /* Minuta dupla: uma aba por conteúdo, cada um com a área inteira. */
+      .ept-inline-editor-abas {
+        display: flex;
+        gap: 4px;
+        margin-bottom: -16px;
+        border-bottom: 2px solid var(--ept-modal-field-bd, rgba(74, 51, 88, 0.12));
+      }
+
+      .ept-inline-editor-aba {
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+        padding: 10px 18px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #6b7280;
+        cursor: pointer;
+      }
+
+      .ept-inline-editor-aba:hover {
+        color: var(--ept-brand-700, #4a3358);
+      }
+
+      .ept-inline-editor-aba[aria-selected="true"] {
+        color: var(--ept-brand-700, #4a3358);
+        border-bottom-color: #F66942;
+      }
+
+      /* Alteração ainda não salva naquela aba. */
+      .ept-inline-editor-aba.ept-aba-alterada::after {
+        content: " ●";
+        color: #F66942;
+      }
+
+      .ept-inline-editor-content[hidden] {
+        display: none;
+      }
+
       .ept-inline-editor-content[contenteditable="true"]:focus {
         outline: none;
         border-color: var(--ept-brand-700, #4a3358);
@@ -184,9 +225,40 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     window.EPT_INLINE_EDITOR_STATE = null;
     this.state = null;
   },
+  /**
+   * Fechar a pedido do usuário (×, Cancelar, Esc): com alteração ainda não
+   * salva, pergunta antes de descartar. closeModal() segue fechando direto,
+   * para o fechamento automático depois de salvar.
+   */
+  pedirFechar() {
+    const state = this.state;
+    if (!state) {
+      this.closeModal();
+      return;
+    }
+    let aviso = "";
+    if (state.abas) {
+      const nomes = state.abas.filter((aba) => aba.alterada).map((aba) => aba.nome.toLowerCase());
+      if (nomes.length) {
+        aviso = `Há alteração não salva em ${nomes.join(" e ")}.`;
+      }
+    } else {
+      const area = state.contentEditableElement;
+      if (area && area.innerHTML !== area._eptBaseline) {
+        aviso = "Há alteração não salva na minuta.";
+      }
+    }
+    if (aviso && !confirm(`EPT: ${aviso}\nFechar e descartar a alteração?`)) {
+      return;
+    }
+    this.closeModal();
+  },
   handleEscape(event) {
     if (event.key === "Escape") {
-      EPT_INLINE_EDITOR.closeModal();
+      // Sem isto, o Esc que fecha a pergunta chegaria também ao eproc.
+      event.preventDefault();
+      event.stopPropagation();
+      EPT_INLINE_EDITOR.pedirFechar();
     }
   },
   openModal(modalData) {
@@ -226,7 +298,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     closeBtn.className = "ept-inline-editor-close";
     closeBtn.setAttribute("aria-label", "Fechar editor inline");
     closeBtn.innerHTML = "&times;";
-    closeBtn.addEventListener("click", () => this.closeModal());
+    closeBtn.addEventListener("click", () => this.pedirFechar());
 
     header.appendChild(headerTextWrapper);
     header.appendChild(closeBtn);
@@ -247,14 +319,70 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       body.appendChild(infoWrapper);
     }
 
-    const contentArea = document.createElement("div");
-    contentArea.className = "ept-inline-editor-content";
-    contentArea.setAttribute("contenteditable", "true");
-    contentArea.setAttribute("role", "textbox");
-    contentArea.setAttribute("aria-labelledby", "ept-editor-title");
-    contentArea.innerHTML = modalData.editableContent || "";
-
-    body.appendChild(contentArea);
+    // Minuta dupla (EMENTA + ACÓRDÃO, RELATÓRIO + VOTO): uma aba por
+    // conteúdo, cada um com a área inteira e o seu próprio salvar. Com um
+    // corpo só, o modal segue como sempre foi.
+    const campos =
+      Array.isArray(modalData.campos) && modalData.campos.length > 1 ? modalData.campos : null;
+    const contentAreas = [];
+    const criarCampo = (html, rotulo, classe) => {
+      const area = document.createElement("div");
+      area.className = "ept-inline-editor-content";
+      area.setAttribute("contenteditable", "true");
+      area.setAttribute("role", "textbox");
+      if (rotulo) {
+        area.setAttribute("aria-label", rotulo);
+      } else {
+        area.setAttribute("aria-labelledby", "ept-editor-title");
+      }
+      area.innerHTML = html || "";
+      // Original sem marcas da extensão: referência para saber que
+      // parágrafos o usuário não tocou (esses não são normalizados).
+      area._eptOriginal = area.innerHTML;
+      EPT_protegerWidgets(area);
+      // Linha de base para saber se houve alteração. Lida de volta do DOM
+      // (não da string recebida), porque o navegador normaliza o HTML.
+      area._eptBaseline = area.innerHTML;
+      area._eptClasse = classe || "paragrafoPadrao";
+      EPT_protegerCampoEdicao(area);
+      contentAreas.push(area);
+      return area;
+    };
+    const abas = [];
+    if (campos) {
+      const barra = document.createElement("div");
+      barra.className = "ept-inline-editor-abas";
+      barra.setAttribute("role", "tablist");
+      body.appendChild(barra);
+      campos.forEach((campo, i) => {
+        const nome = EPT_nomeConteudo(campo.titulo, i);
+        const tab = document.createElement("button");
+        tab.type = "button";
+        tab.className = "ept-inline-editor-aba";
+        tab.setAttribute("role", "tab");
+        tab.textContent = nome;
+        barra.appendChild(tab);
+        const area = criarCampo(campo.html, nome, campo.classe);
+        area.setAttribute("role", "tabpanel");
+        body.appendChild(area);
+        const aba = { nome, tab, area, alterada: false, salva: false };
+        abas.push(aba);
+        tab.addEventListener("click", () => this.selecionarAba(i));
+        area.addEventListener("input", () => {
+          // Desfazer até o texto salvo conta como "sem alteração".
+          aba.alterada = area.innerHTML !== area._eptBaseline;
+          tab.classList.toggle("ept-aba-alterada", aba.alterada);
+          if (this.state && this.state.abaAtiva === i) {
+            this.atualizarBotaoSalvar();
+          }
+        });
+      });
+    } else {
+      const areaUnica = criarCampo(modalData.editableContent, null, modalData.classeParagrafo);
+      areaUnica.addEventListener("input", () => this.atualizarBotaoSalvar());
+      body.appendChild(areaUnica);
+    }
+    const contentArea = contentAreas[0];
 
     const footer = document.createElement("div");
     footer.className = "ept-inline-editor-footer";
@@ -263,7 +391,7 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
     cancelBtn.type = "button";
     cancelBtn.className = "ept-inline-editor-btn ept-inline-editor-btn-cancel";
     cancelBtn.textContent = "Cancelar";
-    cancelBtn.addEventListener("click", () => this.closeModal());
+    cancelBtn.addEventListener("click", () => this.pedirFechar());
 
     const saveBtn = document.createElement("button");
     saveBtn.type = "button";
@@ -294,6 +422,8 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
     this.overlay = overlay;
     this.state.contentEditableElement = contentArea;
+    this.state.contentEditableElements = contentAreas;
+    this.state.abas = abas.length ? abas : null;
     this.state.saveButton = saveBtn;
     this.state.cancelButton = cancelBtn;
     this.state.overlay = overlay;
@@ -316,8 +446,65 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
     this.state.canSave = canSave;
     this.setSavingState(false, canSave ? "Salvar" : "Dados insuficientes");
+    // Salvar só se habilita depois de alguma alteração no conteúdo.
+    if (this.state.abas) {
+      this.selecionarAba(0);
+    } else {
+      this.atualizarBotaoSalvar();
+    }
 
     window.EPT_INLINE_EDITOR_STATE = this.state;
+  },
+  /** Mostra só a área da aba i e ajusta o botão salvar para ela. */
+  selecionarAba(i) {
+    const abas = this.state && this.state.abas;
+    if (!abas || !abas[i] || this.state.isSaving) {
+      return;
+    }
+    this.state.abaAtiva = i;
+    abas.forEach((aba, j) => {
+      const ativa = j === i;
+      aba.tab.setAttribute("aria-selected", ativa ? "true" : "false");
+      aba.area.hidden = !ativa;
+    });
+    this.state.contentEditableElement = abas[i].area;
+    this.atualizarBotaoSalvar();
+    abas[i].area.focus();
+  },
+  /**
+   * Estado dos botões do rodapé:
+   * - Salvar só habilita com alteração em relação ao conteúdo de base (o
+   *   original, ou o da última gravação) — vale para minuta simples e dupla.
+   * - Minuta dupla: aba salva e sem alteração nova → "Ementa salva"
+   *   (desabilitado) e "Cancelar" vira "Fechar", só enquanto durar esse
+   *   estado naquela aba.
+   */
+  atualizarBotaoSalvar() {
+    const state = this.state;
+    if (!state || !state.saveButton || state.canSave === false || state.isSaving) {
+      return;
+    }
+    const save = state.saveButton;
+    const cancel = state.cancelButton;
+    const aba = state.abas && state.abas[state.abaAtiva];
+    if (aba) {
+      const concluida = aba.salva && !aba.alterada;
+      save.textContent = concluida
+        ? EPT_rotuloSalvo(aba.nome)
+        : `Salvar ${aba.nome.toLowerCase()}`;
+      save.disabled = !aba.alterada;
+      if (cancel) {
+        cancel.textContent = concluida ? "Fechar" : "Cancelar";
+      }
+      return;
+    }
+    const area = state.contentEditableElement;
+    const alterada = Boolean(area) && area.innerHTML !== area._eptBaseline;
+    save.textContent = "Salvar";
+    save.disabled = !alterada;
+    if (cancel) {
+      cancel.textContent = "Cancelar";
+    }
   },
   findEditableSection(root) {
     if (!root) return null;
@@ -387,6 +574,12 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
     return sanitized;
   },
+  /**
+   * Devolve o article com o(s) corpo(s) editado(s). Recebe uma string (um
+   * corpo, caminho de sempre) ou um array alinhado com state.campos (um
+   * conteúdo por corpo, localizado pela posição entre as sections que
+   * aceitam texto — a mesma ordem usada para montar os campos).
+   */
   reconstructArticle(sanitizedEditableContent) {
     if (!this.state || !this.state.articleHTML) {
       throw new Error("Dados originais da minuta não encontrados.");
@@ -394,6 +587,26 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = this.state.articleHTML;
+
+    if (Array.isArray(sanitizedEditableContent)) {
+      const corpos = tempDiv.querySelectorAll('section[data-sin_permite_texto_padrao="true"]');
+      const campos = this.state.campos || [];
+      if (corpos.length !== campos.length || campos.length !== sanitizedEditableContent.length) {
+        throw new Error("A estrutura da minuta mudou desde que o editor foi aberto. Recarregue e tente de novo.");
+      }
+      campos.forEach((campo, i) => {
+        const sec = corpos[campo.indice];
+        sec.innerHTML = sanitizedEditableContent[i];
+        try {
+          sec.setAttribute("contenteditable", "true");
+        } catch (e) {}
+      });
+      const articleMulti = tempDiv.querySelector("article");
+      if (!articleMulti) {
+        throw new Error("Estrutura da minuta inválida ao reconstruir article.");
+      }
+      return articleMulti.outerHTML;
+    }
 
     const editableSection = this.findEditableSection(tempDiv);
     if (!editableSection) {
@@ -563,31 +776,74 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       return;
     }
 
-    const editableElement = state.contentEditableElement;
+    // Minuta dupla: salva só a aba ativa. Os outros corpos vão como estão
+    // no article guardado (o original, ou o da última gravação), para que um
+    // salvar não leve junto edição não salva da outra aba.
+    const multi = Boolean(state.abas && state.abas.length > 1);
+    const abaAtiva = multi ? state.abas[state.abaAtiva] : null;
+    const editableElement = multi ? abaAtiva.area : state.contentEditableElement;
     if (!editableElement) {
       alert("EPT: Conteúdo editável não encontrado.");
       return;
     }
 
     const rawContent = editableElement.innerHTML;
-    if (!rawContent.trim()) {
-      alert("EPT: O conteúdo da minuta está vazio.");
+    // O que vai para o eproc: o HTML do campo já normalizado (parágrafos
+    // com classe, sem <span>/style/<font> do navegador, <br><br> → parágrafo).
+    const conteudoGravado = EPT_normalizarCorpoMinuta(
+      EPT_desprotegerHtml(rawContent),
+      editableElement._eptClasse,
+      editableElement._eptOriginal
+    );
+    const vazio = (() => {
+      const t = document.createElement("div");
+      t.innerHTML = conteudoGravado;
+      return !t.textContent.replace(/\u00a0/g, " ").trim();
+    })();
+    if (vazio) {
+      alert(
+        multi
+          ? `EPT: O conteúdo de ${abaAtiva.nome.toLowerCase()} está vazio.`
+          : "EPT: O conteúdo da minuta está vazio."
+      );
       return;
     }
 
     try {
       this.setSavingState(true, "Salvando...");
 
-      const sanitizedEditable = this.sanitizeHtmlEntities(rawContent);
-      const reconstructedArticle = this.reconstructArticle(sanitizedEditable);
+      let sanitizedList;
+      if (multi) {
+        const atual = document.createElement("div");
+        atual.innerHTML = state.articleHTML;
+        const corposAtuais = atual.querySelectorAll('section[data-sin_permite_texto_padrao="true"]');
+        sanitizedList = state.campos.map((campo, i) =>
+          i === state.abaAtiva
+            ? this.sanitizeHtmlEntities(conteudoGravado)
+            : this.sanitizeHtmlEntities(corposAtuais[campo.indice] ? corposAtuais[campo.indice].innerHTML : "")
+        );
+      } else {
+        sanitizedList = [this.sanitizeHtmlEntities(conteudoGravado)];
+      }
+      const sanitizedEditable = sanitizedList.join("");
+      const reconstructedArticle = this.reconstructArticle(
+        multi ? sanitizedList : sanitizedList[0]
+      );
       const sanitizedArticle = this.sanitizeHtmlEntities(reconstructedArticle);
       const xhtmlArticle = this.ensureXhtmlCompliance(sanitizedArticle);
-      const tamSecEditaveis = sanitizedEditable.length;
+      // Com vários corpos, a soma do tamanho de todas as seções editáveis.
+      const tamSecEditaveis = sanitizedList.reduce((n, c) => n + c.length, 0);
 
       this.state.articleHTML = xhtmlArticle;
       this.state.editableContent = sanitizedEditable;
 
-      const saveUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=minuta_salvar&acao_origem=minuta_editar&hash=${state.hash}`;
+      // O hash de minuta_salvar é o que o eproc gera na página do EDITOR, não
+      // o do preview (state.hash). Com o do preview, o servidor executa o
+      // salvar/desbloquear, mas guarda "A ação foi cancelada devido a uma
+      // mudança no perfil do usuário" para a próxima tela (ex.: assinar).
+      const hashSalvar = (await EPT_hashSalvarDoEditor(state.rowElement, state.baseUrl)) || state.hash;
+      EPT_addLog("save:hash", { doEditor: hashSalvar !== state.hash });
+      const saveUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=minuta_salvar&acao_origem=minuta_editar&hash=${hashSalvar}`;
       const savePayload = this.buildSavePayload(xhtmlArticle, tamSecEditaveis);
 
       EPT_addLog("save:request", {
@@ -628,48 +884,480 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
 
       try {
         if (state.rowElement) {
-          EPT_updatePreviewContainer(state.rowElement, sanitizedEditable, 1000);
+          let previewHtml = sanitizedEditable;
+          if (multi) {
+            // Mesmo formato da lista: cada corpo com o seu limite, separados por filete.
+            const tmp = document.createElement("div");
+            tmp.innerHTML = xhtmlArticle;
+            previewHtml = EPT_extractPreviewBody(tmp).partes;
+          }
+          EPT_updatePreviewContainer(state.rowElement, previewHtml, 1000);
         }
       } catch (updateError) {
         debugLog("EPT: Erro ao atualizar linha após salvamento:", updateError);
       }
 
-      // Após salvar e tentar desbloquear, emular chamada nativa de atualização de contexto
+      // Após salvar e desbloquear, a mesma chamada que o eproc faz ao voltar
+      // do editor (atualizaTrMinuta): atualizar_info_minuta.
+      //
+      // Antes ia com o hash da URL da área de trabalho e corpo vazio. O hash
+      // do eproc é por ação; com um que não confere, o servidor redirecionava
+      // para a tela inicial e guardava "A ação foi cancelada devido a uma
+      // mudança no perfil do usuário", exibida na ação seguinte. E o fetch
+      // seguia o redirecionamento, carregando o painel inteiro (lento).
+      // Agora: hash que o eproc gerou para esta ação (no script da página),
+      // corpo igual ao nativo, e redirecionamento nunca seguido. Sem o hash,
+      // a chamada é pulada — nunca vai com hash errado.
       try {
-        const areaTrabalhoHashMatch = (window.location.href || "").match(/[a-f0-9]{32}/i);
-        const areaTrabalhoHash = areaTrabalhoHashMatch ? areaTrabalhoHashMatch[0] : (state.hash || "");
-        const atualizarUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=atualizar_info_minuta&acao_origem=minuta_area_trabalho${areaTrabalhoHash ? `&hash=${areaTrabalhoHash}` : ""}`;
-
-        EPT_addLog("postsave:update_info:request", { url: atualizarUrl });
-        const atualizarResult = await this.postForm(atualizarUrl, "");
-        EPT_addLog("postsave:update_info:response", { success: atualizarResult?.sucesso === "1", raw: atualizarResult });
+        const hashAtualizar = EPT_hashAcaoAjax("atualizar_info_minuta");
+        const tr = state.rowElement;
+        const idMinuta = tr && tr.id ? tr.id.replace(/^tr_/, "") : "";
+        if (!hashAtualizar || !idMinuta) {
+          EPT_addLog("postsave:update_info:skip", { hash: !!hashAtualizar, idMinuta: !!idMinuta });
+        } else {
+          const atualizarUrl = `${state.baseUrl}/controlador_ajax.php?acao_ajax=atualizar_info_minuta&acao_origem=minuta_area_trabalho&hash=${hashAtualizar}`;
+          const filtro = document.getElementById("hdnFiltroExibicao");
+          const corpo = new URLSearchParams();
+          corpo.append("id_minuta", idMinuta);
+          corpo.append("num_linha", tr.getAttribute("num_linha") || "");
+          corpo.append("arr_filtro_exibicao", filtro ? filtro.value : "");
+          corpo.append("txtTermosPesquisados", "");
+          EPT_addLog("postsave:update_info:request", { url: atualizarUrl });
+          const resp = await fetch(atualizarUrl, {
+            method: "POST",
+            credentials: "include",
+            redirect: "manual",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: corpo.toString(),
+          });
+          EPT_addLog("postsave:update_info:response", {
+            status: resp.status,
+            redirecionado: resp.type === "opaqueredirect",
+          });
+        }
       } catch (postSaveUpdateErr) {
         debugLog("EPT: Falha ao emular atualização pós-salvar:", postSaveUpdateErr);
         EPT_addLog("postsave:update_info:error", { message: postSaveUpdateErr?.message });
       }
 
-      this.setSavingState(true, "Minuta salva!");
+      const rotuloSalvo = multi ? EPT_rotuloSalvo(abaAtiva.nome) : "Minuta salva";
+      if (multi) {
+        // Fica aberto: o usuário pode passar para a outra aba e editá-la.
+        // A nova base é o que foi gravado (rawContent), não a tela: se a
+        // pessoa digitou durante o salvamento, isso ainda conta como alteração.
+        // Sem digitação no meio, o campo passa a mostrar o HTML normalizado,
+        // que é o que ficou gravado.
+        abaAtiva.salva = true;
+        // O gravado vira o novo "original" desta aba.
+        abaAtiva.area._eptOriginal = EPT_serializarHtml(conteudoGravado);
+        if (abaAtiva.area.innerHTML === rawContent) {
+          abaAtiva.area.innerHTML = conteudoGravado;
+          EPT_protegerWidgets(abaAtiva.area);
+          abaAtiva.area._eptBaseline = abaAtiva.area.innerHTML;
+        } else {
+          abaAtiva.area._eptBaseline = rawContent;
+        }
+        abaAtiva.alterada = abaAtiva.area.innerHTML !== abaAtiva.area._eptBaseline;
+        abaAtiva.tab.classList.toggle("ept-aba-alterada", abaAtiva.alterada);
+        this.state.isSaving = false;
+        this.atualizarBotaoSalvar();
+      } else {
+        this.setSavingState(true, `${rotuloSalvo}!`);
+      }
 
       if (unlockFailedMessage) {
         alert(
-          "EPT: Minuta salva com sucesso, mas não foi possível desbloquear automaticamente.\n" +
+          `EPT: ${rotuloSalvo} com sucesso, mas não foi possível desbloquear automaticamente.\n` +
             "Mensagem: " +
             unlockFailedMessage
         );
         EPT_addLog("unlock:warning", { message: unlockFailedMessage });
       }
 
-      setTimeout(() => {
-        this.closeModal();
-      }, 700);
+      if (!multi) {
+        setTimeout(() => {
+          this.closeModal();
+        }, 700);
+      }
     } catch (error) {
       console.error("EPT: Erro ao salvar minuta:", error);
       EPT_addLog("save:error", { message: error.message, stack: error.stack });
-      alert(`EPT: Não foi possível salvar a minuta.\nMotivo: ${error.message}`);
+      alert(
+        `EPT: Não foi possível salvar ${multi ? abaAtiva.nome.toLowerCase() : "a minuta"}.\nMotivo: ${error.message}`
+      );
       this.setSavingState(false, "Salvar");
+      this.atualizarBotaoSalvar();
     }
   },
 };
+
+// ---- Edição rápida: colagem, Shift+Enter e normalização --------------
+//
+// O modal é um contenteditable puro, sem o CKEditor do eproc. Sem estes
+// cuidados, colar do Word/e-mail/site trazia HTML arbitrário para a minuta,
+// e o navegador gerava <br>, <span style>, <font>, <div> e texto solto fora
+// do padrão <p class="..."> que o eproc usa.
+
+/**
+ * Classe de reserva de um corpo, usada só em conteúdo que chegue sem classe
+ * (texto solto, <div>). Enter e colagem não passam por aqui: o próprio
+ * navegador copia a classe do parágrafo onde está o cursor, como o CKEditor.
+ * paragrafoPadrao quando existir no corpo; senão, a classe mais frequente
+ * (na ementa, caputEmenta). Nunca a do primeiro parágrafo por acaso — uma
+ * sentença pode começar por alínea (paragrafoComRecuo) ou citação.
+ */
+function EPT_classeParagrafo(section) {
+  const contagem = new Map();
+  (section ? section.querySelectorAll("p[class]") : []).forEach((p) => {
+    const c = p.getAttribute("class").trim();
+    if (c) {
+      contagem.set(c, (contagem.get(c) || 0) + 1);
+    }
+  });
+  if (!contagem.size || contagem.has("paragrafoPadrao")) {
+    return "paragrafoPadrao";
+  }
+  return Array.from(contagem.entries()).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+// Elementos que o CKEditor trata como bloco fechado (widget "anonimizar" e
+// afins). No modal ficam não editáveis, para o nome não ser alterado letra a
+// letra; a marca sai antes de salvar.
+const EPT_SELETOR_PROTEGIDO =
+  'span.anonimizar, [data-widget], [data-crc32b], [data-cke-widget-wrapper], [contenteditable="false"]';
+
+function EPT_protegerWidgets(area) {
+  area.querySelectorAll(EPT_SELETOR_PROTEGIDO).forEach((el) => {
+    if (el.closest("[data-ept-protegido]") && !el.hasAttribute("data-ept-protegido")) {
+      return; // já dentro de um protegido
+    }
+    if (!el.hasAttribute("data-ept-protegido")) {
+      el.setAttribute(
+        "data-ept-protegido",
+        el.hasAttribute("contenteditable") ? el.getAttribute("contenteditable") : ""
+      );
+    }
+    el.setAttribute("contenteditable", "false");
+  });
+}
+
+/** Desfaz EPT_protegerWidgets numa string de HTML (o atributo original volta). */
+function EPT_desprotegerHtml(html) {
+  const raiz = document.createElement("div");
+  raiz.innerHTML = html || "";
+  raiz.querySelectorAll("[data-ept-protegido]").forEach((el) => {
+    const original = el.getAttribute("data-ept-protegido");
+    el.removeAttribute("data-ept-protegido");
+    if (original) {
+      el.setAttribute("contenteditable", original);
+    } else {
+      el.removeAttribute("contenteditable");
+    }
+  });
+  return raiz.innerHTML;
+}
+
+/** Serializa pelo DOM, para comparar HTML na mesma forma que o campo usa. */
+function EPT_serializarHtml(html) {
+  const raiz = document.createElement("div");
+  raiz.innerHTML = html || "";
+  return raiz.innerHTML;
+}
+
+/** Insere texto puro na seleção: 1ª linha no parágrafo atual, cada linha
+ * seguinte num parágrafo novo (que herda a classe, como o Enter). Usa
+ * execCommand para o Ctrl+Z continuar funcionando. */
+function EPT_inserirTextoComoParagrafos(texto) {
+  const linhas = String(texto || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .map((l) => l.replace(/\t/g, " ").replace(/\s+$/, ""))
+    .filter((l) => l.trim().length);
+  linhas.forEach((linha, i) => {
+    if (i > 0) {
+      document.execCommand("insertParagraph");
+    }
+    document.execCommand("insertText", false, linha);
+  });
+}
+
+/** Colagem e arrasto só como texto. Enter e Shift+Enter ficam com o
+ * comportamento do navegador, igual ao do CKEditor (Shift+Enter = <br>). */
+function EPT_protegerCampoEdicao(area) {
+  area.addEventListener("paste", (event) => {
+    const dados = event.clipboardData;
+    if (!dados) {
+      return;
+    }
+    event.preventDefault();
+    EPT_inserirTextoComoParagrafos(dados.getData("text/plain"));
+  });
+  area.addEventListener("drop", (event) => {
+    const dados = event.dataTransfer;
+    if (!dados) {
+      return;
+    }
+    event.preventDefault();
+    const range =
+      document.caretRangeFromPoint && document.caretRangeFromPoint(event.clientX, event.clientY);
+    if (range) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+    EPT_inserirTextoComoParagrafos(dados.getData("text/plain"));
+  });
+}
+
+/**
+ * Deixa o HTML do campo no padrão do eproc antes de salvar — mas SÓ nos
+ * parágrafos novos ou alterados. Parágrafo de topo cujo id e HTML batem com
+ * o original carregado (`original`) fica intocado: uma vírgula corrigida não
+ * pode mexer no resto da sentença.
+ *
+ * Nos parágrafos novos/alterados:
+ * - texto e inline soltos no topo, e <div>, viram <p> com a classe de reserva;
+ * - <p> sem classe recebe a classe de reserva;
+ * - <font> e <span> sem atributo (ou só com style) são desembrulhados;
+ *   style sai dos <span> restantes (spans com classe — dispositivo,
+ *   anonimizar — ficam);
+ * - &nbsp; nas pontas de cada trecho de texto vira espaço; espaço no fim do
+ *   parágrafo sai;
+ * - id repetido sai (o Chrome copia o id ao dividir um parágrafo com Enter;
+ *   o eproc renumera ao gravar).
+ * <br> fica como está (Shift+Enter, igual ao nativo). Listas, tabelas e
+ * citações não são tocadas.
+ */
+function EPT_normalizarCorpoMinuta(html, classe, original) {
+  const classePadrao = classe || "paragrafoPadrao";
+  const raiz = document.createElement("div");
+  raiz.innerHTML = html || "";
+
+  // Parágrafos originais intactos (id → HTML), cada id usado uma vez.
+  const originais = new Map();
+  if (typeof original === "string") {
+    const o = document.createElement("div");
+    o.innerHTML = original;
+    Array.from(o.children).forEach((el) => {
+      if (el.id && !originais.has(el.id)) {
+        originais.set(el.id, el.outerHTML);
+      }
+    });
+  }
+  const intocados = new Set();
+  Array.from(raiz.children).forEach((el) => {
+    if (el.id && originais.get(el.id) === el.outerHTML) {
+      intocados.add(el);
+      originais.delete(el.id);
+    }
+  });
+  const livre = (el) => {
+    let topo = el;
+    while (topo && topo.parentNode !== raiz) {
+      topo = topo.parentNode;
+    }
+    return !intocados.has(topo);
+  };
+
+  // 1. <font> e <span> sem função.
+  raiz.querySelectorAll("font").forEach((el) => {
+    if (livre(el)) {
+      el.replaceWith(...el.childNodes);
+    }
+  });
+  raiz.querySelectorAll("span").forEach((el) => {
+    if (!livre(el)) {
+      return;
+    }
+    el.removeAttribute("style");
+    if (!el.attributes.length) {
+      el.replaceWith(...el.childNodes);
+    }
+  });
+
+  // 2. <div> vira parágrafo (desembrulha se já contém blocos).
+  const BLOCO = /^(P|DIV|UL|OL|TABLE|BLOCKQUOTE|H[1-6]|PRE|HR|SECTION)$/;
+  raiz.querySelectorAll("div").forEach((div) => {
+    if (!livre(div)) {
+      return;
+    }
+    const temBloco = Array.from(div.children).some((c) => BLOCO.test(c.tagName));
+    if (temBloco) {
+      div.replaceWith(...div.childNodes);
+    } else {
+      const p = document.createElement("p");
+      if (div.getAttribute("class")) {
+        p.setAttribute("class", div.getAttribute("class"));
+      }
+      p.append(...div.childNodes);
+      div.replaceWith(p);
+    }
+  });
+
+  // 3. Texto e inline soltos no topo → <p>.
+  let pendente = null;
+  Array.from(raiz.childNodes).forEach((no) => {
+    if (no.nodeType === 1 && BLOCO.test(no.tagName)) {
+      pendente = null;
+      return;
+    }
+    if (no.nodeType !== 1 && no.nodeType !== 3) {
+      return;
+    }
+    if (no.nodeType === 3 && !no.textContent.trim() && !pendente) {
+      no.remove();
+      return;
+    }
+    if (!pendente) {
+      pendente = document.createElement("p");
+      pendente.setAttribute("class", classePadrao);
+      raiz.insertBefore(pendente, no);
+    }
+    pendente.appendChild(no);
+  });
+
+  // 4. Classe, ids e espaços. Ids dos intocados entram primeiro: um
+  //    parágrafo novo com id copiado é que perde o id.
+  const idsVistos = new Set();
+  intocados.forEach((el) => idsVistos.add(el.id));
+  raiz.querySelectorAll("p").forEach((p) => {
+    if (!livre(p)) {
+      return;
+    }
+    if (!p.getAttribute("class")) {
+      p.setAttribute("class", classePadrao);
+    }
+    if (p.id) {
+      if (idsVistos.has(p.id)) {
+        p.removeAttribute("id");
+      } else {
+        idsVistos.add(p.id);
+      }
+    }
+    const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    const textos = [];
+    while (walker.nextNode()) {
+      textos.push(walker.currentNode);
+    }
+    textos.forEach((t) => {
+      t.textContent = t.textContent.replace(/^\u00a0/, " ").replace(/\u00a0$/, " ");
+    });
+    for (let k = textos.length - 1; k >= 0; k--) {
+      const t = textos[k];
+      const limpo = t.textContent.replace(/[ \u00a0]+$/, "");
+      t.textContent = limpo;
+      if (limpo.length) {
+        break;
+      }
+    }
+  });
+
+  return raiz.innerHTML;
+}
+
+/**
+ * Hash que o eproc gerou para uma acao_ajax nesta página. Fica nos scripts
+ * inline (ex.: atualizaTrMinuta monta "controlador_ajax.php?acao_ajax=
+ * atualizar_info_minuta&...&hash=<32 hex>"). O DOM é compartilhado com o
+ * mundo isolado, então o texto dos scripts é legível daqui.
+ */
+function EPT_hashAcaoAjax(acao) {
+  const re = new RegExp(`acao_ajax=${acao}[^"'\\s]*?hash=([a-f0-9]{32})`, "i");
+  for (const s of document.scripts) {
+    if (s.src) {
+      continue;
+    }
+    const m = re.exec(s.textContent || "");
+    if (m) {
+      return m[1];
+    }
+  }
+  return "";
+}
+
+/**
+ * Hash de minuta_salvar desta minuta, lido da página do editor nativo — o
+ * mesmo endereço que o botão "Editar" da linha abre (window.open com
+ * acao=minuta_editar). Abrir o editor bloqueia a minuta, como no fluxo
+ * nativo; o desbloqueio que a edição rápida faz logo após salvar libera.
+ * Retorna "" se não conseguir (quem chama decide o que fazer).
+ */
+async function EPT_hashSalvarDoEditor(rowElement, baseUrl) {
+  try {
+    if (!rowElement || !baseUrl) {
+      return "";
+    }
+    const absoluta = (rel) =>
+      /^https?:\/\//i.test(rel) ? rel : `${baseUrl}/${rel.replace(/^\//, "")}`;
+    const baixar = async (rel) => {
+      const resp = await fetch(absoluta(rel), { credentials: "include", redirect: "manual" });
+      return resp.ok ? await resp.text() : "";
+    };
+
+    let relEditor = EPT_linkAcaoDaLinha(rowElement, "minuta_editar");
+    if (!relEditor) {
+      // Minuta com agendamento de eventos: o "Editar" da linha abre antes a
+      // tela minuta_verificar_agendamento (exibirSubFrm), e é ela que traz o
+      // endereço do editor (strLinkVisualizarMinuta). Comum no 1º grau.
+      const relAgendamento = EPT_linkAcaoDaLinha(rowElement, "minuta_verificar_agendamento");
+      if (!relAgendamento) {
+        return "";
+      }
+      const m = /controlador\.php\?acao=minuta_editar[^"'\s<>]*/i.exec(await baixar(relAgendamento));
+      if (!m) {
+        return "";
+      }
+      relEditor = m[0].replace(/&amp;/g, "&");
+    }
+    const html = await baixar(relEditor);
+    const m = /acao_ajax=minuta_salvar[^"'\s<]*?hash=([a-f0-9]{32})/i.exec(html);
+    return m ? m[1] : "";
+  } catch (e) {
+    return "";
+  }
+}
+
+/**
+ * Endereço (como o eproc escreveu, com o hash) de uma ação nos links da
+ * linha. O eproc usa onclick="window.open('...')" em uns casos e
+ * href="javascript:exibirSubFrm('...')" em outros; procura nos dois.
+ */
+function EPT_linkAcaoDaLinha(rowElement, acao) {
+  const re = new RegExp(`controlador\\.php\\?acao=${acao}&[^'"\\s]*`, "i");
+  for (const a of rowElement.querySelectorAll("a")) {
+    for (const attr of ["onclick", "href"]) {
+      const m = re.exec(a.getAttribute(attr) || "");
+      if (m) {
+        return m[0].replace(/&amp;/g, "&");
+      }
+    }
+  }
+  return "";
+}
+
+/**
+ * Endereço base do eproc: a pasta onde está o controlador.php da página.
+ * Quase todos os tribunais usam /eproc/, mas não todos — TJMMG usa
+ * /eproc1g/ e /eproc2g/, STM usa /eproc_1g_prod/ e /eproc_2g_prod/. Cortar
+ * a URL em "eproc/" quebrava nesses.
+ */
+function EPT_baseEproc() {
+  return window.location.origin + window.location.pathname.replace(/\/[^/]*$/, "");
+}
+
+/** "EMENTA" → "Ementa", "ACÓRDÃO" → "Acórdão"; sem título, "Parte N". */
+function EPT_nomeConteudo(titulo, i) {
+  const t = (titulo || "").replace(/\s+/g, " ").trim().toLocaleLowerCase("pt-BR");
+  if (!t) {
+    return `Parte ${i + 1}`;
+  }
+  return t.charAt(0).toLocaleUpperCase("pt-BR") + t.slice(1);
+}
+
+/** "Ementa salva", "Acórdão salvo", "Relatório salvo", "Voto salvo". */
+function EPT_rotuloSalvo(nome) {
+  return /a$/i.test(nome) || /^parte\b/i.test(nome) ? `${nome} salva` : `${nome} salvo`;
+}
 
 window.EPT_DEBUG_ENABLED = window.EPT_DEBUG_ENABLED || false;
 
@@ -682,16 +1370,52 @@ function debugLog(...args) {
   }
 }
 
-/** Fecha o tooltip global do Infra (mesmo mecanismo dos onmouseout do eproc), evitando balão preso após mutar o DOM. */
+/**
+ * Fecha o balão global do Infra (#divInfraTooltip + #ifrInfraTooltip).
+ *
+ * O ept.js roda no mundo isolado da extensão: window.infraTooltipOcultar,
+ * que é da página, não existe aqui — a versão antiga desta função nunca
+ * fechava nada. O DOM é compartilhado, então fazemos o mesmo que o
+ * infraTooltipOcultar faz: visibility hidden nos dois elementos.
+ */
 function EPT_tryHideInfraTooltip() {
   try {
-    const fn = window.infraTooltipOcultar;
-    if (typeof fn === "function") {
-      fn();
-    }
+    ["divInfraTooltip", "ifrInfraTooltip"].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.visibility = "hidden";
+      }
+    });
   } catch (e) {
     /* silencioso */
   }
+}
+
+/**
+ * Tira os tooltips do Infra (onmouseover/onmouseout com infraTooltip*) do
+ * cartão da minuta. Ficam só os da coluna "Mais ações"
+ * (td.ept-recursos-originais), que explicam os ícones.
+ *
+ * Motivo: o cartão é redesenhado com o mouse por cima; o elemento que abriu
+ * o balão some sem disparar o onmouseout, e o balão fica preso na tela.
+ */
+function EPT_stripCardTooltips(root) {
+  if (!root || !root.querySelectorAll) {
+    return;
+  }
+  root
+    .querySelectorAll('[onmouseover*="infraTooltip"], [onmouseout*="infraTooltip"]')
+    .forEach(function (el) {
+      if (el.closest("td.ept-recursos-originais")) {
+        return;
+      }
+      ["onmouseover", "onmouseout"].forEach(function (attr) {
+        const v = el.getAttribute(attr);
+        if (v && v.indexOf("infraTooltip") !== -1) {
+          el.removeAttribute(attr);
+        }
+      });
+    });
 }
 
 function EPT_addLog(event, payload) {
@@ -781,13 +1505,61 @@ function EPT_truncatePreviewContent(htmlContent, maxChars = 1000) {
   };
 }
 
-function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000) {
-  const contentInfo = EPT_truncatePreviewContent(htmlContent, maxChars);
-  const uniqueId = EPT_generatePreviewId();
+/**
+ * Corpo e título da minuta para o preview da lista.
+ *
+ * Minuta de 2º grau pode ter mais de um corpo: a EMENTA traz a seção
+ * "ementa" (estilo caputEmenta) e, depois do título "ACÓRDÃO", a seção
+ * "acordao"; há também RELATÓRIO + VOTO num documento só. O seletor antigo
+ * pegava só a primeira section de estilo "paragrafo" e perdia o resto.
+ * Aqui entram todas as sections que aceitam texto
+ * (data-sin_permite_texto_padrao), na ordem do documento, separadas por um
+ * filete; os títulos de cada corpo vão juntos para o cabeçalho do cartão
+ * ("EMENTA · ACÓRDÃO"). Sem nenhuma dessas sections, cai no seletor antigo.
+ *
+ * @returns {{partes: string[], titulo: string}} uma entrada por corpo
+ *   (uma só fora das minutas duplas); titulo vazio = usar o padrão.
+ */
+function EPT_extractPreviewBody(root) {
+  if (!root) {
+    return { html: "", titulo: "" };
+  }
+  const scope = root.querySelector("article") || root;
+  const corpos = scope.querySelectorAll('section[data-sin_permite_texto_padrao="true"]');
+  if (corpos.length > 1) {
+    const partes = [];
+    const titulos = [];
+    let tituloPendente = "";
+    scope.querySelectorAll("section").forEach(function (sec) {
+      if (sec.getAttribute("data-estilo_padrao") === "titulo") {
+        tituloPendente = sec.textContent.replace(/\s+/g, " ").trim();
+      } else if (sec.getAttribute("data-sin_permite_texto_padrao") === "true") {
+        partes.push(sec.innerHTML);
+        if (tituloPendente) {
+          titulos.push(tituloPendente);
+        }
+        tituloPendente = "";
+      }
+    });
+    return { partes, titulo: titulos.join(" · ") };
+  }
+  const section =
+    scope.querySelector('section[data-estilo_padrao="paragrafo"]') || corpos[0] || null;
+  return { partes: [section ? section.innerHTML : ""], titulo: "" };
+}
 
-  if (contentInfo.isTruncated) {
-    return `
-      <div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
+/**
+ * Um corpo do preview, com o limite de caracteres e o seu próprio
+ * "Ver texto completo". Nas minutas duplas, cada corpo passa por aqui
+ * separadamente — o limite vale para cada um, não para o conjunto.
+ */
+function EPT_buildPreviewPart(htmlContent, maxChars) {
+  const contentInfo = EPT_truncatePreviewContent(htmlContent, maxChars);
+  if (!contentInfo.isTruncated) {
+    return contentInfo.content;
+  }
+  const uniqueId = EPT_generatePreviewId();
+  return `
         <div id="${uniqueId}-truncated" style="display: block;">
           ${contentInfo.content}
           <span
@@ -815,13 +1587,22 @@ function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000) {
           >
             ▼ Ocultar parte do texto
           </span>
-        </div>
-      </div>
-    `;
-  }
+        </div>`;
+}
 
+/**
+ * Contêiner do preview. Aceita o HTML de um corpo ou, nas minutas duplas,
+ * um array com um HTML por corpo — cada um limitado à parte e separados
+ * por filete.
+ */
+function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000) {
+  const partes = Array.isArray(htmlContent) ? htmlContent : [htmlContent];
+  const uniqueId = EPT_generatePreviewId();
+  const corpo = partes
+    .map((html) => EPT_buildPreviewPart(html || "", maxChars))
+    .join('<hr class="ept-minuta-separador">');
   return `<div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
-    ${contentInfo.content}
+    ${corpo}
   </div>`;
 }
 
@@ -851,6 +1632,7 @@ function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000) {
     window.EPT_TableStyler.enhanceContent(rowElement);
   }
 
+  EPT_stripCardTooltips(rowElement);
   EPT_tryHideInfraTooltip();
 }
 
@@ -1045,6 +1827,10 @@ function EPT_collapseRow(row, options) {
   const keptOthers = $row.children("td").length - 1;
   const colspan = Math.max(1, totalCols - keptOthers);
   contentTd.attr("colspan", colspan);
+
+  // Só a célula do cartão; a de "Mais ações" mantém os seus tooltips.
+  EPT_stripCardTooltips(contentTd[0]);
+  EPT_tryHideInfraTooltip();
 }
 
 function EPT_withSuppressedTableObserver(fn) {
@@ -1252,6 +2038,7 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
       if (window.EPT_TableStyler) {
         window.EPT_TableStyler.enhanceContent($row[0]);
       }
+      EPT_stripCardTooltips($row[0]);
       EPT_tryHideInfraTooltip();
     });
   };
@@ -1266,14 +2053,16 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
 
   if (urlPreview) {
     const url = window.location.href;
-    const urlEproc = url.split("eproc/")[0] + "eproc";
+    const urlEproc = EPT_baseEproc();
     $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
       const htmlObject = document.createElement("div");
       htmlObject.innerHTML = data;
+      const corpo = EPT_extractPreviewBody(htmlObject);
       const tituloRaw = htmlObject.querySelector("p.titulo");
-      const titulo = tituloRaw && tituloRaw.textContent ? tituloRaw.textContent : meta.tipo || "";
-      const section = htmlObject.querySelector('section[data-estilo_padrao="paragrafo"]');
-      const sectionContent = EPT_buildPreviewMarkup(section ? section.innerHTML : "", 1000);
+      const titulo =
+        corpo.titulo ||
+        (tituloRaw && tituloRaw.textContent ? tituloRaw.textContent : meta.tipo || "");
+      const sectionContent = EPT_buildPreviewMarkup(corpo.partes, 1000);
       applyCard(titulo, sectionContent);
     });
   } else {
@@ -1360,22 +2149,24 @@ function EPT_restorePreviewAfterEdicao(tr) {
     }
     return;
   }
-  const urlEproc = window.location.href.split("eproc/")[0] + "eproc";
+  const urlEproc = EPT_baseEproc();
   $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
     const htmlObject = document.createElement("div");
     htmlObject.innerHTML = data;
-    const section = htmlObject.querySelector('section[data-estilo_padrao="paragrafo"]');
+    const corpo = EPT_extractPreviewBody(htmlObject);
     EPT_withSuppressedTableObserver(function () {
-      EPT_updatePreviewContainer(tr, section ? section.innerHTML : "", 1000);
+      EPT_updatePreviewContainer(tr, corpo.partes, 1000);
       const tituloRaw = htmlObject.querySelector("p.titulo");
-      if (tituloRaw && tituloRaw.textContent) {
+      const tituloTexto = corpo.titulo || (tituloRaw && tituloRaw.textContent) || "";
+      if (tituloTexto) {
         const headerMid = tr.querySelector(".ept-minuta-header > span:nth-child(2)");
         if (headerMid) {
           const br = headerMid.querySelector("br");
           const statusHtml = br
             ? headerMid.innerHTML.substring(headerMid.innerHTML.indexOf("<br"))
             : "&nbsp;";
-          headerMid.innerHTML = tituloRaw.textContent + statusHtml;
+          headerMid.textContent = tituloTexto;
+          headerMid.insertAdjacentHTML("beforeend", statusHtml);
         }
       }
     });
@@ -2631,21 +3422,7 @@ async function getStorageData(key) {
         if (window.EPT_EPROC_BASE_URL) {
           return window.EPT_EPROC_BASE_URL;
         }
-        const currentUrl = window.location.href;
-        let baseUrl = "";
-
-        if (currentUrl.includes("eproc/")) {
-          baseUrl = currentUrl.split("eproc/")[0] + "eproc";
-        } else {
-          const pathParts = window.location.pathname.split("/");
-          const eprocIndex = pathParts.findIndex((part) => part === "eproc");
-          if (eprocIndex !== -1) {
-            baseUrl = `${window.location.origin}/${pathParts.slice(1, eprocIndex + 1).join("/")}`;
-          } else {
-            baseUrl = window.location.origin;
-          }
-        }
-
+        const baseUrl = EPT_baseEproc();
         window.EPT_EPROC_BASE_URL = baseUrl;
         return baseUrl;
       }
@@ -2816,9 +3593,31 @@ async function getStorageData(key) {
             infoItems.push(`Documento: ${codDocumento}`);
           }
 
+          // Um campo por corpo, com o título que o precede no documento
+          // (mesma leitura do preview da lista).
+          const campos = [];
+          let tituloPendente = "";
+          let indiceCorpo = 0;
+          article.querySelectorAll("section").forEach(function (sec) {
+            if (sec.getAttribute("data-estilo_padrao") === "titulo") {
+              tituloPendente = sec.textContent.replace(/\s+/g, " ").trim();
+            } else if (sec.getAttribute("data-sin_permite_texto_padrao") === "true") {
+              campos.push({
+                indice: indiceCorpo,
+                titulo: tituloPendente,
+                html: sec.innerHTML,
+                classe: EPT_classeParagrafo(sec),
+              });
+              indiceCorpo += 1;
+              tituloPendente = "";
+            }
+          });
+
           const modalState = {
+            campos: campos.length > 1 ? campos : null,
             articleHTML: article.outerHTML,
             editableContent: editableSection.innerHTML,
+            classeParagrafo: EPT_classeParagrafo(editableSection),
             editableSectionId: sectionId,
             idDocumento,
             codDocumento,

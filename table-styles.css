@@ -403,6 +403,16 @@ html[data-ept-palette="esmeralda"] {
     margin-bottom: 0 !important;
 }
 
+/* Filete entre corpos da mesma minuta (ementa | acórdão, relatório | voto).
+   Os títulos de cada corpo ficam juntos no cabeçalho do cartão. */
+.ept-preview-container hr.ept-minuta-separador {
+    border: 0 !important;
+    border-top: 1px solid var(--ept-slate-200, #e5e7eb) !important;
+    height: 0 !important;
+    margin: 1.1em 0 !important;
+    width: 100% !important;
+}
+
 .ept-preview-container strong,
 .ept-minuta-text strong {
     color: var(--ept-purple-900, #2f1d3d) !important;

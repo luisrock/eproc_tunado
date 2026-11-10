@@ -27,6 +27,22 @@ const urls = [
   'https://eproc2g.tjmg.jus.br',
   'https://eproc1g.tjpr.jus.br',
   'https://eproc2g.tjpr.jus.br',
+  // Tribunais opcionais (permissão concedida no popup). TJAL e TJBA: só 1º
+  // grau por enquanto (2º em construção); TJMMG usa um host só, com /eproc1g/ e /eproc2g/.
+  'https://eproc1g.tjal.jus.br',
+  'https://eproc1g.tjba.jus.br',
+  'https://eproc1g.tjms.jus.br',
+  'https://eproc2g.tjms.jus.br',
+  'https://eproc1g.tjse.jus.br',
+  'https://eproc2g.tjse.jus.br',
+  'https://eproc1g.tjac.jus.br',
+  'https://eproc2g.tjac.jus.br',
+  'https://eproc1g.stm.jus.br',
+  'https://eproc2g.stm.jus.br',
+  'https://eproc1g.tjmrs.jus.br',
+  'https://eproc2g.tjmrs.jus.br',
+  'https://eproc.tjmmg.jus.br/eproc1g/',
+  'https://eproc.tjmmg.jus.br/eproc2g/',
 ];
 
 // Função para testar uma URL

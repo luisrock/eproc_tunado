@@ -50,6 +50,9 @@ zip -r "$OUT" . \
   -x ".DS_Store" \
   -x "**/.DS_Store" \
   -x "eproc-tunado-*.zip" \
+  -x ".claude/*" \
+  -x ".claude/**/*" \
+  -x "prerelease.sh" \
   -x "ziptunado.sh"
 
 BYTES=$(wc -c < "$OUT" | tr -d ' ')
