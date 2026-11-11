@@ -403,14 +403,54 @@ html[data-ept-palette="esmeralda"] {
     margin-bottom: 0 !important;
 }
 
-/* Filete entre corpos da mesma minuta (ementa | acórdão, relatório | voto).
-   Os títulos de cada corpo ficam juntos no cabeçalho do cartão. */
-.ept-preview-container hr.ept-minuta-separador {
+/* Minuta dupla (ementa | acórdão, relatório | voto): uma aba por corpo,
+   como no modal da edição rápida. Só o corpo da aba ativa aparece. */
+.ept-preview-abas {
+    border-bottom: 1px solid var(--ept-slate-200, #e5e7eb) !important;
+    display: flex !important;
+    gap: 2px !important;
+    margin: 0 0 1em !important;
+}
+
+.ept-preview-aba {
+    appearance: none !important;
+    background: transparent !important;
     border: 0 !important;
-    border-top: 1px solid var(--ept-slate-200, #e5e7eb) !important;
-    height: 0 !important;
-    margin: 1.1em 0 !important;
-    width: 100% !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    color: var(--ept-slate-500, #6b7280) !important;
+    cursor: pointer !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    line-height: 1.2 !important;
+    margin: 0 0 -1px !important;
+    padding: 6px 14px 7px !important;
+    text-transform: uppercase !important;
+}
+
+.ept-preview-aba:first-child {
+    padding-left: 0 !important;
+}
+
+.ept-preview-aba:hover {
+    color: var(--ept-purple-900, #2f1d3d) !important;
+}
+
+.ept-preview-aba[aria-selected="true"] {
+    border-bottom-color: #F66942 !important;
+    color: var(--ept-purple-900, #2f1d3d) !important;
+}
+
+.ept-preview-aba:focus-visible {
+    outline: 2px solid var(--ept-purple-900, #2f1d3d) !important;
+    outline-offset: 2px !important;
+}
+
+.ept-preview-painel[hidden] {
+    display: none !important;
 }
 
 .ept-preview-container strong,

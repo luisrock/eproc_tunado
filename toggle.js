@@ -175,10 +175,13 @@ document.addEventListener("DOMContentLoaded", (event) => {
     chrome.runtime.getManifest().optional_host_permissions || [];
   const hostDoPadrao = (padrao) => padrao.replace(/^\*:\/\//, "").replace(/\/\*$/, "");
   const btnTjpr = document.getElementById("btn-tjpr");
+  const avisoAtivar = document.getElementById("ativar-tribunal");
+  const avisoHost = document.getElementById("ativar-host");
   let origemPendente = null;
-  if (btnTjpr) {
-    // Aparece só quando a aba ativa é um host opcional ainda sem acesso.
-    // Para todo o resto da base, o popup segue sem ele.
+  if (btnTjpr && avisoAtivar) {
+    // O aviso (no alto do popup) aparece só quando a aba ativa é um host
+    // opcional ainda sem acesso. Para todo o resto da base, o popup segue
+    // sem ele. O ícone da extensão mostra um "!" nessa aba (background.js).
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const url = tabs && tabs[0] && tabs[0].url;
       if (!url) {
@@ -197,7 +200,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
       chrome.permissions.contains({ origins: [origem] }, (concedido) => {
         if (!concedido) {
           origemPendente = origem;
-          btnTjpr.hidden = false;
+          if (avisoHost) {
+            avisoHost.textContent = host;
+          }
+          avisoAtivar.hidden = false;
+          btnTjpr.focus();
         }
       });
     });
@@ -205,15 +212,13 @@ document.addEventListener("DOMContentLoaded", (event) => {
       if (!origemPendente) {
         return;
       }
+      // Recarregar as abas do tribunal e tirar o "!" do ícone fica com o
+      // background (permissions.onAdded): a janela de permissão do Chrome
+      // pode fechar este popup antes de a resposta chegar aqui.
       chrome.permissions.request({ origins: [origemPendente] }, (concedido) => {
-        if (!concedido) {
-          return;
+        if (concedido) {
+          avisoAtivar.hidden = true;
         }
-        btnTjpr.hidden = true;
-        // Recarrega as abas desse host já abertas, para a extensão agir.
-        chrome.tabs.query({ url: [origemPendente] }, (results) => {
-          (results || []).forEach((item) => updateTab(item.id));
-        });
       });
     };
   }

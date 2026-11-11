@@ -70,7 +70,10 @@ Os **21 hosts** de `host_permissions` são exigidos na instalação. Os demais
 (TJPR, os tribunais novos da 1.1.0 e a homologação do TRF2) ficam em
 `optional_host_permissions`: quem for daquele tribunal concede uma vez, por um
 botão que só aparece no popup quando a aba ativa é um desses hosts ainda sem
-acesso ([`toggle.js`](toggle.js), que lê a lista do próprio manifest).
+acesso ([`toggle.js`](toggle.js), que lê a lista do próprio manifest). O botão
+fica num aviso no alto do popup, e nessa aba o ícone da extensão mostra um
+"!" laranja ([`background.js`](background.js)), para a pessoa saber que falta
+ativar.
 
 A distinção não é cosmética. O Chrome **não aplica em silêncio** uma
 atualização que peça permissão nova: ele retém o update e, ao aplicá-lo,
@@ -333,7 +336,8 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 - **Minutas duplas** (ementa + acórdão, relatório + voto): o preview mostra
   todos os corpos (`section[data-sin_permite_texto_padrao]`), títulos juntos
-  no cabeçalho e filete entre eles; limite de caracteres por corpo
+  no cabeçalho e uma aba por corpo no cartão, na ordem do documento (abre em
+  EMENTA ou VOTO, `EPT_abaPadrao`); limite de caracteres por corpo
 - **Edição rápida em abas** para minutas duplas, salvar por aba; salvar só
   habilita com alteração; "Fechar" no lugar de "Cancelar" após salvar;
   ×, Cancelar e Esc pedem confirmação se houver alteração não salva
@@ -350,6 +354,10 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
   STM e TJMMG
 - **Novos tribunais opcionais:** TJAL, TJBA, TJMS, TJSE, TJAC, STM, TJMRS,
   TJMMG; e a homologação do TRF2
+- **Ativação mais visível nos tribunais opcionais:** "!" laranja no ícone da
+  extensão na aba do tribunal ainda sem acesso, e aviso com o botão no alto
+  do popup; a recarga das abas após a concessão passou para o `background.js`
+  (`permissions.onAdded`)
 
 ### v1.0.1
 

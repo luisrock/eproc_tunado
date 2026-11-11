@@ -57,6 +57,56 @@ body {
     flex-direction: column;
 }
 
+/* Aviso de ativação num tribunal opcional — no alto do popup */
+[hidden] {
+    display: none !important;
+}
+
+.ativar-tribunal {
+    background: #fff4ef;
+    border-bottom: 3px solid var(--color-accent);
+    padding: var(--spacing-lg) var(--spacing-xxl) var(--spacing-xl);
+}
+
+.ativar-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.ativar-texto {
+    font-size: 0.813rem;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.btn-ativar {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-accent);
+    border: 2px solid var(--color-accent);
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 6px rgba(246, 105, 66, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-ativar:hover {
+    background: #e2552f;
+    border-color: #e2552f;
+    transform: translateY(-1px);
+}
+
+.btn-ativar:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 /* Header */
 .header {
     background: var(--color-primary);

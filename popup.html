@@ -9,6 +9,22 @@
 </head>
 <body>
     <div class="container">
+        <!-- Só aparece na aba de um tribunal opcional (TJPR, homologação etc.)
+             ainda sem acesso concedido. Fica no alto: é a primeira coisa que
+             a pessoa precisa fazer ali. -->
+        <section id="ativar-tribunal" class="ativar-tribunal" hidden>
+            <p class="ativar-titulo">Falta um passo para o EPT funcionar aqui</p>
+            <p class="ativar-texto">
+                O Eproc Tunado ainda não foi ativado em
+                <strong id="ativar-host">este tribunal</strong>.
+                Clique no botão e, na janela do Chrome, escolha <strong>Permitir</strong>.
+                É uma vez só.
+            </p>
+            <button id="btn-tjpr" class="btn-ativar">
+                Ativar o EPT neste tribunal
+            </button>
+        </section>
+
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -102,10 +118,6 @@
         <div class="actions">
             <button id="btn-reload" class="btn-action">
                 Recarregar páginas do Eproc
-            </button>
-            <!-- Só aparece na aba de um host opcional (TJPR, homologação), sem acesso concedido. -->
-            <button id="btn-tjpr" class="btn-action" hidden>
-                Ativar o EPT neste tribunal
             </button>
         </div>
 

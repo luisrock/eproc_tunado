@@ -885,13 +885,16 @@ window.EPT_INLINE_EDITOR = window.EPT_INLINE_EDITOR || {
       try {
         if (state.rowElement) {
           let previewHtml = sanitizedEditable;
+          let previewTitulos = [];
           if (multi) {
-            // Mesmo formato da lista: cada corpo com o seu limite, separados por filete.
+            // Mesmo formato da lista: cada corpo com o seu limite, numa aba.
             const tmp = document.createElement("div");
             tmp.innerHTML = xhtmlArticle;
-            previewHtml = EPT_extractPreviewBody(tmp).partes;
+            const corpoSalvo = EPT_extractPreviewBody(tmp);
+            previewHtml = corpoSalvo.partes;
+            previewTitulos = corpoSalvo.titulos;
           }
-          EPT_updatePreviewContainer(state.rowElement, previewHtml, 1000);
+          EPT_updatePreviewContainer(state.rowElement, previewHtml, 1000, previewTitulos);
         }
       } catch (updateError) {
         debugLog("EPT: Erro ao atualizar linha após salvamento:", updateError);
@@ -1513,8 +1516,8 @@ function EPT_truncatePreviewContent(htmlContent, maxChars = 1000) {
  * "acordao"; há também RELATÓRIO + VOTO num documento só. O seletor antigo
  * pegava só a primeira section de estilo "paragrafo" e perdia o resto.
  * Aqui entram todas as sections que aceitam texto
- * (data-sin_permite_texto_padrao), na ordem do documento, separadas por um
- * filete; os títulos de cada corpo vão juntos para o cabeçalho do cartão
+ * (data-sin_permite_texto_padrao), na ordem do documento, cada uma numa
+ * aba do cartão; os títulos de cada corpo vão juntos para o cabeçalho do cartão
  * ("EMENTA · ACÓRDÃO"). Sem nenhuma dessas sections, cai no seletor antigo.
  *
  * @returns {{partes: string[], titulo: string}} uma entrada por corpo
@@ -1522,7 +1525,7 @@ function EPT_truncatePreviewContent(htmlContent, maxChars = 1000) {
  */
 function EPT_extractPreviewBody(root) {
   if (!root) {
-    return { html: "", titulo: "" };
+    return { partes: [""], titulos: [], titulo: "" };
   }
   const scope = root.querySelector("article") || root;
   const corpos = scope.querySelectorAll('section[data-sin_permite_texto_padrao="true"]');
@@ -1535,17 +1538,16 @@ function EPT_extractPreviewBody(root) {
         tituloPendente = sec.textContent.replace(/\s+/g, " ").trim();
       } else if (sec.getAttribute("data-sin_permite_texto_padrao") === "true") {
         partes.push(sec.innerHTML);
-        if (tituloPendente) {
-          titulos.push(tituloPendente);
-        }
+        // Alinhado com partes: "" quando o corpo não tem título próprio.
+        titulos.push(tituloPendente);
         tituloPendente = "";
       }
     });
-    return { partes, titulo: titulos.join(" · ") };
+    return { partes, titulos, titulo: titulos.filter(Boolean).join(" · ") };
   }
   const section =
     scope.querySelector('section[data-estilo_padrao="paragrafo"]') || corpos[0] || null;
-  return { partes: [section ? section.innerHTML : ""], titulo: "" };
+  return { partes: [section ? section.innerHTML : ""], titulos: [], titulo: "" };
 }
 
 /**
@@ -1592,27 +1594,96 @@ function EPT_buildPreviewPart(htmlContent, maxChars) {
 
 /**
  * Contêiner do preview. Aceita o HTML de um corpo ou, nas minutas duplas,
- * um array com um HTML por corpo — cada um limitado à parte e separados
- * por filete.
+ * um array com um HTML por corpo — cada um limitado à parte e numa aba
+ * própria (Ementa | Acórdão), como no modal da edição rápida. Só a aba
+ * ativa aparece. As abas seguem a ordem do documento; a que abre
+ * selecionada é a de `abaAtiva` ou, sem ela, EMENTA (em ementa + acórdão) ou
+ * VOTO (em relatório + voto) — a primeira, se não houver nenhuma das duas.
  */
-function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000) {
+function EPT_abaPadrao(titulos) {
+  const nomes = (titulos || []).map((t) => String(t || "").replace(/\s+/g, " ").trim().toLocaleLowerCase("pt-BR"));
+  for (const preferida of ["ementa", "voto"]) {
+    const i = nomes.indexOf(preferida);
+    if (i >= 0) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000, titulos = [], abaAtiva = null) {
   const partes = Array.isArray(htmlContent) ? htmlContent : [htmlContent];
   const uniqueId = EPT_generatePreviewId();
-  const corpo = partes
-    .map((html) => EPT_buildPreviewPart(html || "", maxChars))
-    .join('<hr class="ept-minuta-separador">');
-  return `<div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
-    ${corpo}
+  if (partes.length < 2) {
+    return `<div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
+    ${EPT_buildPreviewPart(partes[0] || "", maxChars)}
+  </div>`;
+  }
+  const ativa =
+    Number.isInteger(abaAtiva) && abaAtiva >= 0 && abaAtiva < partes.length
+      ? abaAtiva
+      : Math.min(EPT_abaPadrao(titulos), partes.length - 1);
+  const escapar = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const abas = partes
+    .map((_, i) => {
+      const nome = escapar(EPT_nomeConteudo((titulos || [])[i], i));
+      return `<button type="button" class="ept-preview-aba" role="tab" data-ept-aba="${i}" aria-selected="${i === ativa}">${nome}</button>`;
+    })
+    .join("");
+  const paineis = partes
+    .map(
+      (html, i) =>
+        `<div class="ept-preview-painel" role="tabpanel" data-ept-painel="${i}"${i === ativa ? "" : " hidden"}>${EPT_buildPreviewPart(html || "", maxChars)}</div>`
+    )
+    .join("");
+  return `<div class="ept-preview-container ept-preview-com-abas" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}" data-ept-aba-ativa="${ativa}">
+    <div class="ept-preview-abas" role="tablist">${abas}</div>
+    ${paineis}
   </div>`;
 }
 
-function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000) {
+// Troca de aba no cartão da minuta dupla. Um ouvinte só, no documento, em
+// fase de captura: o cartão é reescrito a cada atualização, e o clique na
+// aba não deve chegar aos ouvintes da linha (seleção da minuta etc.).
+document.addEventListener(
+  "click",
+  (event) => {
+    const aba = event.target && event.target.closest && event.target.closest(".ept-preview-aba");
+    if (!aba) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const container = aba.closest("[data-ept-preview-container]");
+    if (!container) {
+      return;
+    }
+    const indice = aba.getAttribute("data-ept-aba");
+    container.setAttribute("data-ept-aba-ativa", indice);
+    container.querySelectorAll(".ept-preview-aba").forEach((b) => {
+      b.setAttribute("aria-selected", String(b === aba));
+    });
+    container.querySelectorAll(".ept-preview-painel").forEach((p) => {
+      p.hidden = p.getAttribute("data-ept-painel") !== indice;
+    });
+  },
+  true
+);
+
+function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000, titulos = []) {
   if (!rowElement) {
     return;
   }
 
-  const newMarkup = EPT_buildPreviewMarkup(htmlContent, maxChars);
   const existingContainer = rowElement.querySelector("[data-ept-preview-container]");
+  // Ao reescrever o cartão (depois de salvar, por exemplo), a aba que a
+  // pessoa estava vendo continua selecionada.
+  const abaGuardada = existingContainer
+    ? parseInt(existingContainer.getAttribute("data-ept-aba-ativa"), 10)
+    : NaN;
+  const abaAtiva = Number.isInteger(abaGuardada) ? abaGuardada : null;
+  const newMarkup = EPT_buildPreviewMarkup(htmlContent, maxChars, titulos, abaAtiva);
 
   if (existingContainer) {
     existingContainer.outerHTML = newMarkup;
@@ -2062,7 +2133,7 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
       const titulo =
         corpo.titulo ||
         (tituloRaw && tituloRaw.textContent ? tituloRaw.textContent : meta.tipo || "");
-      const sectionContent = EPT_buildPreviewMarkup(corpo.partes, 1000);
+      const sectionContent = EPT_buildPreviewMarkup(corpo.partes, 1000, corpo.titulos);
       applyCard(titulo, sectionContent);
     });
   } else {
@@ -2155,7 +2226,7 @@ function EPT_restorePreviewAfterEdicao(tr) {
     htmlObject.innerHTML = data;
     const corpo = EPT_extractPreviewBody(htmlObject);
     EPT_withSuppressedTableObserver(function () {
-      EPT_updatePreviewContainer(tr, corpo.partes, 1000);
+      EPT_updatePreviewContainer(tr, corpo.partes, 1000, corpo.titulos);
       const tituloRaw = htmlObject.querySelector("p.titulo");
       const tituloTexto = corpo.titulo || (tituloRaw && tituloRaw.textContent) || "";
       if (tituloTexto) {

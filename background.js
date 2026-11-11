@@ -84,6 +84,86 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
   }
 });
 
+// ---- Tribunal opcional ainda não ativado: "!" no ícone ---------------
+//
+// Tribunais em optional_host_permissions só funcionam depois que o usuário
+// concede o acesso, pelo botão do popup. Sem aviso, a pessoa instala, abre o
+// eproc e nada acontece. Então, na aba de um desses tribunais ainda sem
+// acesso, o ícone ganha um "!" laranja e a dica do mouse diz o que fazer.
+// O aviso é por aba: nas outras, o ícone segue normal.
+const EPT_ORIGENS_OPCIONAIS =
+  chrome.runtime.getManifest().optional_host_permissions || [];
+
+function origemOpcionalDaUrl(url) {
+  let host;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch (e) {
+    return null;
+  }
+  return (
+    EPT_ORIGENS_OPCIONAIS.find(
+      (p) => p.replace(/^\*:\/\//, "").replace(/\/\*$/, "") === host
+    ) || null
+  );
+}
+
+async function atualizarAvisoAtivacao(tab) {
+  if (!tab || typeof tab.id !== "number" || !tab.url) {
+    return;
+  }
+  const origem = origemOpcionalDaUrl(tab.url);
+  if (!origem) {
+    return;
+  }
+  try {
+    const concedido = await chrome.permissions.contains({ origins: [origem] });
+    await chrome.action.setBadgeText({ tabId: tab.id, text: concedido ? "" : "!" });
+    if (!concedido) {
+      await chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: "#F66942" });
+      if (chrome.action.setBadgeTextColor) {
+        await chrome.action.setBadgeTextColor({ tabId: tab.id, color: "#ffffff" });
+      }
+      await chrome.action.setTitle({
+        tabId: tab.id,
+        title: "Eproc Tunado: clique aqui para ativar neste tribunal",
+      });
+    }
+  } catch (e) {
+    // A aba pode ter sido fechada no meio do caminho.
+  }
+}
+
+async function atualizarAvisoEmTodasAsAbas() {
+  const tabs = await chrome.tabs.query({});
+  tabs.forEach(atualizarAvisoAtivacao);
+}
+
+// O Chrome zera os valores por aba a cada navegação; por isso, a cada
+// atualização da aba o aviso é reavaliado.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  atualizarAvisoAtivacao(tab);
+});
+
+// Acesso concedido: recarrega as abas daquele tribunal, para a extensão
+// agir (a recarga também tira o "!"). Feito aqui, e não no popup, porque a
+// janela de permissão pode fechar o popup antes da resposta.
+chrome.permissions.onAdded.addListener(async (permissions) => {
+  const origens = (permissions && permissions.origins) || [];
+  if (!origens.length) {
+    return;
+  }
+  try {
+    const tabs = await chrome.tabs.query({ url: origens });
+    tabs.forEach((tab) => chrome.tabs.reload(tab.id));
+  } catch (e) {
+    atualizarAvisoEmTodasAsAbas();
+  }
+});
+chrome.permissions.onRemoved.addListener(atualizarAvisoEmTodasAsAbas);
+
+atualizarAvisoEmTodasAsAbas();
+
 // Injects scripts and modifies the page depending on the data retrieved
 async function injectScripts(tabId) {
   let data = await chrome.storage.sync.get([
