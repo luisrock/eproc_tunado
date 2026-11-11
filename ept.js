@@ -1442,6 +1442,101 @@ function EPT_addLog(event, payload) {
   }
 }
 
+// ---- Conteúdo ativo no HTML da minuta ---------------------------------
+//
+// O HTML da minuta vem do eproc e é escrito por quem tem acesso ao
+// gabinete. A extensão o insere na página (cartão da lista, modal da edição
+// rápida); sem filtro, um <img onerror=...> gravado numa minuta rodaria na
+// sessão de quem abre a lista. Por isso:
+// - o HTML é lido sempre num documento inerte (DOMParser: nada executa,
+//   nenhuma imagem é carregada);
+// - na LISTA, o conteúdo ativo é retirado antes de ir para a página (é só
+//   exibição, nada é gravado);
+// - na EDIÇÃO RÁPIDA, minuta com conteúdo ativo é recusada: retirar e
+//   salvar alteraria o documento sem a pessoa saber.
+
+// Elementos que executam código, carregam outro documento, enviam
+// formulário, mudam o estilo da página, ou que o navegador lê de um jeito
+// no documento inerte e de outro na página (noscript, template, svg, math…).
+const EPT_ELEMENTOS_ATIVOS = [
+  "script", "iframe", "frame", "frameset", "object", "embed", "applet",
+  "link", "meta", "base", "style", "form", "input", "button", "select",
+  "textarea", "noscript", "noembed", "noframes", "template", "xmp",
+  "plaintext", "listing", "svg", "math", "animate", "set",
+].join(",");
+
+/** Documento inerte a partir de uma string de HTML. */
+function EPT_documentoInerte(html) {
+  return new DOMParser().parseFromString(String(html || ""), "text/html");
+}
+
+/**
+ * Procura conteúdo ativo dentro de `root` (elemento de documento inerte).
+ * Com `remover`, retira o que achar. Devolve a lista do que foi achado, em
+ * texto, sem repetição (ex.: ["<script>", "atributo onerror"]).
+ */
+function EPT_conteudoAtivo(root, remover) {
+  const achados = new Set();
+  if (!root) {
+    return [];
+  }
+  Array.from(root.querySelectorAll(EPT_ELEMENTOS_ATIVOS)).forEach((el) => {
+    achados.add(`<${el.localName}>`);
+    if (remover) {
+      el.remove();
+    }
+  });
+  const elementos = Array.from(root.querySelectorAll("*"));
+  if (root.nodeType === 1) {
+    elementos.push(root);
+  }
+  elementos.forEach((el) => {
+    Array.from(el.attributes).forEach((attr) => {
+      const nome = attr.name.toLowerCase();
+      // Espaços e caracteres de controle são ignorados pelo navegador antes
+      // do esquema ("java\tscript:").
+      const valor = attr.value.replace(/[\u0000- ]/g, "").toLowerCase();
+      let motivo = "";
+      if (nome.startsWith("on")) {
+        motivo = `atributo ${nome}`;
+      } else if (nome === "srcdoc") {
+        motivo = "atributo srcdoc";
+      } else if (/^(javascript|vbscript):/.test(valor) || /^data:text\/html/.test(valor)) {
+        motivo = `endereço ${valor.split(":")[0]}: em ${nome}`;
+      }
+      if (motivo) {
+        achados.add(motivo);
+        if (remover) {
+          el.removeAttribute(attr.name);
+        }
+      }
+    });
+  });
+  return Array.from(achados);
+}
+
+/**
+ * Página de preview do eproc pronta para a lista: lida em documento inerte
+ * e já sem conteúdo ativo. Devolve o <body> (inerte), para consulta com
+ * querySelector e leitura de innerHTML.
+ */
+function EPT_previewSeguro(html) {
+  const doc = EPT_documentoInerte(html);
+  // O que conta para o aviso do cartão é o documento da minuta (article) —
+  // o mesmo alcance da recusa da edição rápida. O resto da página de
+  // preview é limpo também, mas sem aviso: é a moldura do eproc.
+  const minuta =
+    doc.body.querySelector("article") ||
+    doc.body.querySelector('section[data-estilo_padrao="paragrafo"]');
+  const achados = minuta ? EPT_conteudoAtivo(minuta, false) : [];
+  EPT_conteudoAtivo(doc.body, true);
+  if (achados.length) {
+    EPT_addLog("preview:conteudo_ativo_removido", { achados });
+  }
+  doc.body._eptConteudoRetirado = achados.length > 0;
+  return doc.body;
+}
+
 function EPT_generatePreviewId() {
   return `ept-preview-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -1611,12 +1706,23 @@ function EPT_abaPadrao(titulos) {
   return 0;
 }
 
-function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000, titulos = [], abaAtiva = null) {
+function EPT_buildPreviewMarkup(
+  htmlContent,
+  maxChars = 1000,
+  titulos = [],
+  abaAtiva = null,
+  conteudoRetirado = false
+) {
   const partes = Array.isArray(htmlContent) ? htmlContent : [htmlContent];
   const uniqueId = EPT_generatePreviewId();
+  // Conteúdo ativo retirado (EPT_previewSeguro): o cartão mostra menos do
+  // que o documento tem, e quem vai assinar precisa saber.
+  const aviso = conteudoRetirado
+    ? '<div class="ept-preview-aviso" role="note" data-ept-conteudo-retirado="true">Parte do conteúdo desta minuta não é exibida aqui. Confira no editor do eproc antes de assinar.</div>'
+    : "";
   if (partes.length < 2) {
     return `<div class="ept-preview-container" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}">
-    ${EPT_buildPreviewPart(partes[0] || "", maxChars)}
+    ${aviso}${EPT_buildPreviewPart(partes[0] || "", maxChars)}
   </div>`;
   }
   const ativa =
@@ -1638,7 +1744,7 @@ function EPT_buildPreviewMarkup(htmlContent, maxChars = 1000, titulos = [], abaA
     )
     .join("");
   return `<div class="ept-preview-container ept-preview-com-abas" data-ept-preview-container="true" data-ept-preview-id="${uniqueId}" data-ept-aba-ativa="${ativa}">
-    <div class="ept-preview-abas" role="tablist">${abas}</div>
+    ${aviso}<div class="ept-preview-abas" role="tablist">${abas}</div>
     ${paineis}
   </div>`;
 }
@@ -1671,7 +1777,13 @@ document.addEventListener(
   true
 );
 
-function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000, titulos = []) {
+function EPT_updatePreviewContainer(
+  rowElement,
+  htmlContent,
+  maxChars = 1000,
+  titulos = [],
+  conteudoRetirado = false
+) {
   if (!rowElement) {
     return;
   }
@@ -1683,7 +1795,7 @@ function EPT_updatePreviewContainer(rowElement, htmlContent, maxChars = 1000, ti
     ? parseInt(existingContainer.getAttribute("data-ept-aba-ativa"), 10)
     : NaN;
   const abaAtiva = Number.isInteger(abaGuardada) ? abaGuardada : null;
-  const newMarkup = EPT_buildPreviewMarkup(htmlContent, maxChars, titulos, abaAtiva);
+  const newMarkup = EPT_buildPreviewMarkup(htmlContent, maxChars, titulos, abaAtiva, conteudoRetirado);
 
   if (existingContainer) {
     existingContainer.outerHTML = newMarkup;
@@ -2126,14 +2238,19 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
     const url = window.location.href;
     const urlEproc = EPT_baseEproc();
     $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
-      const htmlObject = document.createElement("div");
-      htmlObject.innerHTML = data;
+      const htmlObject = EPT_previewSeguro(data);
       const corpo = EPT_extractPreviewBody(htmlObject);
       const tituloRaw = htmlObject.querySelector("p.titulo");
       const titulo =
         corpo.titulo ||
         (tituloRaw && tituloRaw.textContent ? tituloRaw.textContent : meta.tipo || "");
-      const sectionContent = EPT_buildPreviewMarkup(corpo.partes, 1000, corpo.titulos);
+      const sectionContent = EPT_buildPreviewMarkup(
+        corpo.partes,
+        1000,
+        corpo.titulos,
+        null,
+        htmlObject._eptConteudoRetirado
+      );
       applyCard(titulo, sectionContent);
     });
   } else {
@@ -2222,11 +2339,16 @@ function EPT_restorePreviewAfterEdicao(tr) {
   }
   const urlEproc = EPT_baseEproc();
   $.get(`${urlEproc}/${urlPreview}`).done(function (data) {
-    const htmlObject = document.createElement("div");
-    htmlObject.innerHTML = data;
+    const htmlObject = EPT_previewSeguro(data);
     const corpo = EPT_extractPreviewBody(htmlObject);
     EPT_withSuppressedTableObserver(function () {
-      EPT_updatePreviewContainer(tr, corpo.partes, 1000, corpo.titulos);
+      EPT_updatePreviewContainer(
+        tr,
+        corpo.partes,
+        1000,
+        corpo.titulos,
+        htmlObject._eptConteudoRetirado
+      );
       const tituloRaw = htmlObject.querySelector("p.titulo");
       const tituloTexto = corpo.titulo || (tituloRaw && tituloRaw.textContent) || "";
       if (tituloTexto) {
@@ -3614,6 +3736,21 @@ async function getStorageData(key) {
           if (!article) {
             EPT_addLog("preview:error", { reason: "Article não encontrado" });
             throw new Error("Article não encontrado no preview da minuta.");
+          }
+
+          // Minuta com conteúdo ativo (script, on*, iframe…) não entra na
+          // edição rápida: exibir exigiria retirar esse conteúdo, e salvar
+          // o retiraria do documento sem a pessoa saber.
+          const conteudoAtivo = EPT_conteudoAtivo(article, false);
+          if (conteudoAtivo.length) {
+            EPT_addLog("preview:recusada_conteudo_ativo", { achados: conteudoAtivo });
+            alert(
+              "EPT: Esta minuta tem conteúdo que a edição rápida não aceita (" +
+                conteudoAtivo.slice(0, 4).join(", ") +
+                (conteudoAtivo.length > 4 ? "…" : "") +
+                ").\nPara não alterar o documento, a edição rápida não foi aberta. Use o botão Editar do eproc."
+            );
+            return;
           }
 
           const editableSection =

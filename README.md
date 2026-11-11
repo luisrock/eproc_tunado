@@ -354,6 +354,11 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
   STM e TJMMG
 - **Novos tribunais opcionais:** TJAL, TJBA, TJMS, TJSE, TJAC, STM, TJMRS,
   TJMMG; e a homologação do TRF2
+- **HTML da minuta filtrado:** o conteúdo vindo do eproc é lido em documento
+  inerte (`DOMParser`). Na lista, conteúdo ativo (`<script>`, `<iframe>`,
+  atributos `on*`, endereços `javascript:` etc.) é retirado antes de ir para
+  a página (`EPT_previewSeguro`); a edição rápida recusa minuta que o
+  contenha, para nunca alterar o documento em silêncio (`EPT_conteudoAtivo`)
 - **Ativação mais visível nos tribunais opcionais:** "!" laranja no ícone da
   extensão na aba do tribunal ainda sem acesso, e aviso com o botão no alto
   do popup; a recarga das abas após a concessão passou para o `background.js`

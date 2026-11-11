@@ -403,6 +403,19 @@ html[data-ept-palette="esmeralda"] {
     margin-bottom: 0 !important;
 }
 
+/* Aviso de que o filtro de segurança retirou conteúdo do que o cartão mostra. */
+.ept-preview-container .ept-preview-aviso {
+    background: #fff7e6 !important;
+    border-left: 3px solid #d97706 !important;
+    color: #7c4a03 !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    margin: 0 0 1em !important;
+    padding: 6px 10px !important;
+}
+
 /* Minuta dupla (ementa | acórdão, relatório | voto): uma aba por corpo,
    como no modal da edição rápida. Só o corpo da aba ativa aparece. */
 .ept-preview-abas {
