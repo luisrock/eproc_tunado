@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -104,7 +104,7 @@ Para gerar o zip de upload na Chrome Web Store (ainda não publicado nesta vers�
 ./ziptunado.sh
 ```
 
-O pacote sai em `../eproc-tunado-1.1.0.zip`.
+O pacote sai em `../eproc-tunado-1.2.0.zip`.
 
 ## 🎯 Funcionalidades
 
@@ -332,7 +332,20 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 ## 🔄 Changelog
 
-### v1.1.0 (atual)
+### v1.2.0 (atual)
+
+- **Botão Lembrete com lembrete existente:** o eproc troca a ação do botão
+  para `minuta_inserir_lembrete` (lista) quando a minuta já tem lembrete;
+  ela entrou em `EPT_ACTION_CATEGORY`, e o botão não some mais do rodapé
+- **Indicador de lembretes no cartão:** lido do balão da coluna Código
+  (`label` com `img[src*="minuta_lembrete"]` e `infraTooltipMostrar(...,'Lembrete')`,
+  `EPT_collectLembreteInfo`); rótulo "Lembretes (N)" e balão com popover
+  só em CSS (usuário, data/hora, descrição), HTML filtrado por allowlist
+  (`EPT_sanitizeLembreteHtml`). Reserva: ação `minuta_inserir_lembrete`
+  sem contagem. Relido quando o eproc reinsere as colunas nativas
+  (`EPT_refreshLembreteNoCartao`)
+
+### v1.1.0
 
 - **Minutas duplas** (ementa + acórdão, relatório + voto): o preview mostra
   todos os corpos (`section[data-sin_permite_texto_padrao]`), títulos juntos

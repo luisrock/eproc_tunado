@@ -2174,7 +2174,9 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
   }
 
   const divBotoes = $row.find("#divListaRecursosMinuta");
-  const curatedHtml = EPT_buildCuratedActionsHtml(divBotoes);
+  // Lido antes de contentTd.html(...), que apaga o balão da coluna Código.
+  const lembreteInfo = EPT_collectLembreteInfo(contentTd, divBotoes);
+  const curatedHtml = EPT_buildCuratedActionsHtml(divBotoes, lembreteInfo);
   const moreBtnHtml = recursosTd.length
     ? `<button type="button" class="ept-btn-mais-acoes" aria-pressed="${keepActions ? "true" : "false"}" aria-label="Mais ações" title="${keepActions ? "Ocultar outras ações" : "Mostrar outras ações"}">Mais ações</button>`
     : "";
@@ -2298,6 +2300,9 @@ function EPT_fixEprocMutatedRow(tr, columnMap, keepActions) {
     }
     if (contentTd.length) {
       EPT_withSuppressedTableObserver(function () {
+        // As colunas nativas recém-inseridas trazem o estado atual dos
+        // lembretes (balão na coluna Código); relê antes de recolhê-las.
+        EPT_refreshLembreteNoCartao(tr, recursosTd);
         EPT_collapseRow($row, {
           contentTd,
           keepRecursosTd: recursosTd.length ? recursosTd : null,
@@ -2320,6 +2325,40 @@ function EPT_fixEprocMutatedRow(tr, columnMap, keepActions) {
   EPT_transformMinutaRow($row, map, keepActions, {
     emEdicao: temCadeado,
   });
+}
+
+/**
+ * Refaz os botões do rodapé de um cartão a partir da coluna Código nativa
+ * que o eproc reinseriu na mesma <tr> (atualizaTrMinuta). Sem essa coluna,
+ * não há fonte nova e o rodapé fica como está.
+ */
+function EPT_refreshLembreteNoCartao(tr, recursosTd) {
+  try {
+    const acoes = tr.querySelector(".ept-minuta-footer .ept-acoes-minuta");
+    if (!acoes) {
+      return;
+    }
+    const codigoNativo = Array.prototype.find.call(tr.children, function (td) {
+      return (
+        td.tagName === "TD" &&
+        !td.querySelector(".ept-minuta-footer") &&
+        !td.classList.contains("ept-recursos-originais") &&
+        !td.querySelector("#divListaRecursosMinuta") &&
+        td.querySelector("a.linkMinuta")
+      );
+    });
+    if (!codigoNativo) {
+      return;
+    }
+    const divBotoes = $(recursosTd || []).find("#divListaRecursosMinuta");
+    if (!divBotoes.length) {
+      return;
+    }
+    const info = EPT_collectLembreteInfo(codigoNativo, divBotoes);
+    acoes.innerHTML = EPT_buildCuratedActionsHtml(divBotoes, info);
+  } catch (e) {
+    debugLog("EPT: falha ao reler lembretes da minuta", e);
+  }
 }
 
 function EPT_restorePreviewAfterEdicao(tr) {
@@ -2586,8 +2625,216 @@ const EPT_ACTION_CATEGORY = {
   minuta_editar: "editar",
   minuta_assinar: "assinar",
   minuta_devolver: "devolver",
+  // O eproc troca a ação do mesmo botão (ícone, alt e tooltip iguais):
+  // sem lembrete -> minuta_lembrete_cadastrar (formulário de cadastro);
+  // com lembrete -> minuta_inserir_lembrete (lista: Novo/Desativar/Fechar).
   minuta_lembrete_cadastrar: "lembrete",
+  minuta_inserir_lembrete: "lembrete",
 };
+
+// ---- Lembretes da minuta ----
+//
+// Fonte da verdade: o balão que o eproc põe na coluna "Código", logo abaixo
+// do código da minuta:
+//   <label class="infraEventoUsuario"
+//     onmouseover="return infraTooltipMostrar('Usuário: ...<br>Data/hora: ...
+//       <br>Descrição: <b>...</b><hr> ','Lembrete',400);" ...>
+//     <img src="imagens/minuta_lembrete.gif" ...></label>
+// Cada lembrete termina em <hr>. Reserva: botão com acao=minuta_inserir_lembrete
+// (sabe-se que há lembrete, mas não quantos nem o texto).
+// O balão ao lado do NÚMERO DO PROCESSO é outra coisa e não é tocado aqui.
+
+/** Lê os dois primeiros argumentos de infraTooltipMostrar('texto','título',...). */
+function EPT_parseInfraTooltip(onmouseover) {
+  const m = /infraTooltipMostrar\(\s*'((?:\\.|[^'\\])*)'\s*,\s*'((?:\\.|[^'\\])*)'/.exec(
+    onmouseover || ""
+  );
+  if (!m) {
+    return null;
+  }
+  const unescape = (s) => s.replace(/\\(.)/g, "$1");
+  return { html: unescape(m[1]), titulo: unescape(m[2]) };
+}
+
+/** O <label> do balão de lembrete da minuta, ou null. */
+function EPT_findLembreteBalao(root) {
+  if (!root || !root.querySelectorAll) {
+    return null;
+  }
+  const labels = root.querySelectorAll('label[onmouseover*="infraTooltipMostrar"]');
+  for (const label of labels) {
+    if (
+      label.closest(".ept-minuta-footer, #divListaRecursosMinuta, td.ept-recursos-originais") ||
+      !label.querySelector('img[src*="minuta_lembrete"]')
+    ) {
+      continue;
+    }
+    const tip = EPT_parseInfraTooltip(label.getAttribute("onmouseover"));
+    if (tip && /^lembrete/i.test(tip.titulo.trim())) {
+      return label;
+    }
+  }
+  return null;
+}
+
+/**
+ * Filtra o HTML do tooltip para exibição no cartão: só marcação de texto,
+ * sem atributo nenhum. A descrição é digitada pelo usuário; o eproc não a
+ * filtra, então não confiamos nela (ver também EPT_previewSeguro).
+ */
+function EPT_sanitizeLembreteHtml(html) {
+  const permitidas = new Set(["B", "STRONG", "I", "EM", "U", "BR", "HR", "P", "SPAN", "DIV", "SMALL"]);
+  const origem = new DOMParser().parseFromString(`<body>${html || ""}</body>`, "text/html").body;
+  const destino = document.createElement("div");
+  const copiar = function (de, para) {
+    de.childNodes.forEach(function (no) {
+      if (no.nodeType === Node.TEXT_NODE) {
+        para.appendChild(document.createTextNode(no.textContent));
+      } else if (no.nodeType === Node.ELEMENT_NODE) {
+        if (permitidas.has(no.tagName)) {
+          const el = document.createElement(no.tagName.toLowerCase());
+          para.appendChild(el);
+          copiar(no, el);
+        } else if (!/^(SCRIPT|STYLE|TEMPLATE|IFRAME|OBJECT|EMBED|SVG|MATH)$/.test(no.tagName)) {
+          copiar(no, para);
+        }
+      }
+    });
+  };
+  copiar(origem, destino);
+  // O eproc fecha cada lembrete com <hr>; o último sobra.
+  let ultimo = destino.lastChild;
+  while (
+    ultimo &&
+    ((ultimo.nodeType === Node.TEXT_NODE && !ultimo.textContent.trim()) ||
+      (ultimo.nodeType === Node.ELEMENT_NODE && ultimo.tagName === "HR"))
+  ) {
+    destino.removeChild(ultimo);
+    ultimo = destino.lastChild;
+  }
+  return destino.innerHTML;
+}
+
+/**
+ * Estado de lembretes da linha: { tem, n (0 = desconhecido), html, imgSrc }.
+ * Lê o balão da coluna Código (contentTd) e, na falta dele, a ação do botão.
+ */
+function EPT_collectLembreteInfo(contentTd, divBotoes) {
+  const td = contentTd && contentTd.jquery ? contentTd[0] : contentTd;
+  const balao = EPT_findLembreteBalao(td);
+  if (balao) {
+    const tip = EPT_parseInfraTooltip(balao.getAttribute("onmouseover"));
+    const bruto = tip ? tip.html : "";
+    const n =
+      (bruto.match(/Usu(?:á|&aacute;|a)rio\s*:/gi) || []).length ||
+      (bruto.match(/<hr\b/gi) || []).length ||
+      1;
+    const img = balao.querySelector('img[src*="minuta_lembrete"]');
+    return {
+      tem: true,
+      n,
+      html: EPT_sanitizeLembreteHtml(bruto),
+      imgSrc: img ? img.getAttribute("src") : "",
+    };
+  }
+  const $botoes = divBotoes && divBotoes.jquery ? divBotoes : $(divBotoes || []);
+  const botao = $botoes.find('a[href*="acao=minuta_inserir_lembrete"]')[0];
+  if (botao) {
+    const img = botao.querySelector("img");
+    return { tem: true, n: 0, html: "", imgSrc: img ? img.getAttribute("src") : "" };
+  }
+  return { tem: false, n: 0, html: "", imgSrc: "" };
+}
+
+/**
+ * Conteúdo extra do botão Lembrete: o balão (antes do rótulo) e os dados
+ * do popover, guardados ocultos dentro do próprio botão.
+ */
+function EPT_buildLembreteIndicadorHtml(info) {
+  const rotulo = info.n
+    ? `${info.n} lembrete${info.n > 1 ? "s" : ""} na minuta`
+    : "A minuta tem lembrete(s)";
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const src = info.imgSrc && !/^\s*javascript:/i.test(info.imgSrc) ? info.imgSrc : "imagens/minuta_lembrete.gif";
+  const corpo = info.html || "<i>Clique em “Lembretes” para ver o conteúdo.</i>";
+  return (
+    `<img class="ept-lembrete-icone" src="${esc(src)}" alt="">` +
+    `<span class="ept-lembrete-dados" hidden>` +
+    `<span class="ept-lembrete-popover-titulo">${esc(rotulo)}</span>${corpo}</span>`
+  );
+}
+
+/**
+ * Popover dos lembretes: um único elemento no <body>, position: fixed, para
+ * não ser cortado pelo overflow: hidden da barra segmentada de botões.
+ * Some em qualquer mouseover fora do botão, no scroll, no Esc e no blur —
+ * se o cartão for redesenhado sob o mouse, o próximo movimento o fecha.
+ */
+let EPT_lembretePopoverBound = false;
+
+function EPT_ocultarLembretePopover() {
+  const pop = document.getElementById("ept-lembrete-popover");
+  if (pop) {
+    pop.hidden = true;
+  }
+}
+
+function EPT_mostrarLembretePopover(botao) {
+  const dados = botao.querySelector(".ept-lembrete-dados");
+  if (!dados) {
+    return;
+  }
+  let pop = document.getElementById("ept-lembrete-popover");
+  if (!pop) {
+    pop = document.createElement("div");
+    pop.id = "ept-lembrete-popover";
+    pop.className = "ept-lembrete-popover";
+    pop.setAttribute("role", "tooltip");
+    document.body.appendChild(pop);
+  }
+  if (pop._eptDe !== botao) {
+    // dados.innerHTML já passou por EPT_sanitizeLembreteHtml.
+    pop.innerHTML = dados.innerHTML;
+    pop._eptDe = botao;
+  }
+  pop.hidden = false;
+  const r = botao.getBoundingClientRect();
+  const margem = 8;
+  const largura = pop.offsetWidth;
+  const altura = pop.offsetHeight;
+  let top = r.top - altura - 6;
+  if (top < margem) {
+    top = r.bottom + 6;
+  }
+  const left = Math.max(margem, Math.min(r.left, window.innerWidth - largura - margem));
+  pop.style.top = `${Math.round(top)}px`;
+  pop.style.left = `${Math.round(left)}px`;
+}
+
+function EPT_bindLembretePopover() {
+  if (EPT_lembretePopoverBound) {
+    return;
+  }
+  EPT_lembretePopoverBound = true;
+  const seletor = '.ept-minuta-footer a[data-ept-tem-lembrete="true"]';
+  const aoEntrar = function (event) {
+    const botao = event.target && event.target.closest ? event.target.closest(seletor) : null;
+    if (botao) {
+      EPT_mostrarLembretePopover(botao);
+    } else {
+      EPT_ocultarLembretePopover();
+    }
+  };
+  document.addEventListener("mouseover", aoEntrar, true);
+  document.addEventListener("focusin", aoEntrar, true);
+  document.addEventListener("focusout", EPT_ocultarLembretePopover, true);
+  document.addEventListener("scroll", EPT_ocultarLembretePopover, true);
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      EPT_ocultarLembretePopover();
+    }
+  });
+}
 
 /**
  * Extrai a ação de um botão (<a> ou wrapper) na ordem:
@@ -2672,7 +2919,7 @@ function EPT_createQuickEditLink() {
  * (que permanece com todos os ícones, inclusive Conferir).
  * "Edição rápida" só entra se o eproc ofereceu Editar nesta minuta.
  */
-function EPT_buildCuratedActionsHtml(divBotoes) {
+function EPT_buildCuratedActionsHtml(divBotoes, lembreteInfo) {
   const parts = [];
   let hasEditar = false;
   if (divBotoes && divBotoes.length) {
@@ -2692,6 +2939,16 @@ function EPT_buildCuratedActionsHtml(divBotoes) {
       const clone = this.cloneNode(true);
       const anchor = clone.matches("a") ? clone : clone.querySelector("a");
       (anchor || clone).setAttribute("data-ept-action", category);
+      if (category === "lembrete" && lembreteInfo && lembreteInfo.tem) {
+        (anchor || clone).setAttribute("data-ept-tem-lembrete", "true");
+        if (lembreteInfo.n) {
+          (anchor || clone).setAttribute("data-ept-lembretes", String(lembreteInfo.n));
+        }
+        (anchor || clone).insertAdjacentHTML("beforeend", EPT_buildLembreteIndicadorHtml(lembreteInfo));
+        parts.push(clone.outerHTML);
+        EPT_bindLembretePopover();
+        return;
+      }
       parts.push(clone.outerHTML);
     });
   }
