@@ -1645,6 +1645,214 @@ function EPT_extractPreviewBody(root) {
   return { partes: [section ? section.innerHTML : ""], titulos: [], titulo: "" };
 }
 
+// ---- Partes do processo no cartão ------------------------------------
+//
+// A lista de minutas não mostra as partes, mas o preview que a extensão já
+// baixa para o cartão traz o cabeçalho do documento, com
+//   <section data-nome="partes">
+//     <div data-polo="autores"><div data-parte_polo="autor">
+//       <p class="parte"><span class="tipo_parte">EXEQUENTE</span>:
+//         <span class="nome_parte">FULANO</span></p>
+//     <div data-polo="reus"> ... (idem)
+// Nenhuma requisição a mais. Só texto vai para a página (escapado).
+
+// ---- Filtros da área de trabalho (modo foco) --------------------------
+//
+// Tudo o que fica em #frmMinutaLista acima da tabela (#divInfraAreaTabela):
+// pesquisa, critérios de exibição etc. Um link "Filtros" logo acima da
+// tabela mostra e esconde esse bloco. Só os elementos visíveis no momento
+// recebem a marca, para o link nunca revelar o que o eproc deixou oculto; e
+// o esconder é por classe, sem tocar no style que o eproc controla.
+
+const EPT_CLASSE_FILTRO = "ept-filtro-recolhivel";
+
+function EPT_montarFiltros(abertos) {
+  const form = document.getElementById("frmMinutaLista");
+  const tabela = document.getElementById("divInfraAreaTabela");
+  if (!form || !tabela || tabela.parentElement !== form || document.getElementById("eptFiltros")) {
+    return;
+  }
+  const alvos = Array.from(form.children).filter(
+    (el) =>
+      el !== tabela &&
+      !(el.tagName === "INPUT" && el.type === "hidden") &&
+      el.getClientRects().length > 0
+  );
+  if (!alvos.length) {
+    return;
+  }
+  alvos.forEach((el) => el.classList.add(EPT_CLASSE_FILTRO));
+
+  const bloco = document.createElement("div");
+  bloco.id = "eptFiltros";
+  bloco.className = "ept-filtros";
+  const btn = document.createElement("button");
+  btn.type = "button"; // nunca submeter o formulário da lista
+  btn.className = "ept-btn-filtros";
+  btn.textContent = "Filtros";
+  bloco.appendChild(btn);
+  form.insertBefore(bloco, tabela);
+
+  const aplicar = (abrir) => {
+    btn.setAttribute("aria-expanded", String(abrir));
+    btn.title = abrir ? "Ocultar os filtros" : "Mostrar os filtros";
+    form.classList.toggle("ept-filtros-ocultos", !abrir);
+  };
+  btn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    aplicar(btn.getAttribute("aria-expanded") !== "true");
+  });
+  aplicar(!!abertos);
+}
+
+/** Texto puro pronto para entrar em HTML (conteúdo ou atributo entre aspas duplas). */
+function EPT_escaparHtml(s) {
+  return String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+  );
+}
+
+/** Partes da minuta: [{ tipo, nome, polo }], na ordem do documento. */
+function EPT_extractPartes(root) {
+  if (!root || !root.querySelector) {
+    return [];
+  }
+  const scope = root.querySelector("article") || root;
+  const secao = scope.querySelector('section[data-nome="partes"]');
+  if (!secao) {
+    return [];
+  }
+  const limpar = (s) => String(s || "").replace(/\s+/g, " ").trim();
+  const partes = [];
+  secao.querySelectorAll("p.parte, p[data-sin_parte]").forEach((p) => {
+    const tipoEl = p.querySelector(".tipo_parte");
+    const nomeEl = p.querySelector(".nome_parte");
+    let tipo = limpar(tipoEl && tipoEl.textContent);
+    let nome = limpar(nomeEl && nomeEl.textContent);
+    if (!nome) {
+      // Sem os spans: "TIPO: NOME" em texto corrido.
+      const texto = limpar(p.textContent);
+      const i = texto.indexOf(":");
+      tipo = i > 0 ? texto.slice(0, i).trim() : "";
+      nome = i > 0 ? texto.slice(i + 1).trim() : texto;
+    }
+    if (!nome) {
+      return;
+    }
+    const poloEl = p.closest("[data-polo]");
+    partes.push({ tipo, nome, polo: poloEl ? poloEl.getAttribute("data-polo") : "" });
+  });
+  return partes;
+}
+
+// Opção "Partes sempre expostas" (ept_partes_expostas, padrão OFF): lida em
+// executeScript, antes de montar os cartões.
+let EPT_partesExpostas = false;
+
+// Partes exibidas por polo; acima disso, "(outros)".
+const EPT_MAX_PARTES_POR_POLO = 2;
+
+/**
+ * Link "Partes" e a lista, agrupada por polo, na ordem do documento: até
+ * duas partes por polo, e "(outros)" depois da segunda quando o documento
+ * listar mais. Nenhuma contagem é exibida: o eproc não manda número, e uma
+ * contagem feita aqui poderia divergir da capa do processo. "" sem partes.
+ */
+function EPT_buildPartesMarkup(partes) {
+  if (!partes || !partes.length) {
+    return "";
+  }
+  const escapar = (s) =>
+    String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const polos = [];
+  partes.forEach((p) => {
+    const chave = p.polo || "";
+    let grupo = polos.find((g) => g.chave === chave);
+    if (!grupo) {
+      grupo = { chave, partes: [] };
+      polos.push(grupo);
+    }
+    grupo.partes.push(p);
+  });
+  const blocos = polos
+    .map((g) => {
+      const total = g.partes.length;
+      const visiveis = g.partes.slice(0, EPT_MAX_PARTES_POR_POLO);
+      const linhas = visiveis
+        .map((p, i) => {
+          // Tipo e valor sempre em dois spans (o tipo pode vir vazio), para
+          // os estilos que alinham o tipo numa coluna própria.
+          // Tipo só com a inicial maiúscula ("EXEQUENTE" -> "Exequente"):
+          // o contraste com o nome, em caixa alta, separa os dois.
+          const tipoTexto = p.tipo
+            ? p.tipo.charAt(0).toLocaleUpperCase("pt-BR") + p.tipo.slice(1).toLocaleLowerCase("pt-BR")
+            : "";
+          const tipo = `<span class="ept-parte-tipo">${tipoTexto ? `${escapar(tipoTexto)}:` : ""}</span> `;
+          const ultima = i === visiveis.length - 1;
+          const outros =
+            ultima && total > visiveis.length ? ' <span class="ept-parte-outros">(outros)</span>' : "";
+          return `<li class="ept-parte">${tipo}<span class="ept-parte-valor"><span class="ept-parte-nome">${escapar(p.nome)}</span>${outros}</span></li>`;
+        })
+        .join("");
+      const polo = g.chave ? ` data-ept-polo="${escapar(g.chave)}"` : "";
+      return `<div class="ept-polo"${polo}><ul class="ept-polo-partes">${linhas}</ul></div>`;
+    })
+    .join("");
+  const id = `${EPT_generatePreviewId()}-partes`;
+  const aberto = !!EPT_partesExpostas;
+  return `<div class="ept-partes" data-ept-partes="true">
+    <button type="button" class="ept-btn-partes" aria-expanded="${aberto}" aria-controls="${id}" title="${aberto ? "Ocultar" : "Mostrar"} as partes do processo">Partes</button>
+    <div class="ept-partes-lista" id="${id}"${aberto ? "" : " hidden"}>${blocos}</div>
+  </div>`;
+}
+
+// Abre e fecha a lista de partes. Mesmo esquema das abas do cartão: um
+// ouvinte só, em captura, para o clique não chegar aos ouvintes da linha.
+document.addEventListener(
+  "click",
+  (event) => {
+    const btn = event.target && event.target.closest && event.target.closest(".ept-btn-partes");
+    if (!btn) {
+      return;
+    }
+    // A lista é a irmã do botão no mesmo bloco, nunca um id qualquer da
+    // página: o texto da minuta mantém class e aria-*, e um "botão" forjado
+    // nele não pode esconder outros elementos.
+    const bloco = btn.parentElement;
+    const lista =
+      bloco && bloco.classList.contains("ept-partes")
+        ? bloco.querySelector(":scope > .ept-partes-lista")
+        : null;
+    if (!lista) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const abrir = btn.getAttribute("aria-expanded") !== "true";
+    btn.setAttribute("aria-expanded", String(abrir));
+    btn.title = abrir ? "Ocultar as partes do processo" : "Mostrar as partes do processo";
+    lista.hidden = !abrir;
+  },
+  true
+);
+
+/**
+ * Põe as partes no cartão, logo abaixo do cabeçalho, se ainda não estiverem
+ * (cartão montado como "em edição" não as tem).
+ */
+function EPT_inserirPartesNoCartao(tr, root) {
+  if (!tr || tr.querySelector("[data-ept-partes]")) {
+    return;
+  }
+  const markup = EPT_buildPartesMarkup(EPT_extractPartes(root));
+  const header = tr.querySelector(".ept-minuta-header");
+  if (markup && header) {
+    header.insertAdjacentHTML("afterend", markup);
+  }
+}
+
 /**
  * Um corpo do preview, com o limite de caracteres e o seu próprio
  * "Ver texto completo". Nas minutas duplas, cada corpo passa por aqui
@@ -2187,14 +2395,19 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
     (originalLinks[0] && originalLinks[0].hrefPreview) ||
     "";
 
-  const applyCard = function (titulo, sectionContent) {
-    const statusLinha = meta.status ? `<br>${meta.status}` : "";
-    const assinaturaInfo = EPT_formatAssinaturaInfo(meta.servidor, meta.criacao);
+  const applyCard = function (tituloTexto, sectionContent, partesHtml) {
+    // Título, status, órgão e assinatura chegam como texto (textContent /
+    // .text(), já decodificados) e vão para .html(): escapados, para que um
+    // "<img onerror=...>" escrito como texto não vire elemento. Na tela, o
+    // resultado é o mesmo. O processo segue como HTML: é o link do eproc.
+    const titulo = EPT_escaparHtml(tituloTexto);
+    const statusLinha = meta.status ? `<br>${EPT_escaparHtml(meta.status)}` : "";
+    const assinaturaInfo = EPT_escaparHtml(EPT_formatAssinaturaInfo(meta.servidor, meta.criacao));
     const acoesHtml = `<div class="ept-acoes-minuta">${curatedHtml}</div>${moreBtnHtml}`;
     const cabecalho = `<div style="display:flex; justify-content: space-between; margin-bottom: 30px; margin-top: 15px;">
                                                       <span>${meta.processo}</span> 
                                                       <span align="center">${titulo}${statusLinha}&nbsp;</span>
-                                                      <span>${meta.orgao}</span>
+                                                      <span>${EPT_escaparHtml(meta.orgao)}</span>
                                                   </div>`;
     const footer = `<div class="ept-minuta-footer" style="display:flex;justify-content:flex-start;align-items:center;width:100%;margin-bottom: 5px;margin-top: 30px;">
                                                   ${acoesHtml}
@@ -2212,7 +2425,7 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
       contentTd
         .attr("align", "left")
         .css("padding", "20px")
-        .html(cabecalho + sectionContent + footer);
+        .html(cabecalho + (partesHtml || "") + sectionContent + footer);
       EPT_collapseRow($row, {
         contentTd,
         keepRecursosTd: recursosTd.length ? recursosTd : null,
@@ -2253,7 +2466,7 @@ function EPT_transformMinutaRow(row, columnMap, keepActions, options) {
         null,
         htmlObject._eptConteudoRetirado
       );
-      applyCard(titulo, sectionContent);
+      applyCard(titulo, sectionContent, EPT_buildPartesMarkup(EPT_extractPartes(htmlObject)));
     });
   } else {
     EPT_withSuppressedTableObserver(function () {
@@ -2388,6 +2601,7 @@ function EPT_restorePreviewAfterEdicao(tr) {
         corpo.titulos,
         htmlObject._eptConteudoRetirado
       );
+      EPT_inserirPartesNoCartao(tr, htmlObject);
       const tituloRaw = htmlObject.querySelector("p.titulo");
       const tituloTexto = corpo.titulo || (tituloRaw && tituloRaw.textContent) || "";
       if (tituloTexto) {
@@ -3045,6 +3259,7 @@ async function getStorageData(key) {
       "ept_tabletext",
       "ept_edit",
       "ept_keep_actions",
+      "ept_partes_expostas",
     ]);
   
     // If extension is not enabled, log message and terminate
@@ -3077,9 +3292,10 @@ async function getStorageData(key) {
   
       // Handle ept_focus setting
       const ept_focusData = await getStorageData("ept_focus");
-      if (ept_focusData.ept_focus && window.location.href.includes('acao=minuta_area_trabalho')) {
-        // console.log('focus to work');
-        $("#frmMinutaLista").children(":not(#divInfraAreaTabela)").hide();
+      if (window.location.href.includes("acao=minuta_area_trabalho")) {
+        // Modo foco: ligado, a lista abre com os filtros escondidos;
+        // desligado, abertos. Nos dois casos, o link "Filtros" alterna.
+        EPT_montarFiltros(!ept_focusData.ept_focus);
       }
   
       // console.log(ept_focusData);
@@ -3100,6 +3316,8 @@ async function getStorageData(key) {
       // Flag "Manter botões originais" (padrão OFF: undefined -> false).
       const ept_keepActionsData = await getStorageData("ept_keep_actions");
       const keepActions = !!ept_keepActionsData.ept_keep_actions;
+      // "Partes sempre expostas" (padrão OFF: undefined -> false).
+      EPT_partesExpostas = !!data.ept_partes_expostas;
 
       if (window.location.href.includes("acao=minuta_area_trabalho")) {
         if (ept_tabletextData.ept_tabletext) {

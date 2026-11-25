@@ -118,6 +118,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
   let btnEdit = document.getElementById("toggle-ept_edit");
   let ept_keep_actions;
   let btnKeepActions = document.getElementById("toggle-ept_keep_actions");
+  let btnPartes = document.getElementById("toggle-ept_partes_expostas");
   let btnReload = document.getElementById("btn-reload");
 
   // Get ept_enabled variable
@@ -132,6 +133,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
       "ept_tabletext",
       "ept_edit",
       "ept_keep_actions",
+      "ept_partes_expostas",
     ];
     variables.forEach((item) => {
       chrome.storage.sync.get(item, (result) => {
@@ -235,7 +237,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     });
   };
 
-  [btnPassword, btnFocus, btnActions, btnText, btnEdit, btnKeepActions].forEach((btn) => {
+  [btnPassword, btnFocus, btnActions, btnText, btnEdit, btnKeepActions, btnPartes].forEach((btn) => {
     if (btn) { // Verificação de segurança caso o elemento não exista
       btn.onclick = () => {
         let item = btn.id.split("-")[1];

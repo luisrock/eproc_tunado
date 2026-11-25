@@ -2,7 +2,7 @@
 
 **Extensão Chrome para aperfeiçoar a interface de minutas do eproc para juízes**
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://maurolopes.com.br)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://maurolopes.com.br)
 [![Chrome Extension](https://img.shields.io/badge/chrome-extension-green.svg)](https://chrome.google.com/webstore)
 
 ## 📋 Sobre
@@ -104,7 +104,7 @@ Para gerar o zip de upload na Chrome Web Store (ainda não publicado nesta vers�
 ./ziptunado.sh
 ```
 
-O pacote sai em `../eproc-tunado-1.2.0.zip`.
+O pacote sai em `../eproc-tunado-1.3.0.zip`.
 
 ## 🎯 Funcionalidades
 
@@ -113,11 +113,13 @@ O pacote sai em `../eproc-tunado-1.2.0.zip`.
 - **Visual refined** sempre que a visualização de texto está ligada (não há interruptor extra de “interface aprimorada”)
 - **Ações no rodapé**: Editar, Assinar, Devolver, Lembrete e edição rápida (barra segmentada)
 - **Mais ações**: revela ou esconde os ícones originais daquela minuta (Conferir e demais)
+- **Partes**: abaixo do cabeçalho, mostra e esconde as partes do processo (até duas por polo, "(outros)" se houver mais)
 - **Retunar**: no cabeçalho da tabela, recarrega e reaplica a formatação
 - **Minuta em edição**: se o eproc bloquear a linha (laranja + cadeado), o cartão permanece com os dados básicos e o texto “em edição”; ao desbloquear, o preview volta sem recarregar a página
 
 ### Produtividade
-- **Modo foco** e **focar ações principais** (popup)
+- **Filtros**: link acima da tabela que mostra e esconde a pesquisa e os filtros; o **modo foco** define se abrem escondidos
+- **Focar ações principais** (popup)
 - **Clique automático** para manter agendamento na edição
 - **Armazenar senha** (campo de senha no tipo correto, para o navegador salvar)
 
@@ -127,11 +129,12 @@ O pacote sai em `../eproc-tunado-1.2.0.zip`.
 |--------|--------|
 | **Ativado** | Liga ou desliga a extensão |
 | **Armazenar senha** | Campo de senha como `password` |
-| **Modo foco** | Oculta elementos secundários na área de minutas |
+| **Modo foco** | Abre a área de minutas com os filtros escondidos; o link “Filtros” os mostra |
 | **Focar ações principais** | Só Visualizar e Assinar acima da tabela |
 | **Visualização de texto** | Texto na listagem **e** o visual de cartões |
 | **Clique automático** | Confirma “manter agendamento” na edição |
 | **Manter botões originais** | Já abre cada minuta com os ícones extras visíveis; “Mais ações” continua podendo ocultá-los |
+| **Partes sempre expostas** | Abre cada cartão com as partes do processo à mostra; “Partes” continua podendo ocultá-las |
 
 As preferências ficam no `chrome.storage.sync`.
 
@@ -332,7 +335,30 @@ Uso pessoal e profissional de magistrados e servidores do Poder Judiciário.
 
 ## 🔄 Changelog
 
-### v1.2.0 (atual)
+### v1.3.0 (atual)
+
+- **Partes do processo no cartão:** lidas do mesmo preview que a extensão
+  já baixa (`section[data-nome="partes"]`, polos `[data-polo]`,
+  `span.tipo_parte`/`span.nome_parte`), sem requisição a mais
+  (`EPT_extractPartes`). Link "Partes" abaixo do cabeçalho abre e fecha a
+  lista (`EPT_buildPartesMarkup`, `.ept-btn-partes`); até duas partes por
+  polo e "(outros)" quando o documento lista mais. Nenhuma contagem é
+  exibida: o eproc não manda número. Texto escapado; visual com filete
+  laranja e fonte menor que a do teor, para não se confundir com a minuta
+- **Partes sempre expostas** (`ept_partes_expostas`, padrão OFF): a lista
+  já abre aberta; o link continua fechando
+- **Filtros** (`EPT_montarFiltros`): link acima da tabela que mostra e
+  esconde os filhos de `#frmMinutaLista` fora de `#divInfraAreaTabela`. Só
+  os elementos visíveis na carga recebem a marca (`.ept-filtro-recolhivel`),
+  e o esconder é por classe no form, sem tocar no `style` do eproc. O
+  **Modo Foco** (`ept_focus`, mesma chave) passa a definir só o estado
+  inicial: ligado, filtros escondidos; desligado, à mostra
+- **Escape no cabeçalho do cartão:** título, status, órgão e assinatura
+  passam por `EPT_escaparHtml` antes do `.html()`; o link "Partes" só age
+  sobre a lista do próprio bloco
+- **Popup em duas colunas**, sem rolagem
+
+### v1.2.0
 
 - **Botão Lembrete com lembrete existente:** o eproc troca a ação do botão
   para `minuta_inserir_lembrete` (lista) quando a minuta já tem lembrete;
