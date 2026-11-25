@@ -1691,7 +1691,9 @@ function EPT_montarFiltros(abertos) {
   btn.className = "ept-btn-filtros";
   btn.textContent = "Filtros";
   bloco.appendChild(btn);
-  form.insertBefore(bloco, tabela);
+  // Antes do primeiro filtro, como título do bloco que abre: aberto, os
+  // filtros vêm logo abaixo do link, e não longe dele, junto da tabela.
+  form.insertBefore(bloco, alvos[0]);
 
   const aplicar = (abrir) => {
     btn.setAttribute("aria-expanded", String(abrir));

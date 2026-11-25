@@ -794,9 +794,15 @@ html .ept-partes div.ept-partes-lista[hidden] {
     display: none !important;
 }
 
+/* O link vem antes dos filtros: aberto, colado neles; fechado, com respiro
+   até a tabela. */
 .ept-filtros {
-    margin: 6px 0 8px !important;
+    margin: 6px 0 4px !important;
     text-align: left !important;
+}
+
+#frmMinutaLista.ept-filtros-ocultos > .ept-filtros {
+    margin-bottom: 16px !important;
 }
 
 .ept-filtros .ept-btn-filtros {
